@@ -45,7 +45,21 @@ const adminMenuItems = [
   },
 ];
 
-const doctorMenuItems = adminMenuItems;
+const doctorOnlyMenuItems = [
+  {
+    title: "Bệnh nhân",
+    url: "/dashboard/patients",
+    icon: Users,
+  }
+];
+
+const patientOnlyMenuItems = [
+  {
+    title: "Quản lý hồ sơ",
+    url: "/dashboard/health-overview",
+    icon: Home,
+  }
+];
 
 interface AppSidebarProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -104,7 +118,10 @@ const AppSidebar: React.FC<AppSidebarProps> = React.memo(({ userData }) => {
 
   // Memoize menu items to prevent unnecessary recalculations
   const menuItems = useMemo(() => {
-    return userData?.data.role === "DOCTOR" ? doctorMenuItems : adminMenuItems;
+    const role = userData?.data.role;
+    if (role === "DOCTOR") return doctorOnlyMenuItems;
+    if (role === "PATIENT") return patientOnlyMenuItems;
+    return adminMenuItems;
   }, [userData?.data.role]);
 
   // Memoize active path to prevent recalculation on every render

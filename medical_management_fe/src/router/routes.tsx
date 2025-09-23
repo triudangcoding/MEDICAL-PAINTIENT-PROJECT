@@ -13,13 +13,31 @@ const isAuthenticated = () => {
   return !!localStorage.getItem("accessToken");
 };
 
-// Root route redirect dựa vào trạng thái đăng nhập
+const getPrimaryRole = (): "ADMIN" | "DOCTOR" | "PATIENT" | null => {
+  try {
+    const rolesRaw = localStorage.getItem("roles");
+    if (!rolesRaw) return null;
+    const arr = JSON.parse(rolesRaw) as string[];
+    const r = arr?.[0];
+    if (r === "ADMIN" || r === "DOCTOR" || r === "PATIENT") return r;
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const roleToDefaultPath = (role: ReturnType<typeof getPrimaryRole>) => {
+  if (role === "ADMIN") return "/dashboard";
+  if (role === "DOCTOR") return "/dashboard/patients";
+  if (role === "PATIENT") return "/dashboard/health-overview";
+  return "/dashboard";
+};
+
+// Root route redirect dựa vào trạng thái đăng nhập + role
 const RootRedirect = () => {
-  return isAuthenticated() ? (
-    <Navigate to="/dashboard" replace />
-  ) : (
-    <Navigate to="/login" replace />
-  );
+  if (!isAuthenticated()) return <Navigate to="/login" replace />;
+  const role = getPrimaryRole();
+  return <Navigate to={roleToDefaultPath(role)} replace />;
 };
 
 export const routes: RouteObject[] = [
@@ -55,7 +73,6 @@ export const routes: RouteObject[] = [
         path: "health-overview",
         element: <HealthOverview />,
       },
-      // Removed other routes for mock flow
     ],
   },
 ];

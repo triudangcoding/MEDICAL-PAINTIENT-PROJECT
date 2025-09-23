@@ -18,11 +18,15 @@ export const authApi = {
 
   async getCurrentUser(): Promise<UserResponse> {
     const res = await axiosInstance.get("/auth/me");
-    // /auth/me returns user directly or wrapped
-    if (res.data?.data) {
-      return { data: res.data.data, statusCode: res.data.statusCode ?? 200 } as UserResponse;
-    }
-    return { data: res.data, statusCode: 200 } as UserResponse;
+    const raw = res.data?.data ?? res.data;
+    // Normalize role field: backend may return `roles`
+    const normalized = raw && typeof raw === "object"
+      ? { ...raw, role: raw.role ?? raw.roles }
+      : raw;
+    return {
+      data: normalized,
+      statusCode: res.data?.statusCode ?? 200
+    } as UserResponse;
   },
 
   logout(): void {

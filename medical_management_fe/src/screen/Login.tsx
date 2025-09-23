@@ -15,7 +15,15 @@ export default function Login() {
 
   useEffect(() => {
     if (localStorage.getItem("accessToken")) {
-      navigate("/dashboard");
+      // If already logged in, route by role
+      const rolesRaw = localStorage.getItem("roles");
+      let target = "/dashboard";
+      try {
+        const role = rolesRaw ? (JSON.parse(rolesRaw) as string[])[0] : null;
+        if (role === "DOCTOR") target = "/dashboard/patients";
+        else if (role === "PATIENT") target = "/dashboard/health-overview";
+      } catch {}
+      navigate(target);
     }
   }, [navigate]);
 
@@ -68,15 +76,17 @@ export default function Login() {
       // Refresh current user cache
       queryClient.invalidateQueries({ queryKey: ["currentUser"] });
 
+      // Navigate based on role
+      const role = res.user.role;
+      const target = role === "DOCTOR" ? "/dashboard/patients" : role === "PATIENT" ? "/dashboard/health-overview" : "/dashboard";
+
       toast.success("Login successful! Redirecting...", {
-        duration: 1000,
+        duration: 800,
         position: "top-center",
         style: { background: "#10B981", color: "#fff" },
       });
 
-      // Navigate based on role (can be expanded later)
-      const target = "/dashboard";
-      setTimeout(() => navigate(target), 800);
+      setTimeout(() => navigate(target), 600);
     } catch (error: unknown) {
       const message = (error as any)?.response?.data?.message || "Login failed";
       toast.error(message, {
