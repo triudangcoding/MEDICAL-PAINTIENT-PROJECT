@@ -1,0 +1,65 @@
+version: '3.8'
+
+networks:
+  sns-network:
+    name: 'sns-network'
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.0.0.0/16
+          ip_range: 10.0.0.0/24
+          gateway: 10.0.0.1
+
+services:
+  postgres:
+    image: bitnami/postgresql:latest
+    container_name: postgres-5439-sns
+    networks:
+      - sns-network
+    volumes:
+      - postgres-data-be:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=postgres
+      - POSTGRESQL_DATABASE=sns
+    ports:
+      - '5439:5432'
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+
+  redis:
+    container_name: redis-6444-sns
+    image: bitnami/redis:latest
+    networks:
+      - sns-network
+    ports:
+      - '6444:6379'
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis}
+    volumes:
+      - redis-data:/bitnami/redis
+    restart: unless-stopped
+    healthcheck:
+      test: [ 'CMD', 'redis-cli', '--raw', 'ping' ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+volumes:
+  postgres-data-be:
+  redis-data:

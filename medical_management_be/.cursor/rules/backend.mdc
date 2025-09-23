@@ -1,0 +1,397 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Backend Development Rules
+
+## 1. Communication Principles
+- **Use Vietnamese in all situations:**
+  - All answers, explanations, and analyses must be written in Vietnamese
+  - Use clear wording, avoid mechanical translation from English to Vietnamese
+  - For technical terms without Vietnamese equivalents, the original term can be kept with a brief explanation if needed
+
+## 2. Analysis Process
+- **Comprehensive approach:**
+  - Always thoroughly analyze all aspects of the problem before providing solutions
+  - Clearly identify functional and non-functional requirements
+  - Evaluate alternative solutions before deciding
+  - Consider the impact of solutions on performance, security, and user experience
+- **Research methodology:**
+  - Study the existing codebase thoroughly to understand structure and logic
+  - Analyze in detail the properties, data relationships, and related business logic
+  - Look for design patterns being applied in the project
+  - Review libraries and frameworks being used to ensure consistency
+
+## 3. Principles for Respecting Existing Code
+- **Maintain consistency:**
+  - Do not delete or change code without clear instructions
+  - Maintain the current coding style of the project
+  - Follow established naming conventions and structures
+  - Do not change existing logic or processing flow unless specifically requested
+- **Dependencies management:**
+  - Do not arbitrarily add new libraries unless absolutely necessary
+  - Prioritize using libraries already present in the project
+  - When new dependencies are needed, propose and explain the reasons
+  - Always check and fix all errors in linter and data type after code generation to ensure the code is error-free
+
+## 4. NestJS Architecture
+- **Directory structure:**
+  - Organize by clearly defined functional modules
+  - Each module should include controllers, services, DTOs, entities
+  - Separate business logic from controllers to ensure reusability
+  - Use common/shared directory for shared utilities
+
+- **Design Patterns:**
+  - Repository Pattern: To abstract the data layer
+  - Dependency Injection: Use NestJS's DI to enhance testability
+  - Decorator Pattern: Leverage decorators to build middlewares, guards
+  - Factory Pattern: Create complex objects flexibly
+
+- **Module structure:**
+  - Controllers: Handle HTTP requests, routing
+  - Services: Contain business logic
+  - Providers: Supporting services, helpers
+  - DTOs (Data Transfer Objects): Define input/output data structures
+  - Entities: Data models corresponding to database schema
+
+## 5. Database Management with Prisma
+- **Schema design:**
+  - Design clear schema.prisma with comprehensive comments
+  - Use relations to represent relationships between tables
+  - Define indexes for frequently queried fields
+  - Use enums to ensure data consistency
+
+- **Migration:**
+  - Create migrations for all database changes
+  - Add clear notes for each migration
+  - Test migrations on dev environment before applying to production
+  - Backup data before each migration
+
+- **Efficient querying:**
+  - Use Prisma Client API to optimize query performance
+  - Leverage include/select to reduce returned data
+  - Apply transactions for complex operations
+  - Use batch operations when processing multiple records
+
+## 6. RESTful API Design
+- **API conventions:**
+  - Use HTTP verbs appropriately (GET, POST, PUT, DELETE, PATCH)
+  - Name endpoints using plural nouns (/users instead of /user)
+  - Clear API versioning (/api/v1/users)
+  - Apply filtering, sorting, and pagination for endpoints returning multiple results
+  - Follow RESTful resource naming standards
+
+- **Response format:**
+  - Consistency in response structure (success, error, data)
+  - Use appropriate HTTP status codes
+  - Provide detailed and helpful error messages
+  - Include metadata when needed (pagination, total count)
+
+- **Payload optimization:**
+  - Only return necessary data (using DTOs)
+  - Apply compression for large responses
+  - Use caching when appropriate
+  - Consider using GraphQL for complex queries
+
+## 7. Authentication and Authorization
+- **Authentication strategy:**
+  - Use JWT tokens with refresh token
+  - Securely store sensitive information (password hashing with bcrypt)
+  - Implement logout and token invalidation mechanisms
+  - Apply rate limiting to prevent brute force attacks
+
+- **Authorization:**
+  - Implement RBAC (Role-Based Access Control)
+  - Use NestJS Guards and Decorators
+  - Check permissions in detail at endpoint and resource level
+  - Log important activities related to access rights
+
+## 8. Error Handling and Logging
+- **Error handling strategy:**
+  - Use NestJS global exception filters
+  - Clearly categorize errors (ValidationError, NotFoundError, etc.)
+  - Return user-friendly error messages
+  - Don't expose sensitive information in error messages
+
+- **Logging:**
+  - Use appropriate log levels (debug, info, warn, error)
+  - Structured logging for easy analysis
+  - Log important information like request/response, exceptions
+  - Don't log sensitive information (passwords, tokens)
+
+## 9. Testing
+- **Unit Testing:**
+  - Write unit tests for all services and helpers
+  - Use Jest and Bun test
+  - Mock dependencies for independent testing
+  - Ensure minimum 80% test coverage
+
+- **Integration Testing:**
+  - Test API endpoints with real or in-memory database
+  - Check end-to-end workflows
+  - Test edge cases and error handling
+  - Use fixtures and factories to create test data
+
+- **Test structure:**
+  - Organize tests in `__tests__` directory at the same level as the file being tested
+  - Name test files according to convention: `[file-name].spec.ts` or `[file-name].test.ts`
+  - Each module should have its own `__tests__` directory
+  - Example structure:
+    ```
+    src/
+    ├── users/
+    │   ├── __tests__/
+    │   │   ├── user.controller.spec.ts
+    │   │   ├── user.service.spec.ts
+    │   ├── user.controller.ts
+    │   ├── user.service.ts
+    ```
+  - Each test case must be clear and test a specific feature
+  - Use beforeEach/afterEach for setup and cleanup
+  - Automate test runs in CI/CD pipeline
+
+- **Example unit test for service:**
+  ```typescript
+  // __tests__/user.service.spec.ts
+  describe('UserService', () => {
+    let userService: UserService;
+    let prismaService: PrismaService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          UserService,
+          {
+            provide: PrismaService,
+            useValue: {
+              user: {
+                findUnique: jest.fn(),
+                create: jest.fn(),
+                update: jest.fn(),
+                delete: jest.fn(),
+              },
+            },
+          },
+        ],
+      }).compile();
+
+      userService = module.get<UserService>(UserService);
+      prismaService = module.get<PrismaService>(PrismaService);
+    });
+
+    it('should find a user by id', async () => {
+      const mockUser = { id: 1, email: 'test@example.com', name: 'Test User' };
+      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(mockUser);
+
+      const result = await userService.findById(1);
+      
+      expect(result).toEqual(mockUser);
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { id: 1 },
+      });
+    });
+  });
+  ```
+
+## 10. Performance and Optimization
+- **Database optimization:**
+  - Indexing for frequently queried fields
+  - Query optimization (avoid N+1 problem)
+  - Use caching for infrequently changing data
+  - Monitor query performance
+
+- **Memory management:**
+  - Handle memory leaks, especially in event listeners
+  - Be careful with closures and circular references
+  - Use streaming for large data processing
+  - Monitor memory usage
+
+- **Concurrency:**
+  - Use worker threads for heavy tasks
+  - Apply queuing mechanisms for background tasks
+  - Handle race conditions when needed
+  - Load balancing to distribute workload
+
+## 11. Security
+- **Security principles:**
+  - Always validate input data
+  - Apply appropriate CORS policy
+  - Use Helmet to set secure HTTP headers
+  - Prevent SQL injection with Prisma
+
+- **Attack prevention:**
+  - XSS: Sanitize data before returning to client
+  - CSRF: Use tokens for form submissions
+  - Rate limiting: Limit number of requests
+  - DOS/DDOS: Configure timeouts and connection limits
+
+- **Data protection:**
+  - Encrypt sensitive data (passwords, financial info)
+  - Apply principle of least privilege
+  - Use environment variables for sensitive information
+  - Perform regular security audits and penetration testing
+
+## 12. Documentation
+- **API Documentation:**
+  - Use Swagger/OpenAPI to generate API documentation
+  - Provide comprehensive descriptions for each endpoint (parameters, responses, examples)
+  - Group endpoints by functionality
+  - Update documentation when API changes
+
+- **Code Documentation:**
+  - Use JSDoc/TSDoc for functions and classes
+  - Clearly describe input parameters and return values
+  - Add examples when necessary
+  - Explain complex algorithms
+
+## 13. Deployment and CI/CD
+- **Environment setup:**
+  - Use .env files for each environment
+  - Separate configurations for development, testing, staging, production
+  - Validate environment variables at startup
+  - Use containerization (Docker) to ensure consistency
+
+- **CI/CD pipeline:**
+  - Automatically run tests when code is pushed
+  - Check linting and type checking
+  - Build and deploy automatically for designated branches
+  - Implement rollback mechanism when deployment fails
+
+## 14. Bun Performance
+- **Maximize Bun usage:**
+  - Use Bun.serve() for high-performance HTTP server
+  - Optimize file I/O with Bun.file
+  - Leverage new Bun features like hot reloading
+  - Optimize Bun.bundler for production builds
+
+- **Package management:**
+  - Use bun install for faster dependency installation
+  - Understand the differences between Bun and Node.js
+  - Regularly update dependencies
+  - Use lockfile to ensure consistency
+
+## 15. Coding Standards
+- **TypeScript best practices:**
+  - Use complete types, avoid any
+  - Leverage interfaces and type aliases
+  - Apply advanced types when needed
+  - Implement consistent error handling with Either type or Result patterns
+
+- **Clean code:**
+  - Use clear, descriptive variable and function names
+  - Apply Single Responsibility Principle for classes and functions
+  - Use Dependency Injection to enhance testability
+  - Write pure functions when possible
+
+- **Code review:**
+  - Check correctness and efficiency
+  - Ensure compliance with code standards
+  - Review test coverage
+  - Evaluate performance and security implications
+
+## 16. Using Zod for Validation
+- **Reasons to use Zod instead of class-validator:**
+  - Schema-first approach instead of decorator-based
+  - Powerful and automatic type inference
+  - Easy to combine and extend schemas
+  - No dependency on decorators and metadata reflection
+
+- **Integrating Zod with NestJS:**
+  - Create custom pipe for Zod validation:
+  ```typescript
+  // zod-validation.pipe.ts
+  import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
+  import { ZodSchema } from 'zod';
+
+  @Injectable()
+  export class ZodValidationPipe implements PipeTransform {
+    constructor(private schema: ZodSchema) {}
+
+    transform(value: unknown) {
+      try {
+        return this.schema.parse(value);
+      } catch (error) {
+        throw new BadRequestException('Validation failed', {
+          cause: error,
+          description: error.errors,
+        });
+      }
+    }
+  }
+  ```
+
+- **Defining schemas:**
+  - Create dedicated directory for schemas: `src/schemas/`
+  - Name according to convention: `[entity].schema.ts`
+  - Reuse schemas through composition and extension
+  - Write clear error messages for each validation rule
+
+- **Example using Zod schemas in controller:**
+  ```typescript
+  // user.schema.ts
+  import { z } from 'zod';
+
+  export const createUserSchema = z.object({
+    email: z.string().email({ message: 'Invalid email' }),
+    name: z.string().min(2, { message: 'Name must have at least 2 characters' }),
+    password: z.string().min(8, { message: 'Password must have at least 8 characters' })
+      .regex(/[A-Z]/, { message: 'Password must contain at least 1 uppercase letter' })
+      .regex(/[0-9]/, { message: 'Password must contain at least 1 number' }),
+    age: z.number().int().positive().optional(),
+    role: z.enum(['user', 'admin']).default('user'),
+  });
+
+  export type CreateUserDto = z.infer<typeof createUserSchema>;
+  
+  // Can extend the original schema
+  export const updateUserSchema = createUserSchema.partial();
+  export type UpdateUserDto = z.infer<typeof updateUserSchema>;
+  ```
+  
+  ```typescript
+  // user.controller.ts
+  import { Controller, Post, Body, UsePipes } from '@nestjs/common';
+  import { UserService } from './user.service';
+  import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+  import { createUserSchema, CreateUserDto } from '../schemas/user.schema';
+
+  @Controller('users')
+  export class UserController {
+    constructor(private readonly userService: UserService) {}
+
+    @Post()
+    create(@Body(new ZodValidationPipe(createUserSchema)) createUserDto: CreateUserDto) {
+      return this.userService.create(createUserDto);
+    }
+  }
+  ```
+
+- **Global validation:**
+  - Register ZodValidationPipe as global pipe for the entire application:
+  ```typescript
+  // main.ts
+  import { NestFactory } from '@nestjs/core';
+  import { AppModule } from './app.module';
+  import { ZodError } from 'zod';
+  
+  async function bootstrap() {
+    const app = await NestFactory.create(AppModule);
+    
+    // Handle ZodError globally
+    app.useGlobalFilters(new ZodExceptionFilter());
+    
+    await app.listen(3000);
+  }
+  bootstrap();
+  ```
+
+- **Combining Zod with Prisma:**
+  - Use Zod schema to validate before interacting with Prisma
+  - Zod schemas can be automatically generated from Prisma schema using zod-prisma
+  - Ensure consistency between validation schema and database schema
+
+- **Testing with Zod:**
+  - Write unit tests to verify schemas
+  - Check error messages and validation rules
+  - Use Zod's type inference to ensure type safety in tests 

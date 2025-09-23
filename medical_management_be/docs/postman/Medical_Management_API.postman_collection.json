@@ -1,0 +1,826 @@
+{
+  "info": {
+    "_postman_id": "a3f2b7b2-1c9d-4e7f-9e8a-1234567890ab",
+    "name": "Medical Management API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Production-ready collection for Medical Management backend. Uses variables for base URL, tokens, and path params. All routes are served under the global prefix /api."
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Auth - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.accessToken) {",
+                  "  pm.collectionVariables.set('access_token', json.accessToken);",
+                  "}",
+                  "if (json && json.refreshToken) {",
+                  "  pm.collectionVariables.set('refresh_token', json.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Auth - Register (Public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "register"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"{{fullName}}\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"password\": \"{{password}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth - Logout (Public)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Auth - Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Users - Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Users - Create (ADMIN)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"{{fullName}}\",\n  \"phoneNumber\": \"{{newUserPhone}}\",\n  \"password\": \"{{newUserPassword}}\",\n  \"role\": \"{{newUserRole}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Users - Update (ADMIN)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{userId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"{{fullName}}\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"password\": \"{{password}}\",\n  \"oldPassword\": \"{{oldPassword}}\",\n  \"role\": \"{{role}}\",\n  \"status\": \"{{status}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Users - Delete Multiple (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/multiple",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "multiple"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\"{{userId}}\"]\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Users - Delete Patient Multiple (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/patient/multiple",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "patient", "multiple"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\"{{patientId}}\"]\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Users - Delete Patient (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/patient/{{patientId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "patient", "{{patientId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Users - Soft Delete (ADMIN)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/{{userId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{userId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Medications",
+      "item": [
+        {
+          "name": "Medications - List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/medications?isActive={{isActive}}&page={{page}}&limit={{limit}}&sortBy={{sortBy}}&sortOrder={{sortOrder}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "medications"],
+              "query": [
+                { "key": "isActive", "value": "{{isActive}}" },
+                { "key": "page", "value": "{{page}}" },
+                { "key": "limit", "value": "{{limit}}" },
+                { "key": "sortBy", "value": "{{sortBy}}" },
+                { "key": "sortOrder", "value": "{{sortOrder}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Medications - Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/medications",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "medications"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{medicationName}}\",\n  \"strength\": \"{{strength}}\",\n  \"form\": \"{{form}}\",\n  \"unit\": \"{{unit}}\",\n  \"description\": \"{{description}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Medications - Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/medications/{{medicationId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "medications", "{{medicationId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{medicationName}}\",\n  \"strength\": \"{{strength}}\",\n  \"form\": \"{{form}}\",\n  \"unit\": \"{{unit}}\",\n  \"description\": \"{{description}}\",\n  \"isActive\": {{isActive}}\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Medications - Deactivate",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/medications/{{medicationId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "medications", "{{medicationId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - Reports",
+      "item": [
+        {
+          "name": "Reports - Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reports/overview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "admin", "reports", "overview"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Doctor",
+      "item": [
+        {
+          "name": "Doctor - Patients - List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/patients?q={{q}}&page={{page}}&limit={{limit}}&sortBy={{sortBy}}&sortOrder={{sortOrder}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "patients"],
+              "query": [
+                { "key": "q", "value": "{{q}}" },
+                { "key": "page", "value": "{{page}}" },
+                { "key": "limit", "value": "{{limit}}" },
+                { "key": "sortBy", "value": "{{sortBy}}" },
+                { "key": "sortOrder", "value": "{{sortOrder}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Patients - Get",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/patients/{{patientId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "patients", "{{patientId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Patients - Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/patients",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "patients"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"{{fullName}}\",\n  \"phoneNumber\": \"{{phoneNumber}}\",\n  \"password\": \"{{password}}\",\n  \"profile\": { \n    \"gender\": \"{{gender}}\",\n    \"birthDate\": \"{{birthDate}}\",\n    \"address\": \"{{address}}\"\n  }\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Patients - Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/patients/{{patientId}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "patients", "{{patientId}}", "profile"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gender\": \"{{gender}}\",\n  \"birthDate\": \"{{birthDate}}\",\n  \"address\": \"{{address}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Patients - Update History",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/patients/{{patientId}}/history",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "patients", "{{patientId}}", "history"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conditions\": [],\n  \"allergies\": [],\n  \"surgeries\": [],\n  \"familyHistory\": \"\",\n  \"lifestyle\": \"\",\n  \"currentMedications\": [],\n  \"notes\": \"\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Prescriptions - Create",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/prescriptions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "prescriptions"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"items\": [\n    { \"medicationId\": \"{{medicationId}}\", \"dosage\": \"1 pill\", \"frequencyPerDay\": 1, \"timesOfDay\": [\"08:00\"], \"durationDays\": 7 }\n  ],\n  \"notes\": \"\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Prescriptions - List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/prescriptions?page={{page}}&limit={{limit}}&sortBy={{sortBy}}&sortOrder={{sortOrder}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "prescriptions"],
+              "query": [
+                { "key": "page", "value": "{{page}}" },
+                { "key": "limit", "value": "{{limit}}" },
+                { "key": "sortBy", "value": "{{sortBy}}" },
+                { "key": "sortOrder", "value": "{{sortOrder}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Prescriptions - Get",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/prescriptions/{{prescriptionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "prescriptions", "{{prescriptionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Prescriptions - Update",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/prescriptions/{{prescriptionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "prescriptions", "{{prescriptionId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"\",\n  \"items\": [ { \n    \"medicationId\": \"{{medicationId}}\", \n    \"dosage\": \"1 pill\", \n    \"frequencyPerDay\": 1, \n    \"timesOfDay\": [\"08:00\"], \n    \"durationDays\": 7 \n  } ]\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Prescriptions - Cancel",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/prescriptions/{{prescriptionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "prescriptions", "{{prescriptionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/overview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "overview"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Patient Adherence",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/patients/{{patientId}}/adherence",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "patients", "{{patientId}}", "adherence"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Alerts - List",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/alerts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "alerts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Doctor - Alerts - Resolve",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/doctor/alerts/{{alertId}}/resolve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "doctor", "alerts", "{{alertId}}", "resolve"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Patient",
+      "item": [
+        {
+          "name": "Patient - Prescriptions - Active",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/patient/prescriptions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patient", "prescriptions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient - Prescriptions - Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/patient/prescriptions/{{prescriptionId}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patient", "prescriptions", "{{prescriptionId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient - History",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/patient/history?page={{page}}&limit={{limit}}&sortBy={{sortBy}}&sortOrder={{sortOrder}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patient", "history"],
+              "query": [
+                { "key": "page", "value": "{{page}}" },
+                { "key": "limit", "value": "{{limit}}" },
+                { "key": "sortBy", "value": "{{sortBy}}" },
+                { "key": "sortOrder", "value": "{{sortOrder}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient - Reminders",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/patient/reminders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patient", "reminders"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient - Confirm Intake",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/patient/prescriptions/{{prescriptionId}}/confirm",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patient", "prescriptions", "{{prescriptionId}}", "confirm"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prescriptionItemId\": \"{{prescriptionItemId}}\",\n  \"takenAt\": \"{{takenAt}}\",\n  \"status\": \"{{adherenceStatus}}\",\n  \"notes\": \"\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient - Adherence Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/patient/adherence",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patient", "adherence"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient - Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/patient/alerts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patient", "alerts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Patient - Overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/patient/overview",
+              "host": ["{{base_url}}"],
+              "path": ["api", "patient", "overview"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "Notifications - For Doctor",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/doctor?page={{page}}&limit={{limit}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "doctor"],
+              "query": [
+                { "key": "page", "value": "{{page}}" },
+                { "key": "limit", "value": "{{limit}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Notifications - For Patient",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/patient?page={{page}}&limit={{limit}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "patient"],
+              "query": [
+                { "key": "page", "value": "{{page}}" },
+                { "key": "limit", "value": "{{limit}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Notifications - Resolve",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/{{alertId}}/resolve",
+              "host": ["{{base_url}}"],
+              "path": ["api", "notifications", "{{alertId}}", "resolve"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Ensure Authorization header is applied if missing at item level",
+          "if (!pm.request.headers.has('Authorization') && pm.collectionVariables.get('access_token')) {",
+          "  pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + pm.collectionVariables.get('access_token') });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:9944" },
+    { "key": "access_token", "value": "" },
+    { "key": "refresh_token", "value": "" },
+    { "key": "phoneNumber", "value": "" },
+    { "key": "password", "value": "" },
+    { "key": "fullName", "value": "" },
+    { "key": "newUserPhone", "value": "" },
+    { "key": "newUserPassword", "value": "" },
+    { "key": "newUserRole", "value": "DOCTOR" },
+    { "key": "userId", "value": "" },
+    { "key": "patientId", "value": "" },
+    { "key": "prescriptionId", "value": "" },
+    { "key": "prescriptionItemId", "value": "" },
+    { "key": "medicationId", "value": "" },
+    { "key": "alertId", "value": "" },
+    { "key": "gender", "value": "MALE" },
+    { "key": "birthDate", "value": "1990-01-01" },
+    { "key": "address", "value": "" },
+    { "key": "medicationName", "value": "" },
+    { "key": "strength", "value": "" },
+    { "key": "form", "value": "" },
+    { "key": "unit", "value": "" },
+    { "key": "description", "value": "" },
+    { "key": "takenAt", "value": "2025-01-01T08:00:00.000Z" },
+    { "key": "adherenceStatus", "value": "TAKEN" },
+    { "key": "q", "value": "" },
+    { "key": "page", "value": "1" },
+    { "key": "limit", "value": "20" },
+    { "key": "sortBy", "value": "createdAt" },
+    { "key": "sortOrder", "value": "desc" },
+    { "key": "isActive", "value": "true" },
+    { "key": "status", "value": "ACTIVE" },
+    { "key": "oldPassword", "value": "" },
+    { "key": "role", "value": "PATIENT" }
+  ]
+}

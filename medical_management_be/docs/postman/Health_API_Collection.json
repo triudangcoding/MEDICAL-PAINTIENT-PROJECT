@@ -1,0 +1,420 @@
+{
+    "info": {
+        "_postman_id": "e5a92f8f-8c68-49c3-b7ef-ac5e8f7c9d32",
+        "name": "Health API",
+        "description": "Collection cho các API quản lý dữ liệu sức khỏe",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Đăng nhập",
+            "request": {
+                "method": "POST",
+                "header": [],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"phoneNumber\": \"0123456789\",\n    \"password\": \"your_password\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{url}}/auth/login",
+                    "host": [
+                        "{{url}}"
+                    ],
+                    "path": [
+                        "auth",
+                        "login"
+                    ]
+                },
+                "description": "Đăng nhập để lấy token trước khi sử dụng API"
+            },
+            "response": []
+        },
+        {
+            "name": "1. Sleep",
+            "item": [
+                {
+                    "name": "Tạo dữ liệu giấc ngủ",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"wakeupCount\": 2,\n    \"startDate\": \"2025-01-05T22:00:00.000Z\",\n    \"endDate\": \"2025-01-06T06:00:00.000Z\",\n    \"totalDeepSleep\": 120,\n    \"totalLightSleep\": 240,\n    \"totalREM\": 60,\n    \"totalSleepTime\": 420\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{url}}/health/sleep",
+                            "host": [
+                                "{{url}}"
+                            ],
+                            "path": [
+                                "health",
+                                "sleep"
+                            ]
+                        },
+                        "description": "Tạo dữ liệu giấc ngủ cho người dùng đã đăng nhập.\n\nLưu ý:\n- Mỗi ngày chỉ có thể tạo 1 bản ghi giấc ngủ\n- Thời gian tính theo phút\n- totalSleepTime = totalDeepSleep + totalLightSleep + totalREM"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Lấy dữ liệu giấc ngủ",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{url}}/health/sleep?date=2025-01-05&period=day",
+                            "host": [
+                                "{{url}}"
+                            ],
+                            "path": [
+                                "health",
+                                "sleep"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "2025-01-05",
+                                    "description": "Ngày cần lấy dữ liệu (định dạng YYYY-MM-DD hoặc MM/DD/YYYY)"
+                                },
+                                {
+                                    "key": "period",
+                                    "value": "day",
+                                    "description": "Khoảng thời gian (day, week, month)"
+                                }
+                            ]
+                        },
+                        "description": "Lấy dữ liệu giấc ngủ theo ngày hoặc khoảng thời gian.\n\nCác period:\n- day: Lấy dữ liệu của 1 ngày cụ thể\n- week: Lấy dữ liệu của 7 ngày (bao gồm ngày được chỉ định và 6 ngày trước đó)\n- month: Lấy dữ liệu từ ngày 1 đến ngày cuối cùng của tháng chứa ngày được chỉ định"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "API liên quan đến dữ liệu giấc ngủ"
+        },
+        {
+            "name": "2. Heart Rate",
+            "item": [
+                {
+                    "name": "Tạo dữ liệu nhịp tim đơn",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"avgHeartRate\": 75,\n    \"date\": \"2025-01-05T10:30:00.000Z\",\n    \"type\": \"AUTO\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{url}}/health/heartrate/single",
+                            "host": [
+                                "{{url}}"
+                            ],
+                            "path": [
+                                "health",
+                                "heartrate",
+                                "single"
+                            ]
+                        },
+                        "description": "Tạo dữ liệu nhịp tim đơn cho người dùng đã đăng nhập.\n\nLưu ý:\n- Không thể tạo nhiều bản ghi trùng thời gian (ngày giờ phút)\n- type: AUTO hoặc MANUAL"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Tạo dữ liệu nhịp tim hàng loạt",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"data\": [\n        {\n            \"heartValue\": 72,\n            \"heartStartTime\": \"2025-01-05T08:00:00.000Z\",\n            \"type\": \"AUTO\"\n        },\n        {\n            \"heartValue\": 75,\n            \"heartStartTime\": \"2025-01-05T09:00:00.000Z\",\n            \"type\": \"AUTO\"\n        },\n        {\n            \"heartValue\": 80,\n            \"heartStartTime\": \"2025-01-05T10:00:00.000Z\",\n            \"type\": \"AUTO\"\n        }\n    ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{url}}/health/heartrate/multi",
+                            "host": [
+                                "{{url}}"
+                            ],
+                            "path": [
+                                "health",
+                                "heartrate",
+                                "multi"
+                            ]
+                        },
+                        "description": "Tạo nhiều dữ liệu nhịp tim cùng lúc cho người dùng đã đăng nhập.\n\nLưu ý:\n- Mỗi bản ghi trong mảng không được trùng thời gian với dữ liệu đã có\n- type: AUTO hoặc MANUAL"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Lấy dữ liệu nhịp tim",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{url}}/health/heartrate?date=2025-01-05&period=week",
+                            "host": [
+                                "{{url}}"
+                            ],
+                            "path": [
+                                "health",
+                                "heartrate"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "2025-01-05",
+                                    "description": "Ngày cần lấy dữ liệu (định dạng YYYY-MM-DD hoặc MM/DD/YYYY)"
+                                },
+                                {
+                                    "key": "period",
+                                    "value": "week",
+                                    "description": "Khoảng thời gian (day, week, month)"
+                                }
+                            ]
+                        },
+                        "description": "Lấy dữ liệu nhịp tim theo ngày hoặc khoảng thời gian.\n\nCác period:\n- day: Lấy toàn bộ dữ liệu của 1 ngày cụ thể\n- week: Lấy dữ liệu trung bình theo ngày của 7 ngày (bao gồm ngày được chỉ định và 6 ngày trước đó)\n- month: Lấy dữ liệu trung bình theo ngày từ ngày 1 đến ngày cuối cùng của tháng"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "API liên quan đến dữ liệu nhịp tim"
+        },
+        {
+            "name": "3. SpO2",
+            "item": [
+                {
+                    "name": "Tạo dữ liệu SpO2",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"spo2Value\": 98,\n    \"spo2StartTime\": \"2025-01-05T14:30:00.000Z\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{url}}/health/spo2",
+                            "host": [
+                                "{{url}}"
+                            ],
+                            "path": [
+                                "health",
+                                "spo2"
+                            ]
+                        },
+                        "description": "Tạo dữ liệu SpO2 cho người dùng đã đăng nhập.\n\nLưu ý:\n- Không thể tạo nhiều bản ghi trùng thời gian (ngày giờ phút)\n- spo2Value: Giá trị từ 0-100"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Lấy dữ liệu SpO2",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{url}}/health/spo2?date=2025-01-05&period=month",
+                            "host": [
+                                "{{url}}"
+                            ],
+                            "path": [
+                                "health",
+                                "spo2"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "2025-01-05",
+                                    "description": "Ngày cần lấy dữ liệu (định dạng YYYY-MM-DD hoặc MM/DD/YYYY)"
+                                },
+                                {
+                                    "key": "period",
+                                    "value": "month",
+                                    "description": "Khoảng thời gian (day, week, month)"
+                                }
+                            ]
+                        },
+                        "description": "Lấy dữ liệu SpO2 theo ngày hoặc khoảng thời gian.\n\nCác period:\n- day: Lấy toàn bộ dữ liệu của 1 ngày cụ thể\n- week: Lấy dữ liệu trung bình theo ngày của 7 ngày (bao gồm ngày được chỉ định và 6 ngày trước đó)\n- month: Lấy dữ liệu trung bình theo ngày từ ngày 1 đến ngày cuối cùng của tháng"
+                    },
+                    "response": []
+                }
+            ],
+            "description": "API liên quan đến dữ liệu SpO2 (nồng độ oxy trong máu)"
+        },
+        {
+            "name": "4. Sport",
+            "item": [
+                {
+                    "name": "Tạo dữ liệu thể thao",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{token}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"data\": [\n        {\n            \"sportStep\": 3000,\n            \"sportCalorie\": 100,\n            \"sportStartTime\": \"2025-01-05T08:00:00.000Z\"\n        },\n        {\n            \"sportStep\": 2000,\n            \"sportCalorie\": 80,\n            \"sportStartTime\": \"2025-01-05T14:00:00.000Z\",\n            \"sportDistance\": 1.5\n        },\n        {\n            \"sportStep\": 5000,\n            \"sportCalorie\": 200,\n            \"sportStartTime\": \"2025-01-06T10:00:00.000Z\",\n            \"sportEndTime\": \"2025-01-06T11:30:00.000Z\",\n            \"sportDistance\": 3.2\n        }\n    ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{url}}/health/sport",
+                            "host": [
+                                "{{url}}"
+                            ],
+                            "path": [
+                                "health",
+                                "sport"
+                            ]
+                        },
+                        "description": "Tạo dữ liệu thể thao cho người dùng đã đăng nhập.\n\nLưu ý:\n- Dữ liệu được tổng hợp theo ngày\n- Nếu đã có dữ liệu trong ngày, hệ thống sẽ cập nhật bản ghi hiện có (cộng dồn số bước và calories)"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "5. Overview",
+                    "item": [
+                        {
+                            "name": "Lấy tổng quan dữ liệu sức khỏe",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{token}}",
+                                        "type": "text"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{url}}/health/overview?date=2025-01-05&period=day",
+                                    "host": [
+                                        "{{url}}"
+                                    ],
+                                    "path": [
+                                        "health",
+                                        "overview"
+                                    ],
+                                    "query": [
+                                        {
+                                            "key": "date",
+                                            "value": "2025-01-05",
+                                            "description": "Ngày cần lấy dữ liệu (định dạng YYYY-MM-DD hoặc MM/DD/YYYY)"
+                                        },
+                                        {
+                                            "key": "period",
+                                            "value": "day",
+                                            "description": "Khoảng thời gian (day, week, month)"
+                                        }
+                                    ]
+                                },
+                                "description": "Lấy tổng quan dữ liệu sức khỏe bao gồm giấc ngủ, nhịp tim, SpO2 và thể thao.\n\nLưu ý:\n- Nếu không cung cấp tham số date, mặc định là ngày hiện tại\n- Nếu không cung cấp tham số period, mặc định là 'day'\n- Dữ liệu trả về bao gồm thông tin tổng hợp và chi tiết của từng loại dữ liệu sức khỏe"
+                            },
+                            "response": []
+                        }
+                    ],
+                    "description": "API tổng hợp dữ liệu sức khỏe"
+                }
+            ],
+            "description": "API liên quan đến dữ liệu thể thao"
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "url",
+            "value": "http://localhost:3000/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "token",
+            "value": "your_jwt_token_here",
+            "type": "string"
+        }
+    ]
+}

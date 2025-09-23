@@ -1,0 +1,190 @@
+{
+    "info": {
+        "name": "Meeting Schedules API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "API để quản lý lịch hẹn giữa bác sĩ và bệnh nhân"
+    },
+    "item": [
+        {
+            "name": "Tạo lịch hẹn mới",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"orderId\": \"uuid-của-đơn-hàng\",\n    \"doctorScheduleFreeId\": \"uuid-của-lịch-rảnh-bác-sĩ\",\n    \"startDate\": \"2023-11-15T09:00:00Z\",\n    \"endDate\": \"2023-11-15T10:00:00Z\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/meeting-schedules",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "meeting-schedules"
+                    ]
+                },
+                "description": "Tạo lịch hẹn mới. Lịch hẹn phải nằm trong khoảng thời gian rảnh của bác sĩ. Mỗi đơn hàng chỉ có thể có một lịch hẹn."
+            },
+            "response": []
+        },
+        {
+            "name": "Lấy tất cả lịch hẹn",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/meeting-schedules",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "meeting-schedules"
+                    ]
+                },
+                "description": "Lấy danh sách tất cả lịch hẹn trong hệ thống, sắp xếp theo thời gian tạo giảm dần"
+            },
+            "response": []
+        },
+        {
+            "name": "Lấy lịch hẹn theo ID",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/meeting-schedules/:id",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "meeting-schedules",
+                        ":id"
+                    ],
+                    "variable": [
+                        {
+                            "key": "id",
+                            "value": "uuid-của-lịch-hẹn",
+                            "description": "ID của lịch hẹn cần xem"
+                        }
+                    ]
+                },
+                "description": "Lấy thông tin chi tiết của một lịch hẹn theo ID"
+            },
+            "response": []
+        },
+        {
+            "name": "Lấy lịch hẹn theo ID người dùng (Bác sĩ/Bệnh nhân)",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/meeting-schedules/user?userId={{userId}}&type={{type}}",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "meeting-schedules",
+                        "user"
+                    ],
+                    "query": [
+                        {
+                            "key": "userId",
+                            "value": "{{userId}}",
+                            "description": "ID của người dùng (bác sĩ hoặc bệnh nhân)"
+                        },
+                        {
+                            "key": "type",
+                            "value": "{{type}}",
+                            "description": "Loại người dùng: 'doctor' hoặc 'patient'"
+                        }
+                    ]
+                },
+                "description": "Lấy tất cả lịch hẹn của một người dùng cụ thể. Type phải là 'doctor' hoặc 'patient'."
+            },
+            "response": []
+        },
+        {
+            "name": "Cập nhật lịch hẹn",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"status\": \"COMPLETED\",\n    \"startDate\": \"2023-11-15T09:30:00Z\",\n    \"endDate\": \"2023-11-15T10:30:00Z\"\n}"
+                },
+                "url": {
+                    "raw": "{{base_url}}/meeting-schedules/:id",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "meeting-schedules",
+                        ":id"
+                    ],
+                    "variable": [
+                        {
+                            "key": "id",
+                            "value": "uuid-của-lịch-hẹn",
+                            "description": "ID của lịch hẹn cần cập nhật"
+                        }
+                    ]
+                },
+                "description": "Cập nhật thông tin lịch hẹn. Có thể cập nhật trạng thái hoặc thời gian. Nếu cập nhật thời gian, phải đảm bảo nằm trong khoảng thời gian rảnh của bác sĩ."
+            },
+            "response": []
+        },
+        {
+            "name": "Xóa lịch hẹn",
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                    "raw": "{{base_url}}/meeting-schedules/:id",
+                    "host": [
+                        "{{base_url}}"
+                    ],
+                    "path": [
+                        "meeting-schedules",
+                        ":id"
+                    ],
+                    "variable": [
+                        {
+                            "key": "id",
+                            "value": "uuid-của-lịch-hẹn",
+                            "description": "ID của lịch hẹn cần xóa"
+                        }
+                    ]
+                },
+                "description": "Xóa lịch hẹn. Không thể xóa lịch hẹn đã hoàn thành."
+            },
+            "response": []
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost:3000",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "uuid-của-người-dùng",
+            "type": "string"
+        },
+        {
+            "key": "type",
+            "value": "doctor",
+            "type": "string",
+            "description": "Có thể là 'doctor' hoặc 'patient'"
+        }
+    ]
+}

@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "bun",
+            "request": "launch",
+            "name": "Debug Bun",
+            "program": "${workspaceFolder}/src/main.ts",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "strictEnv": false,
+            "watchMode": false,
+            "stopOnEntry": false,
+            "noDebug": false,
+            "runtime": "bun",
+            "runtimeArgs": [
+                "--inspect= ws://localhost:6499/yhj8qx214x8"
+            ],
+        },
+    ],
+}

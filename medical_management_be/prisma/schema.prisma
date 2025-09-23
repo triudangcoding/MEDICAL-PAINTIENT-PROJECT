@@ -1,0 +1,275 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Users: Admin, Doctor, Patient
+model User {
+  // Khóa chính người dùng
+  id          String     @id @default(uuid())
+  // Số điện thoại (duy nhất) dùng để đăng nhập
+  phoneNumber String     @unique
+  // Mật khẩu đã mã hóa
+  password    String
+  // Họ và tên
+  fullName    String
+  // Vai trò: ADMIN/DOCTOR/PATIENT
+  role        UserRole   @default(PATIENT)
+  // Trạng thái hoạt động
+  status      UserStatus @default(ACTIVE)
+  // Ngày tạo
+  createdAt   DateTime   @default(now())
+  // Ngày cập nhật gần nhất
+  updatedAt   DateTime   @updatedAt
+  // Thời điểm xóa mềm (nếu có)
+  deletedAt   DateTime?
+
+  // Quan hệ
+  // Thông tin hồ sơ bệnh nhân (nếu là PATIENT)
+  profile                 PatientProfile?
+  // Các đơn thuốc do bác sĩ này tạo
+  prescriptionsAsDoctor   Prescription[] @relation("DoctorPrescriptions")
+  // Các đơn thuốc của bệnh nhân này
+  prescriptionsAsPatient  Prescription[] @relation("PatientPrescriptions")
+  // Nhật ký tuân thủ dùng thuốc của bệnh nhân
+  adherenceLogs           AdherenceLog[]
+  // Cảnh báo gửi cho bệnh nhân
+  alertsAsPatient         Alert[]        @relation("PatientAlerts")
+  // Cảnh báo gửi cho bác sĩ
+  alertsAsDoctor          Alert[]        @relation("DoctorAlerts")
+  // Tiền sử bệnh nhân (nếu là PATIENT)
+  medicalHistory          PatientMedicalHistory?
+}
+
+// Optional basic patient info
+model PatientProfile {
+  // Khóa chính hồ sơ bệnh nhân
+  id        String  @id @default(uuid())
+  // Tham chiếu tới bảng User (mỗi bệnh nhân một hồ sơ)
+  userId    String  @unique
+  // Giới tính
+  gender    Gender?
+  // Ngày sinh
+  birthDate DateTime?
+  // Địa chỉ sinh sống
+  address   String?
+  // Ngày tạo
+  createdAt DateTime @default(now())
+  // Ngày cập nhật
+  updatedAt DateTime @updatedAt
+
+  // Quan hệ tới User
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Tiền sử bệnh nhân: bệnh nền, dị ứng, phẫu thuật, gia đình...
+model PatientMedicalHistory {
+  // Khóa chính
+  id        String  @id @default(uuid())
+  // Tham chiếu tới User (bệnh nhân)
+  patientId String  @unique
+  // Bệnh nền (mảng chuỗi: đái tháo đường, tăng huyết áp...)
+  conditions String[] @default([])
+  // Dị ứng (thuốc/thực phẩm)
+  allergies  String[] @default([])
+  // Phẫu thuật đã từng làm
+  surgeries  String[] @default([])
+  // Tiền sử gia đình
+  familyHistory String?
+  // Lối sống: hút thuốc, rượu bia, vận động...
+  lifestyle String?
+  // Thuốc đang dùng hiện tại (tự khai)
+  currentMedications String[] @default([])
+  // Ghi chú thêm
+  notes String?
+  // Ngày tạo/cập nhật
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Quan hệ
+  patient User @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+// Medication catalog
+model Medication {
+  // Khóa chính thuốc
+  id          String   @id @default(uuid())
+  // Tên thuốc
+  name        String
+  // Hàm lượng (ví dụ: 500mg)
+  strength    String?
+  // Dạng bào chế (viên, nang, siro...)
+  form        String?
+  // Đơn vị (mg, ml...)
+  unit        String?
+  // Mô tả thêm
+  description String?
+  // Trạng thái kích hoạt trong danh mục
+  isActive    Boolean  @default(true)
+  // Ngày tạo
+  createdAt   DateTime @default(now())
+  // Ngày cập nhật
+  updatedAt   DateTime @updatedAt
+
+  // Mối quan hệ: xuất hiện trong các dòng đơn thuốc
+  prescriptionItems PrescriptionItem[]
+}
+
+// Prescription header
+model Prescription {
+  // Khóa chính đơn thuốc
+  id         String             @id @default(uuid())
+  // Bệnh nhân được kê đơn
+  patientId  String
+  // Bác sĩ kê đơn
+  doctorId   String
+  // Trạng thái đơn thuốc
+  status     PrescriptionStatus @default(ACTIVE)
+  // Ngày bắt đầu áp dụng đơn thuốc
+  startDate  DateTime           @default(now())
+  // Ngày kết thúc (nếu có)
+  endDate    DateTime?
+  // Ghi chú chung của đơn
+  notes      String?
+  // Ngày tạo
+  createdAt  DateTime           @default(now())
+  // Ngày cập nhật
+  updatedAt  DateTime           @updatedAt
+
+  // Quan hệ
+  patient User @relation("PatientPrescriptions", fields: [patientId], references: [id], onDelete: Cascade)
+  doctor  User @relation("DoctorPrescriptions", fields: [doctorId], references: [id], onDelete: Cascade)
+  items   PrescriptionItem[]
+  logs    AdherenceLog[]
+  alerts  Alert[]
+}
+
+// Prescription line items
+model PrescriptionItem {
+  // Khóa chính dòng đơn thuốc
+  id              String   @id @default(uuid())
+  // Thuộc về đơn thuốc nào
+  prescriptionId  String
+  // Tham chiếu thuốc
+  medicationId    String
+  // Liều dùng hiển thị (vd: "1 viên")
+  dosage          String
+  // Số lần dùng trong ngày
+  frequencyPerDay Int
+  // Các thời điểm dùng trong ngày (HH:mm)
+  timesOfDay      String[]
+  // Số ngày điều trị
+  durationDays    Int
+  // Đường dùng (uống, bôi...)
+  route           String?
+  // Hướng dẫn bổ sung
+  instructions    String?
+  // Ngày tạo
+  createdAt       DateTime @default(now())
+  // Ngày cập nhật
+  updatedAt       DateTime @updatedAt
+
+  // Quan hệ
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  medication   Medication   @relation(fields: [medicationId], references: [id])
+  logs         AdherenceLog[]
+}
+
+// Adherence logs per dose
+model AdherenceLog {
+  // Khóa chính nhật ký tuân thủ
+  id                 String          @id @default(uuid())
+  // Thuộc đơn thuốc nào
+  prescriptionId     String
+  // Thuộc dòng đơn thuốc nào (có thể null)
+  prescriptionItemId String?
+  // Bệnh nhân thực hiện
+  patientId          String
+  // Thời điểm uống/nhắc thuốc
+  takenAt            DateTime
+  // Trạng thái: đã uống/bỏ lỡ/bỏ qua
+  status             AdherenceStatus
+  // Lượng dùng thực tế (nếu có)
+  amount             String?
+  // Ghi chú
+  notes              String?
+  // Ngày tạo
+  createdAt          DateTime       @default(now())
+  // Ngày cập nhật
+  updatedAt          DateTime       @updatedAt
+
+  // Quan hệ
+  prescription     Prescription     @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  prescriptionItem PrescriptionItem? @relation(fields: [prescriptionItemId], references: [id], onDelete: SetNull)
+  patient          User             @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+// Alerts for non-adherence
+model Alert {
+  // Khóa chính cảnh báo
+  id             String    @id @default(uuid())
+  // Gắn với đơn thuốc (có thể null)
+  prescriptionId String?
+  // Bệnh nhân nhận cảnh báo
+  patientId      String
+  // Bác sĩ liên quan (nếu có)
+  doctorId       String?
+  // Loại cảnh báo
+  type           AlertType
+  // Nội dung chi tiết
+  message        String
+  // Đã xử lý hay chưa
+  resolved       Boolean   @default(false)
+  // Ngày tạo
+  createdAt      DateTime  @default(now())
+  // Ngày cập nhật
+  updatedAt      DateTime  @updatedAt
+
+  // Quan hệ
+  prescription Prescription? @relation(fields: [prescriptionId], references: [id], onDelete: SetNull)
+  patient      User          @relation("PatientAlerts", fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       User?         @relation("DoctorAlerts", fields: [doctorId], references: [id], onDelete: SetNull)
+}
+
+enum UserRole {
+  ADMIN
+  DOCTOR
+  PATIENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum PrescriptionStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum AdherenceStatus {
+  TAKEN
+  MISSED
+  SKIPPED
+}
+
+enum AlertType {
+  MISSED_DOSE
+  LOW_ADHERENCE
+  OTHER
+}
+
+

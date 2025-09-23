@@ -1,0 +1,260 @@
+{
+	"info": {
+		"_postman_id": "test-mental-health-collection",
+		"name": "TestMentalHealth API Collection",
+		"description": "Collection API cho module quản lý câu hỏi test sức khỏe tâm thần và kết quả test của người dùng",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Quản lý câu hỏi test",
+			"item": [
+				{
+					"name": "Lấy danh sách câu hỏi",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/test-mental-health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-mental-health"
+							]
+						},
+						"description": "Lấy danh sách tất cả câu hỏi test được sắp xếp theo index tăng dần"
+					},
+					"response": []
+				},
+				{
+					"name": "Tạo câu hỏi mới",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"index\": 1,\n    \"name\": \"Bạn có thường xuyên cảm thấy lo lắng không?\",\n    \"description\": \"Câu hỏi đánh giá mức độ lo lắng của người dùng\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/test-mental-health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-mental-health"
+							]
+						},
+						"description": "Tạo câu hỏi test mới với index, name và description"
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy câu hỏi theo ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/test-mental-health/{{question_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-mental-health",
+								"{{question_id}}"
+							]
+						},
+						"description": "Lấy thông tin chi tiết của một câu hỏi theo ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Cập nhật câu hỏi",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"index\": 2,\n    \"name\": \"Bạn có thường xuyên cảm thấy căng thẳng không?\",\n    \"description\": \"Câu hỏi đánh giá mức độ căng thẳng của người dùng\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/test-mental-health/{{question_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-mental-health",
+								"{{question_id}}"
+							]
+						},
+						"description": "Cập nhật câu hỏi (có thể thay đổi index, name, description)"
+					},
+					"response": []
+				},
+				{
+					"name": "Xóa câu hỏi",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/test-mental-health/{{question_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-mental-health",
+								"{{question_id}}"
+							]
+						},
+						"description": "Xóa câu hỏi theo ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Các API để quản lý câu hỏi test sức khỏe tâm thần"
+		},
+		{
+			"name": "Quản lý kết quả test của user",
+			"item": [
+				{
+					"name": "Tạo kết quả test cho user",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": \"{{user_id}}\",\n    \"testDate\": \"2024-01-15T10:30:00.000Z\",\n    \"result\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/test-mental-health/user-test",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-mental-health",
+								"user-test"
+							]
+						},
+						"description": "Tạo kết quả test cho user với userId, testDate (optional) và result (optional)"
+					},
+					"response": []
+				},
+				{
+					"name": "Tạo kết quả test cho user (theo list)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"userId\": \"{{user_id}}\",\n    \"testDate\": \"2024-01-15T10:30:00.000Z\",\n    \"data\": [\n        {\n            \"questionId\": \"{{question_id}}\",\n            \"result\": true\n        },\n        {\n            \"questionId\": \"{{question_id_2}}\",\n            \"result\": false\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/test-mental-health/user-test-list",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-mental-health",
+								"user-test-list"
+							]
+						},
+						"description": "Tạo kết quả test cho user theo danh sách câu hỏi"
+					},
+					"response": []
+				},
+				{
+					"name": "Lấy kết quả test của user",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/test-mental-health/user/{{user_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"test-mental-health",
+								"user",
+								"{{user_id}}"
+							]
+						},
+						"description": "Lấy tất cả kết quả test của một user theo userId"
+					},
+					"response": []
+				}
+			],
+			"description": "Các API để quản lý kết quả test của người dùng"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Pre-request script để thiết lập các biến môi trường",
+					"if (!pm.environment.get('base_url')) {",
+					"    pm.environment.set('base_url', 'http://localhost:3000');",
+					"}"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "question_id",
+			"value": "uuid-của-câu-hỏi",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "uuid-của-user",
+			"type": "string"
+		}
+	]
+}

@@ -1,0 +1,153 @@
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
+import { DoctorService } from '@/modules/doctor/doctor.service';
+import { UserInfo } from '@/common/decorators/users.decorator';
+import { IUserFromToken } from '@/modules/users/types/user.type';
+import { UserRole } from '@prisma/client';
+
+@Controller('doctor')
+export class DoctorController {
+  constructor(private readonly doctorService: DoctorService) {}
+
+  private ensureDoctor(user: IUserFromToken) {
+    if (user.roles !== UserRole.DOCTOR) {
+      throw new HttpException('Bạn không có quyền', HttpStatus.FORBIDDEN);
+    }
+  }
+
+  // Hồ sơ bệnh nhân
+  @Get('patients')
+  async listPatients(
+    @UserInfo() user: IUserFromToken,
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc'
+  ) {
+    this.ensureDoctor(user);
+    return this.doctorService.listPatients(user.id, q, {
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+      sortBy,
+      sortOrder
+    });
+  }
+
+  @Get('patients/:id')
+  async getPatient(@Param('id') id: string, @UserInfo() user: IUserFromToken) {
+    this.ensureDoctor(user);
+    return this.doctorService.getPatient(id);
+  }
+
+  @Post('patients')
+  async createPatient(
+    @Body() body: { fullName: string; phoneNumber: string; password: string; profile?: { gender?: string; birthDate?: string; address?: string } },
+    @UserInfo() user: IUserFromToken
+  ) {
+    this.ensureDoctor(user);
+    return this.doctorService.createPatient(body);
+  }
+
+  @Put('patients/:id/profile')
+  async updateProfile(
+    @Param('id') id: string,
+    @Body() body: { gender?: string; birthDate?: string; address?: string },
+    @UserInfo() user: IUserFromToken
+  ) {
+    this.ensureDoctor(user);
+    return this.doctorService.updatePatientProfile(id, body);
+  }
+
+  @Put('patients/:id/history')
+  async updateHistory(
+    @Param('id') id: string,
+    @Body() body: { conditions?: string[]; allergies?: string[]; surgeries?: string[]; familyHistory?: string; lifestyle?: string; currentMedications?: string[]; notes?: string },
+    @UserInfo() user: IUserFromToken
+  ) {
+    this.ensureDoctor(user);
+    return this.doctorService.updatePatientHistory(id, body);
+  }
+
+  // Kê đơn thuốc
+  @Post('prescriptions')
+  async createPrescription(
+    @Body() body: {
+      patientId: string;
+      items: Array<{ medicationId: string; dosage: string; frequencyPerDay: number; timesOfDay: string[]; durationDays: number; route?: string; instructions?: string }>;
+      notes?: string;
+    },
+    @UserInfo() user: IUserFromToken
+  ) {
+    this.ensureDoctor(user);
+    return this.doctorService.createPrescription(user.id, body);
+  }
+
+  @Get('prescriptions')
+  async listPrescriptions(
+    @UserInfo() user: IUserFromToken,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc'
+  ) {
+    this.ensureDoctor(user);
+    return this.doctorService.listPrescriptions(user.id, {
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+      sortBy,
+      sortOrder
+    });
+  }
+
+  @Get('prescriptions/:id')
+  async getPrescription(@Param('id') id: string, @UserInfo() user: IUserFromToken) {
+    this.ensureDoctor(user);
+    return this.doctorService.getPrescription(id);
+  }
+
+  @Put('prescriptions/:id')
+  async updatePrescription(
+    @Param('id') id: string,
+    @Body() body: {
+      items?: Array<{ id?: string; medicationId: string; dosage: string; frequencyPerDay: number; timesOfDay: string[]; durationDays: number; route?: string; instructions?: string }>;
+      notes?: string;
+    },
+    @UserInfo() user: IUserFromToken
+  ) {
+    this.ensureDoctor(user);
+    return this.doctorService.updatePrescription(id, body);
+  }
+
+  @Delete('prescriptions/:id')
+  async cancelPrescription(@Param('id') id: string, @UserInfo() user: IUserFromToken) {
+    this.ensureDoctor(user);
+    return this.doctorService.cancelPrescription(id);
+  }
+
+  // Theo dõi điều trị
+  @Get('overview')
+  async overview(@UserInfo() user: IUserFromToken) {
+    this.ensureDoctor(user);
+    return this.doctorService.overview(user.id);
+  }
+
+  @Get('patients/:id/adherence')
+  async adherence(@Param('id') patientId: string, @UserInfo() user: IUserFromToken) {
+    this.ensureDoctor(user);
+    return this.doctorService.getAdherenceStats(patientId);
+  }
+
+  @Get('alerts')
+  async listAlerts(@UserInfo() user: IUserFromToken) {
+    this.ensureDoctor(user);
+    return this.doctorService.listAlerts(user.id);
+  }
+
+  @Put('alerts/:id/resolve')
+  async resolveAlert(@Param('id') id: string, @UserInfo() user: IUserFromToken) {
+    this.ensureDoctor(user);
+    return this.doctorService.resolveAlert(id);
+  }
+}
+
+

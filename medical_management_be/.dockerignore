@@ -1,0 +1,42 @@
+# Các thư mục và file không cần thiết
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.git
+.github
+.gitignore
+.vscode
+.idea
+.env
+.env.*
+!.env.example
+coverage
+dist
+build
+tmp
+temp
+logs
+*.log
+.DS_Store
+
+# Các file cấu hình local
+*.local
+*.local.*
+
+# Các file test
+**/*.spec.ts
+**/*.test.ts
+**/__tests__
+test
+tests
+
+# Các file documentation
+docs
+*.md
+!README.md
+
+# Docker files
+.dockerignore
+docker-compose*
+Dockerfile* 

@@ -1,0 +1,314 @@
+{
+    "sleepData": [
+        {
+            "startDate": "2025-06-25T02:29:42.000Z",
+            "endDate": "2025-06-25T05:19:54.000Z",
+            "totalDeepSleep": 2321,
+            "totalLightSleep": 6106,
+            "totalREM": 1785,
+            "totalSleepTime": 10212
+        },
+        {
+            "startDate": "2025-06-25T05:19:42.000Z",
+            "endDate": "2025-06-25T08:19:54.000Z",
+            "totalDeepSleep": 2458,
+            "totalLightSleep": 6464,
+            "totalREM": 1890,
+            "totalSleepTime": 10812
+        }
+    ],
+    "heartRateData": [
+        {
+            "heartValue": 67,
+            "heartStartTime": "21:00 25/06/2025",
+            "type": "AUTO"
+        },
+        {
+            "heartValue": 88,
+            "heartStartTime": "22:00 25/06/2025",
+            "type": "AUTO"
+        },
+        {
+            "heartValue": 87,
+            "heartStartTime": "01:00 25/06/2025",
+            "type": "AUTO"
+        },
+        {
+            "heartValue": 71,
+            "heartStartTime": "02:00 25/06/2025",
+            "type": "AUTO"
+        },
+        {
+            "heartValue": 85,
+            "heartStartTime": "03:00 25/06/2025",
+            "type": "AUTO"
+        },
+        {
+            "heartValue": 53,
+            "heartStartTime": "04:00 25/06/2025",
+            "type": "AUTO"
+        },
+        {
+            "heartValue": 97,
+            "heartStartTime": "05:00 25/06/2025",
+            "type": "AUTO"
+        },
+        {
+            "heartValue": 102,
+            "heartStartTime": "06:00 25/06/2025",
+            "type": "AUTO"
+        },
+        {
+            "heartValue": 64,
+            "heartStartTime": "07:00 25/06/2025",
+            "type": "AUTO"
+        },
+        {
+            "heartValue": 69,
+            "heartStartTime": "08:00 25/06/2025",
+            "type": "AUTO"
+        }
+    ],
+    "bloodPressureData": {
+        "averageData": {
+            "avgSBP": 111,
+            "avgDBP": 73
+        },
+        "historyData": [
+            {
+                "bloodStartTime": "21:00 25/06/2025",
+                "bloodSBP": 108,
+                "bloodDBP": 70
+            },
+            {
+                "bloodStartTime": "22:00 25/06/2025",
+                "bloodSBP": 113,
+                "bloodDBP": 75
+            },
+            {
+                "bloodStartTime": "01:00 25/06/2025",
+                "bloodSBP": 115,
+                "bloodDBP": 74
+            },
+            {
+                "bloodStartTime": "02:00 25/06/2025",
+                "bloodSBP": 108,
+                "bloodDBP": 71
+            },
+            {
+                "bloodStartTime": "03:00 25/06/2025",
+                "bloodSBP": 115,
+                "bloodDBP": 76
+            },
+            {
+                "bloodStartTime": "04:00 25/06/2025",
+                "bloodSBP": 103,
+                "bloodDBP": 67
+            },
+            {
+                "bloodStartTime": "05:00 25/06/2025",
+                "bloodSBP": 119,
+                "bloodDBP": 77
+            },
+            {
+                "bloodStartTime": "06:00 25/06/2025",
+                "bloodSBP": 118,
+                "bloodDBP": 79
+            },
+            {
+                "bloodStartTime": "07:00 25/06/2025",
+                "bloodSBP": 105,
+                "bloodDBP": 70
+            },
+            {
+                "bloodStartTime": "08:00 25/06/2025",
+                "bloodSBP": 110,
+                "bloodDBP": 72
+            }
+        ]
+    },
+    "combinedData": {
+        "dataType": 1289,
+        "data": [
+            {
+                "startTime": "21:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 98,
+                "respiratoryRateValue": 13,
+                "hrvValue": 46,
+                "cvrrValue": 4,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            },
+            {
+                "startTime": "22:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 98,
+                "respiratoryRateValue": 18,
+                "hrvValue": 38,
+                "cvrrValue": 5,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            },
+            {
+                "startTime": "01:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 98,
+                "respiratoryRateValue": 18,
+                "hrvValue": 37,
+                "cvrrValue": 5,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            },
+            {
+                "startTime": "02:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 98,
+                "respiratoryRateValue": 14,
+                "hrvValue": 40,
+                "cvrrValue": 3,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            },
+            {
+                "startTime": "03:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 98,
+                "respiratoryRateValue": 17,
+                "hrvValue": 42,
+                "cvrrValue": 2,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            },
+            {
+                "startTime": "04:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 92,
+                "respiratoryRateValue": 11,
+                "hrvValue": 45,
+                "cvrrValue": 5,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            },
+            {
+                "startTime": "05:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 97,
+                "respiratoryRateValue": 20,
+                "hrvValue": 38,
+                "cvrrValue": 6,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            },
+            {
+                "startTime": "06:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 96,
+                "respiratoryRateValue": 21,
+                "hrvValue": 38,
+                "cvrrValue": 4,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            },
+            {
+                "startTime": "07:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 97,
+                "respiratoryRateValue": 13,
+                "hrvValue": 37,
+                "cvrrValue": 6,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            },
+            {
+                "startTime": "08:00 25/06/2025",
+                "stepValue": 0,
+                "heartValue": 0,
+                "DBPValue": 0,
+                "SBPValue": 0,
+                "OOValue": 98,
+                "respiratoryRateValue": 14,
+                "hrvValue": 39,
+                "cvrrValue": 3,
+                "tempIntValue": 0,
+                "tempFloatValue": 15
+            }
+        ],
+        "overview": {
+            "stepValueAvg": 0.0,
+            "heartValueAvg": 0.0,
+            "DBPValueAvg": 0.0,
+            "SBPValueAvg": 0.0,
+            "OOValueAvg": 97.0,
+            "respiratoryRateValueAvg": 15.9,
+            "hrvValueAvg": 40.0,
+            "cvrrValueAvg": 4.3,
+            "tempIntValueAvg": 0.0,
+            "tempFloatValueAvg": 15.0
+        }
+    },
+    "stepData": {
+        "data": [
+            {
+                "stepValue": 40,
+                "stepCalorie": 1,
+                "stepDistance": 25,
+                "stepStartTime": "20:30 25/06/2025"
+            },
+            {
+                "stepValue": 75,
+                "stepCalorie": 3,
+                "stepDistance": 47,
+                "stepStartTime": "21:30 25/06/2025"
+            },
+            {
+                "stepValue": 432,
+                "stepCalorie": 19,
+                "stepDistance": 357,
+                "stepStartTime": "22:00 25/06/2025"
+            },
+            {
+                "stepValue": 166,
+                "stepCalorie": 6,
+                "stepDistance": 116,
+                "stepStartTime": "22:30 25/06/2025"
+            },
+            {
+                "stepValue": 101,
+                "stepCalorie": 4,
+                "stepDistance": 70,
+                "stepStartTime": "01:00 25/06/2025"
+            }
+        ]
+    },
+    "sportData": {
+        "data": []
+    }
+}
