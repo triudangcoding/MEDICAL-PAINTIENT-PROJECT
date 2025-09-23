@@ -53,12 +53,13 @@ const doctorOnlyMenuItems = [
   }
 ];
 
-const patientOnlyMenuItems = [
-  {
-    title: "Quản lý hồ sơ",
-    url: "/dashboard/health-overview",
-    icon: Home,
-  }
+const patientMenuItems = [
+  { title: "Tổng quan", url: "/dashboard/patients?tab=overview", icon: Home },
+  { title: "Đơn thuốc", url: "/dashboard/patients?tab=prescriptions", icon: Users },
+  { title: "Lịch sử", url: "/dashboard/patients?tab=history", icon: Users },
+  { title: "Nhắc nhở", url: "/dashboard/patients?tab=reminders", icon: Users },
+  { title: "Cảnh báo", url: "/dashboard/patients?tab=alerts", icon: Users },
+  { title: "Tuân thủ", url: "/dashboard/patients?tab=adherence", icon: Users },
 ];
 
 interface AppSidebarProps {
@@ -120,12 +121,12 @@ const AppSidebar: React.FC<AppSidebarProps> = React.memo(({ userData }) => {
   const menuItems = useMemo(() => {
     const role = userData?.data.role;
     if (role === "DOCTOR") return doctorOnlyMenuItems;
-    if (role === "PATIENT") return patientOnlyMenuItems;
+    if (role === "PATIENT") return patientMenuItems;
     return adminMenuItems;
   }, [userData?.data.role]);
 
   // Memoize active path to prevent recalculation on every render
-  const activePath = useMemo(() => location.pathname, [location.pathname]);
+  const activePath = useMemo(() => location.pathname + location.search, [location.pathname, location.search]);
 
   // Memoize logout handler
   const handleLogout = useCallback(() => {

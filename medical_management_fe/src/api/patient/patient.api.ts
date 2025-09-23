@@ -92,4 +92,45 @@ export const patientApi = {
         // If needed, can call admin bulk; currently not implemented on BE
         return Promise.resolve({ statusCode: 200 });
     },
+
+    // Patient self-service endpoints (patient.controller.ts)
+    async getActivePrescriptions() {
+        const res = await axiosInstance.get('/patient/prescriptions');
+        return res.data?.data ?? res.data;
+    },
+
+    async getPrescriptionDetail(id: string) {
+        const res = await axiosInstance.get(`/patient/prescriptions/${id}`);
+        return res.data?.data ?? res.data;
+    },
+
+    async getHistory(params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: 'asc' | 'desc' }) {
+        const res = await axiosInstance.get('/patient/history', { params });
+        return res.data?.data ?? res.data;
+    },
+
+    async getReminders() {
+        const res = await axiosInstance.get('/patient/reminders');
+        return res.data?.data ?? res.data;
+    },
+
+    async confirmIntake(prescriptionId: string, body: { prescriptionItemId: string; takenAt: string; status: string; notes?: string }) {
+        const res = await axiosInstance.post(`/patient/prescriptions/${prescriptionId}/confirm`, body);
+        return res.data?.data ?? res.data;
+    },
+
+    async getAdherence() {
+        const res = await axiosInstance.get('/patient/adherence');
+        return res.data?.data ?? res.data;
+    },
+
+    async getOverview() {
+        const res = await axiosInstance.get('/patient/overview');
+        return res.data?.data ?? res.data;
+    },
+
+    async getAlerts() {
+        const res = await axiosInstance.get('/patient/alerts');
+        return res.data?.data ?? res.data;
+    },
 };
