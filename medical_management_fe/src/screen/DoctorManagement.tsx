@@ -170,7 +170,11 @@ const DoctorManagement: React.FC = () => {
   const createPatientMutation = useMutation({
     mutationFn: (dto: PatientCreateDto) => DoctorApi.createPatient(dto),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["doctor-patients"] });
+      // Refresh patient table
+      queryClient.invalidateQueries({ queryKey: ["patient-search"] });
+      queryClient.invalidateQueries({ queryKey: ["patient-get-all"] });
+      // Refresh overview stats
+      queryClient.invalidateQueries({ queryKey: ["doctor-overview"] });
       setOpenCreatePatient(false);
       setCreateForm({
         fullName: "",
@@ -195,6 +199,8 @@ const DoctorManagement: React.FC = () => {
         profile: dto,
       } as any),
     onSuccess: () => {
+      // Refresh patient table
+      queryClient.invalidateQueries({ queryKey: ["patient-search"] });
       queryClient.invalidateQueries({ queryKey: ["patient-get-all"] });
       setOpenEditProfile({ open: false, id: undefined });
       toast.success("Cập nhật hồ sơ thành công", { position: "top-center" });
@@ -210,7 +216,9 @@ const DoctorManagement: React.FC = () => {
     mutationFn: ({ id, dto }: { id: string; dto: PatientHistoryDto }) =>
       DoctorApi.updatePatientHistory(id, dto),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["doctor-patients"] });
+      // Refresh patient table
+      queryClient.invalidateQueries({ queryKey: ["patient-search"] });
+      queryClient.invalidateQueries({ queryKey: ["patient-get-all"] });
       setOpenEditHistory({ open: false, id: undefined });
       toast.success("Cập nhật tiền sử thành công", { position: "top-center" });
     },
@@ -259,6 +267,8 @@ const DoctorManagement: React.FC = () => {
     mutationFn: (dto: MedicationDto) => MedicationsApi.create(dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-medications"] });
+      // Refresh prescriptions table since medications are used in prescriptions
+      queryClient.invalidateQueries({ queryKey: ["doctor-prescriptions"] });
       toast.success("Tạo thuốc thành công");
       setOpenMedDialog(false);
       setMedForm({
@@ -277,6 +287,8 @@ const DoctorManagement: React.FC = () => {
       MedicationsApi.update(id, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-medications"] });
+      // Refresh prescriptions table since medications are used in prescriptions
+      queryClient.invalidateQueries({ queryKey: ["doctor-prescriptions"] });
       toast.success("Cập nhật thuốc thành công");
       setOpenMedDialog(false);
       setEditingMedId(undefined);
@@ -288,6 +300,8 @@ const DoctorManagement: React.FC = () => {
     mutationFn: (id: string) => MedicationsApi.deactivate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-medications"] });
+      // Refresh prescriptions table since medications are used in prescriptions
+      queryClient.invalidateQueries({ queryKey: ["doctor-prescriptions"] });
       toast.success("Đã vô hiệu hóa thuốc");
     },
     onError: (e: any) =>
@@ -332,7 +346,11 @@ const DoctorManagement: React.FC = () => {
     patientApi
       .deletePatient(id)
       .then(() => {
+        // Refresh patient table
+        queryClient.invalidateQueries({ queryKey: ["patient-search"] });
         queryClient.invalidateQueries({ queryKey: ["patient-get-all"] });
+        // Refresh overview stats
+        queryClient.invalidateQueries({ queryKey: ["doctor-overview"] });
         toast.success("Đã xóa bệnh nhân");
       })
       .catch((e) =>
@@ -1039,7 +1057,15 @@ const DoctorManagement: React.FC = () => {
                             <TableCell>{m.form || "-"}</TableCell>
                             <TableCell>{m.unit || "-"}</TableCell>
                             <TableCell>
-                              {m.isActive ? "ACTIVE" : "INACTIVE"}
+                              <span
+                                className={
+                                  m.isActive
+                                    ? "inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800"
+                                    : "inline-flex items-center rounded-full bg-red-100 px-2 py-1 text-xs font-medium text-red-800"
+                                }
+                              >
+                                {m.isActive ? "ACTIVE" : "INACTIVE"}
+                              </span>
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex gap-2 justify-end">

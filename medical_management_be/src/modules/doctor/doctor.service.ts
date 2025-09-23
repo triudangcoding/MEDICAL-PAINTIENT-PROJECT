@@ -350,7 +350,7 @@ export class DoctorService {
       totalItems
     ] = await Promise.all([
       this.databaseService.client.user.count({
-        where: { role: UserRole.PATIENT }
+        where: { role: UserRole.PATIENT, deletedAt: null }
       }),
       this.databaseService.client.prescription.count({ where: { doctorId } }),
       this.databaseService.client.alert.count({
