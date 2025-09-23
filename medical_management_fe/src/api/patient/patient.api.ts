@@ -1,4 +1,5 @@
 // Mocked patient API for FE-only flow
+import { axiosInstance } from "../axios";
 import { ICreatePatientRequest, ICreatePatientResponse, IGetPatientPaginationResponse, IGetPatientResponse, IUpdatePatientRequest } from "./types.patient";
 
 interface IPaginationQuery {
@@ -10,47 +11,85 @@ interface IPaginationQuery {
 }
 
 export const patientApi = {
-    getPatients: async (params?: IPaginationQuery): Promise<IGetPatientPaginationResponse> => {
-        const total = 8;
-        const limit = params?.limit || 10;
-        const currentPage = params?.page || 1;
-        const data = Array.from({ length: Math.min(total, limit) }).map((_, idx) => ({
-            id: `p${idx + 1}`,
-            fullName: `Patient ${idx + 1}`,
-            phoneNumber: `09123456${(10 + idx).toString().slice(-2)}`,
-            status: idx % 3 === 0 ? 'SUSPENDED' : idx % 2 === 0 ? 'INACTIVE' : 'ACTIVE',
-            userInfo: { birthYear: 1990 + (idx % 10), gender: idx % 2 === 0 ? 'MALE' : 'FEMALE', specificAddress: 'Mock address' }
-        }));
-        return Promise.resolve({
-            data,
+    async getPatients(params?: IPaginationQuery): Promise<IGetPatientPaginationResponse> {
+        const { page = 1, limit = 10, search, sortBy, sortOrder } = params || {};
+        // Default to admin listing of patients
+        const res = await axiosInstance.get('/admin/users', {
+            params: { role: 'PATIENT', page, limit, q: search, sortBy, sortOrder }
+        });
+        const payload = res.data?.data ?? res.data;
+        const items = payload.items ?? payload.data ?? [];
+        const total = payload.total ?? 0;
+        const currentPage = payload.page ?? page;
+        const perPage = payload.limit ?? limit;
+        return {
+            data: items,
             pagination: {
                 total,
-                limit,
+                limit: perPage,
                 currentPage,
-                totalPages: Math.ceil(total / limit),
-                hasNextPage: false,
-                hasPrevPage: false
-            }
-        } as unknown as IGetPatientPaginationResponse);
+                totalPages: Math.ceil((total || 0) / (perPage || 1)),
+                hasNextPage: currentPage < Math.ceil((total || 0) / (perPage || 1)),
+                hasPrevPage: currentPage > 1
+            },
+            statusCode: res.data?.statusCode ?? 200
+        } as unknown as IGetPatientPaginationResponse;
     },
 
-    getAllPatients: async (): Promise<IGetPatientResponse> => {
-        return Promise.resolve({ data: [], statusCode: 200 } as unknown as IGetPatientResponse);
+    async getAllPatients(): Promise<IGetPatientResponse> {
+        const res = await axiosInstance.get('/admin/users', { params: { role: 'PATIENT', limit: 1000 } });
+        const payload = res.data?.data ?? res.data;
+        const items = payload.items ?? payload.data ?? [];
+        return { data: items, statusCode: res.data?.statusCode ?? 200 } as unknown as IGetPatientResponse;
     },
 
-    createPatientService: async (data: ICreatePatientRequest): Promise<ICreatePatientResponse> => {
-        return Promise.resolve({ data: { id: 'p-new', ...data }, statusCode: 201 } as unknown as ICreatePatientResponse);
+    async getPatientsForDoctor(params?: IPaginationQuery): Promise<IGetPatientPaginationResponse> {
+        const { page = 1, limit = 10, search, sortBy, sortOrder } = params || {};
+        const res = await axiosInstance.get('/doctor/patients', {
+            params: { q: search, page, limit, sortBy, sortOrder }
+        });
+        const payload = res.data?.data ?? res.data;
+        const items = payload.items ?? payload.data ?? [];
+        const total = payload.total ?? 0;
+        const currentPage = payload.page ?? page;
+        const perPage = payload.limit ?? limit;
+        return {
+            data: items,
+            pagination: {
+                total,
+                limit: perPage,
+                currentPage,
+                totalPages: Math.ceil((total || 0) / (perPage || 1)),
+                hasNextPage: currentPage < Math.ceil((total || 0) / (perPage || 1)),
+                hasPrevPage: currentPage > 1
+            },
+            statusCode: res.data?.statusCode ?? 200
+        } as unknown as IGetPatientPaginationResponse;
     },
 
-    updatePatient: async (id: string, data: IUpdatePatientRequest) => {
-        return Promise.resolve({ data: { id, ...data }, statusCode: 200 } as any);
+    async getPatientDetailForDoctor(id: string) {
+        const res = await axiosInstance.get(`/doctor/patients/${id}`);
+        return (res.data?.data ?? res.data);
     },
 
-    deletePatient: async (_id: string): Promise<any> => {
-        return Promise.resolve({ statusCode: 200 });
+    async createPatientService(data: ICreatePatientRequest): Promise<ICreatePatientResponse> {
+        const res = await axiosInstance.post('/doctor/patients', data);
+        return (res.data?.data ?? res.data) as ICreatePatientResponse;
     },
 
-    deleteMultiplePatients: async (_ids: string[]): Promise<any> => {
+    async updatePatient(id: string, data: IUpdatePatientRequest) {
+        const res = await axiosInstance.put(`/doctor/patients/${id}/profile`, data);
+        return (res.data?.data ?? res.data);
+    },
+
+    async deletePatient(id: string): Promise<any> {
+        // No explicit delete endpoints found for doctor/admin patients; soft delete could be admin/users/:id
+        const res = await axiosInstance.delete(`/admin/users/${id}`);
+        return (res.data?.data ?? res.data);
+    },
+
+    async deleteMultiplePatients(_ids: string[]): Promise<any> {
+        // If needed, can call admin bulk; currently not implemented on BE
         return Promise.resolve({ statusCode: 200 });
     },
 };

@@ -35,6 +35,12 @@ export class AdminUsersController {
     });
   }
 
+  @Get(':id')
+  async detail(@Param('id') id: string, @UserInfo() user: IUserFromToken) {
+    this.ensureAdmin(user);
+    return this.usersService.findById(id);
+  }
+
   @Post()
   async create(@Body() body: RegisterDto, @UserInfo() user: IUserFromToken) {
     this.ensureAdmin(user);

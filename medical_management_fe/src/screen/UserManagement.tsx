@@ -7,11 +7,18 @@ const UserManagement: React.FC = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [roleFilter, setRoleFilter] = useState<"ALL" | "ADMIN" | "DOCTOR" | "PATIENT">("ALL");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["users", page, limit, roleFilter],
     queryFn: () => userApi.getUsers({ page, limit, role: roleFilter === "ALL" ? undefined : roleFilter }),
     keepPreviousData: true,
+  });
+
+  const { data: userDetail, isLoading: isLoadingDetail, isError: isErrorDetail } = useQuery({
+    queryKey: ["admin-user", selectedUserId],
+    queryFn: () => (selectedUserId ? userApi.getUserById(selectedUserId) : Promise.resolve(null as unknown as User)),
+    enabled: !!selectedUserId,
   });
 
   useEffect(() => {
@@ -89,7 +96,11 @@ const UserManagement: React.FC = () => {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {users.map((u: User) => (
-                  <div key={u.id} className={`rounded-xl border bg-background shadow-sm hover:shadow-md transition-shadow ${cardColorByRole(u.role)}`}>
+                  <button
+                    key={u.id}
+                    className={`text-left rounded-xl border bg-background shadow-sm hover:shadow-md transition-shadow w-full ${cardColorByRole(u.role)}`}
+                    onClick={() => setSelectedUserId(u.id)}
+                  >
                     <div className="p-4 flex items-start gap-4">
                       <div className="shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br from-primary to-primary/70 text-white flex items-center justify-center text-lg font-semibold">
                         {u.fullName?.charAt(0) || "U"}
@@ -109,7 +120,7 @@ const UserManagement: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
 
@@ -138,6 +149,52 @@ const UserManagement: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Detail Dialog */}
+      {selectedUserId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedUserId(null)} />
+          <div className="relative bg-card rounded-xl shadow-xl border border-border/20 w-full max-w-md mx-4">
+            <div className="p-4 border-b border-border/20 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground">Thông tin người dùng</h2>
+              <button className="text-muted-foreground hover:text-foreground" onClick={() => setSelectedUserId(null)}>✕</button>
+            </div>
+            <div className="p-4 space-y-3">
+              {isLoadingDetail ? (
+                <div className="text-muted-foreground">Đang tải chi tiết...</div>
+              ) : isErrorDetail || !userDetail ? (
+                <div className="text-red-500">Không thể tải thông tin người dùng</div>
+              ) : (
+                <>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Họ và tên</div>
+                    <div className="text-sm font-medium text-foreground">{userDetail.fullName}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Số điện thoại</div>
+                    <div className="text-sm text-foreground">{userDetail.phoneNumber}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Quyền</span>
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium ${roleColor(userDetail.role)}`}>
+                      {roleLabel(userDetail.role)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">Trạng thái</span>
+                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-medium ${statusColor(userDetail.status)}`}>
+                      {userDetail.status === "ACTIVE" ? "Hoạt động" : "Không hoạt động"}
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="p-4 border-t border-border/20 flex justify-end gap-2">
+              <button className="px-3 py-2 rounded-lg border border-border/30 hover:bg-accent/30" onClick={() => setSelectedUserId(null)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

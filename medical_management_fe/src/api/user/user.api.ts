@@ -41,6 +41,11 @@ export const userApi = {
     return { data: items, pagination, statusCode: res.data?.statusCode ?? 200 };
   },
 
+  async getUserById(id: string): Promise<User> {
+    const res = await axiosInstance.get(`/admin/users/${id}`);
+    return (res.data?.data ?? res.data) as User;
+  },
+
   async createUser(data: CreateUserData): Promise<User> {
     const res = await axiosInstance.post("/admin/users", data);
     return (res.data?.data ?? res.data) as User;
