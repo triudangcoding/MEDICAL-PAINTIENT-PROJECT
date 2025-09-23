@@ -46,7 +46,8 @@ export class PatientService {
         where,
         orderBy: { [orderByField]: orderDir },
         skip: (page - 1) * limit,
-        take: limit
+        take: limit,
+        include: { doctor: true, items: true }
       }),
       this.databaseService.client.prescription.count({ where })
     ]);
