@@ -26,7 +26,7 @@ export class LoggerService extends ConsoleLogger {
   ];
 
   constructor(context?: string) {
-    super(context as string);
+    super(context);
     this.context = context;
   }
 

@@ -44,8 +44,6 @@ export class UsersService {
     return newUser;
   }
 
-
-
   async verifyUser(phoneNumber: string) {
     const user = await this.databaseService.client.user.findUnique({
       where: { phoneNumber }
@@ -171,11 +169,6 @@ export class UsersService {
     });
   }
 
-
-
-
-
-
   async update(id: string, body: UpdateUserDto) {
     const userExist = await this.databaseService.client.user.findUnique({
       where: { id }
@@ -207,7 +200,13 @@ export class UsersService {
     return user;
   }
 
-  async adminListUsers(params: { role?: UserRole; page?: number; limit?: number; sortBy?: string; sortOrder?: 'asc' | 'desc' }) {
+  async adminListUsers(params: {
+    role?: UserRole;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }) {
     const where: any = { deletedAt: null };
     if (params.role) {
       where.role = params.role;
@@ -237,7 +236,9 @@ export class UsersService {
   }
 
   async adminSoftDeleteUser(id: string) {
-    const user = await this.databaseService.client.user.findUnique({ where: { id } });
+    const user = await this.databaseService.client.user.findUnique({
+      where: { id }
+    });
     if (!user) {
       throw new NotFoundException('Không tìm thấy người dùng');
     }

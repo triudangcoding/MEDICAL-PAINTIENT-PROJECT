@@ -27,7 +27,7 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly databaseService: DatabaseService,
     private readonly logger: LoggerService
-  ) { }
+  ) {}
 
   async login(user: IUserFromToken, userAgent: string, ip: string) {
     const userValid = await this.databaseService.client.user.findUnique({

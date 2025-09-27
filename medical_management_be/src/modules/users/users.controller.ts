@@ -23,7 +23,10 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  async createUser(@Body() body: RegisterDto, @UserInfo() user: IUserFromToken) {
+  async createUser(
+    @Body() body: RegisterDto,
+    @UserInfo() user: IUserFromToken
+  ) {
     if (user.roles !== UserRole.ADMIN) {
       throw new HttpException(
         'Bạn không có quyền tạo tài khoản',
@@ -58,7 +61,10 @@ export class UsersController {
     @UserInfo() user: IUserFromToken
   ) {
     if (user.roles !== UserRole.ADMIN) {
-      throw new HttpException('Bạn không có quyền xóa bệnh nhân', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'Bạn không có quyền xóa bệnh nhân',
+        HttpStatus.FORBIDDEN
+      );
     }
     return await this.usersService.deletePatient(id);
   }
@@ -102,5 +108,4 @@ export class UsersController {
     }
     return await this.usersService.adminSoftDeleteUser(id);
   }
-
 }

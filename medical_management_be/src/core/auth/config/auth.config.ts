@@ -32,6 +32,6 @@ export default registerAs('auth', () => {
     smsHost: env.SMS_HOST,
     smsPassSecret: env.SMS_PASS_SECRET,
     smsBrandName: env.SMS_BRANDNAME,
-    smsIsUnicode: env.SMS_ISUNICODE,
+    smsIsUnicode: env.SMS_ISUNICODE
   };
 });

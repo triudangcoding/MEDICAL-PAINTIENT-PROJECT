@@ -10,5 +10,3 @@ import { MedicationsService } from './medications.service';
   providers: [MedicationsService]
 })
 export class MedicationsModule {}
-
-

@@ -228,7 +228,7 @@ export class Utils {
         secret: configService.get<string>('auth.cookieSecret')
       });
       // await app.listen(port, '0.0.0.0');
-    },
+    }
     // setupBullMQ removed in simplified stack
   };
 }

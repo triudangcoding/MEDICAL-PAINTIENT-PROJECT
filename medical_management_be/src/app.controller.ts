@@ -3,7 +3,7 @@ import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) { }
+  constructor(private readonly appService: AppService) {}
 
   @Get()
   getHello(): string {
@@ -47,7 +47,8 @@ export class AppController {
         instructions: 'Open websocket-test.html in browser to test'
       },
       troubleshooting: {
-        postman: 'Postman WebSocket có thể có vấn đề với namespace. Dùng browser test tốt hơn.',
+        postman:
+          'Postman WebSocket có thể có vấn đề với namespace. Dùng browser test tốt hơn.',
         namespace: 'Phải connect tới /chat namespace, không phải root /',
         cors: 'CORS đã được bật cho tất cả origins',
         authentication: 'Tạm thời đã tắt authentication để test'

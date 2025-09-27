@@ -1,8 +1,8 @@
-import { UserRole } from "@prisma/client";
+import { UserRole } from '@prisma/client';
 
 export interface IUserFromToken {
   id: string;
   phoneNumber: string;
   fullName: string;
-  roles: UserRole
+  roles: UserRole;
 }

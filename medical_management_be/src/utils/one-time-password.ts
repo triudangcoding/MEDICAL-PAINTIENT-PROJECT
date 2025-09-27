@@ -5,6 +5,6 @@ export function oneTimePassword() {
     digits: true,
     lowerCaseAlphabets: false,
     specialChars: false,
-    upperCaseAlphabets: false,
+    upperCaseAlphabets: false
   });
 }

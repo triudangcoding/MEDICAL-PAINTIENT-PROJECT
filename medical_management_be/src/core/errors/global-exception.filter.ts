@@ -24,7 +24,7 @@ export class GlobalExceptionsFilter implements ExceptionFilter {
   constructor(
     private readonly configService: ConfigService,
     private readonly errorService: ErrorService
-  ) { }
+  ) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();

@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserInfo } from '@/common/decorators/users.decorator';
 import { IUserFromToken } from '@/modules/users/types/user.type';
@@ -63,5 +74,3 @@ export class AdminUsersController {
     return this.usersService.adminSoftDeleteUser(id);
   }
 }
-
-

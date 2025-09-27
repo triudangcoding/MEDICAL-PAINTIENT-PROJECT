@@ -4,7 +4,7 @@ import { AdherenceStatus, PrescriptionStatus } from '@prisma/client';
 
 @Injectable()
 export class PatientService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   async listActivePrescriptions(patientId: string) {
     return this.databaseService.client.prescription.findMany({
@@ -22,12 +22,25 @@ export class PatientService {
     return p;
   }
 
-  async listHistory(patientId: string, params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: 'asc' | 'desc' }) {
+  async listHistory(
+    patientId: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    }
+  ) {
     const page = params?.page && params.page > 0 ? params.page : 1;
     const limit = params?.limit && params.limit > 0 ? params.limit : 20;
     const orderByField = params?.sortBy || 'createdAt';
     const orderDir = params?.sortOrder || 'desc';
-    const where: any = { patientId, status: { in: [PrescriptionStatus.COMPLETED, PrescriptionStatus.CANCELLED] } };
+    const where: any = {
+      patientId,
+      status: {
+        in: [PrescriptionStatus.COMPLETED, PrescriptionStatus.CANCELLED]
+      }
+    };
     const [items, total] = await Promise.all([
       this.databaseService.client.prescription.findMany({
         where,
@@ -47,7 +60,14 @@ export class PatientService {
       include: { prescription: true, medication: true }
     });
     // Expand to schedule entries
-    const reminders: Array<{ date: string; time: string; prescriptionId: string; prescriptionItemId: string; medicationName: string; dosage: string }> = [];
+    const reminders: Array<{
+      date: string;
+      time: string;
+      prescriptionId: string;
+      prescriptionItemId: string;
+      medicationName: string;
+      dosage: string;
+    }> = [];
     const today = new Date();
     for (const item of items) {
       const start = new Date(item.prescription.startDate);
@@ -73,9 +93,16 @@ export class PatientService {
   async confirmIntake(
     patientId: string,
     prescriptionId: string,
-    body: { prescriptionItemId: string; takenAt: string; status: AdherenceStatus; notes?: string }
+    body: {
+      prescriptionItemId: string;
+      takenAt: string;
+      status: AdherenceStatus;
+      notes?: string;
+    }
   ) {
-    const p = await this.databaseService.client.prescription.findFirst({ where: { id: prescriptionId, patientId } });
+    const p = await this.databaseService.client.prescription.findFirst({
+      where: { id: prescriptionId, patientId }
+    });
     if (!p) throw new NotFoundException('Prescription not found');
     return this.databaseService.client.adherenceLog.create({
       data: {
@@ -98,19 +125,140 @@ export class PatientService {
   }
 
   async listAlerts(patientId: string) {
-    return this.databaseService.client.alert.findMany({ where: { patientId }, orderBy: { createdAt: 'desc' } });
+    return this.databaseService.client.alert.findMany({
+      where: { patientId },
+      orderBy: { createdAt: 'desc' }
+    });
   }
 
   async overview(patientId: string) {
-    const [activePrescriptions, takenLogs, totalItems, unresolvedAlerts] = await Promise.all([
-      this.databaseService.client.prescription.count({ where: { patientId, status: 'ACTIVE' } }),
-      this.databaseService.client.adherenceLog.count({ where: { patientId, status: AdherenceStatus.TAKEN } }),
-      this.databaseService.client.prescriptionItem.count({ where: { prescription: { patientId } } }),
-      this.databaseService.client.alert.count({ where: { patientId, resolved: false } })
-    ]);
+    const [activePrescriptions, takenLogs, totalItems, unresolvedAlerts] =
+      await Promise.all([
+        this.databaseService.client.prescription.count({
+          where: { patientId, status: 'ACTIVE' }
+        }),
+        this.databaseService.client.adherenceLog.count({
+          where: { patientId, status: AdherenceStatus.TAKEN }
+        }),
+        this.databaseService.client.prescriptionItem.count({
+          where: { prescription: { patientId } }
+        }),
+        this.databaseService.client.alert.count({
+          where: { patientId, resolved: false }
+        })
+      ]);
     const adherenceRate = totalItems > 0 ? takenLogs / totalItems : 0;
     return { activePrescriptions, adherenceRate, unresolvedAlerts };
   }
+
+  // Danh sách tất cả bệnh nhân (join User + PatientProfile)
+  async listAllPatients() {
+    return this.databaseService.client.user.findMany({
+      where: {
+        role: 'PATIENT',
+        deletedAt: null // Chỉ lấy các record chưa bị soft delete
+      },
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        profile: {
+          select: {
+            gender: true,
+            birthDate: true,
+            address: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+  }
+
+  async searchPatients(query: { q?: string; page?: number; limit?: number }) {
+    const q = (query.q || '').trim();
+    const page = query.page && query.page > 0 ? query.page : 1;
+    const limit = query.limit && query.limit > 0 ? query.limit : 50;
+    const where: any = {
+      role: 'PATIENT',
+      deletedAt: null // Chỉ tìm trong các record chưa bị soft delete
+    };
+    if (q) {
+      where.OR = [
+        { fullName: { contains: q, mode: 'insensitive' } },
+        { phoneNumber: { contains: q } }
+      ];
+    }
+    const [items, total] = await Promise.all([
+      this.databaseService.client.user.findMany({
+        where,
+        select: {
+          id: true,
+          fullName: true,
+          phoneNumber: true,
+          profile: {
+            select: { gender: true, birthDate: true, address: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      this.databaseService.client.user.count({ where })
+    ]);
+    return { data: items, total, page, limit };
+  }
+
+  async updatePatient(
+    id: string,
+    data: {
+      fullName?: string;
+      phoneNumber?: string;
+      profile?: { gender?: string; birthDate?: string; address?: string };
+    }
+  ) {
+    const tx = this.databaseService.client;
+    const { fullName, phoneNumber, profile } = data || {};
+    const updated = await tx.user.update({
+      where: { id },
+      data: {
+        fullName: fullName ?? undefined,
+        phoneNumber: phoneNumber ?? undefined,
+        profile: profile
+          ? {
+            upsert: {
+              create: {
+                gender: (profile.gender as any) ?? undefined,
+                birthDate: profile.birthDate
+                  ? new Date(profile.birthDate)
+                  : undefined,
+                address: profile.address ?? undefined
+              },
+              update: {
+                gender: (profile.gender as any) ?? undefined,
+                birthDate: profile.birthDate
+                  ? new Date(profile.birthDate)
+                  : undefined,
+                address: profile.address ?? undefined
+              }
+            }
+          }
+          : undefined
+      },
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        profile: { select: { gender: true, birthDate: true, address: true } }
+      }
+    });
+    return updated;
+  }
+
+  async deletePatient(id: string) {
+    // Hard delete - xóa thật khỏi database
+    return this.databaseService.client.user.delete({
+      where: { id },
+      select: { id: true }
+    });
+  }
 }
-
-

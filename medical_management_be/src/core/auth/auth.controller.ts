@@ -8,7 +8,7 @@ import { IpTracking } from '@/common/decorators/ip';
 import { UserAgent } from '@/common/decorators/userAgent';
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) { }
+  constructor(private readonly authService: AuthService) {}
 
   @Post('/login')
   @UseGuards(LocalAuthGuard)

@@ -37,9 +37,18 @@ export const patientApi = {
     },
 
     async getAllPatients(): Promise<IGetPatientResponse> {
-        const res = await axiosInstance.get('/admin/users', { params: { role: 'PATIENT', limit: 1000 } });
+        const res = await axiosInstance.get('/patient/get-all');
         const payload = res.data?.data ?? res.data;
-        const items = payload.items ?? payload.data ?? [];
+        const items = Array.isArray(payload)
+            ? payload
+            : (payload.items ?? payload.data ?? []);
+        return { data: items, statusCode: res.data?.statusCode ?? 200 } as unknown as IGetPatientResponse;
+    },
+
+    async searchPatients(q: string, page?: number, limit?: number): Promise<IGetPatientResponse> {
+        const res = await axiosInstance.get('/patient/search', { params: { q, page, limit } });
+        const payload = res.data?.data ?? res.data;
+        const items = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload) ? payload : []);
         return { data: items, statusCode: res.data?.statusCode ?? 200 } as unknown as IGetPatientResponse;
     },
 
@@ -77,19 +86,19 @@ export const patientApi = {
         return (res.data?.data ?? res.data) as ICreatePatientResponse;
     },
 
-    async updatePatient(id: string, data: IUpdatePatientRequest) {
-        const res = await axiosInstance.put(`/doctor/patients/${id}/profile`, data);
-        return (res.data?.data ?? res.data);
-    },
-
-    async updatePatientHistory(id: string, body: { conditions?: string[]; allergies?: string[]; surgeries?: string[]; familyHistory?: string; lifestyle?: string; currentMedications?: string[]; notes?: string; extras?: any }) {
-        const res = await axiosInstance.put(`/doctor/patients/${id}/history`, body);
-        return (res.data?.data ?? res.data);
-    },
+    // Legacy doctor route kept if needed; prefer below /patient/:id
+    // async updatePatientDoctor(id: string, data: IUpdatePatientRequest) {
+    //     const res = await axiosInstance.put(`/doctor/patients/${id}/profile`, data);
+    //     return (res.data?.data ?? res.data);
+    // },
 
     async deletePatient(id: string): Promise<any> {
-        // Doctor soft-delete patient
-        const res = await axiosInstance.delete(`/doctor/patients/${id}`);
+        const res = await axiosInstance.post(`/patient/${id}/delete`);
+        return (res.data?.data ?? res.data);
+    },
+
+    async updatePatient(id: string, data: Partial<IUpdatePatientRequest>) {
+        const res = await axiosInstance.post(`/patient/${id}`, data);
         return (res.data?.data ?? res.data);
     },
 

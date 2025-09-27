@@ -1,4 +1,12 @@
-import { Controller, Get, HttpException, HttpStatus, Param, Put, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  Put,
+  Query
+} from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { UserInfo } from '@/common/decorators/users.decorator';
 import { IUserFromToken } from '@/modules/users/types/user.type';
@@ -47,5 +55,3 @@ export class NotificationsController {
     return this.notificationsService.resolve(id);
   }
 }
-
-

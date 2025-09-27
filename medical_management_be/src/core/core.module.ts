@@ -20,8 +20,7 @@ import { APP_PIPE } from '@nestjs/core';
     }),
     LoggerModule,
     DatabaseModule,
-    AuthModule,
-    
+    AuthModule
   ],
   providers: [
     ErrorService,
@@ -30,11 +29,6 @@ import { APP_PIPE } from '@nestjs/core';
       useClass: ZodValidationPipe
     }
   ],
-  exports: [
-    ErrorService,
-    LoggerModule,
-    DatabaseModule,
-    AuthModule
-  ]
+  exports: [ErrorService, LoggerModule, DatabaseModule, AuthModule]
 })
-export class CoreModule {}
+export class CoreModule { }

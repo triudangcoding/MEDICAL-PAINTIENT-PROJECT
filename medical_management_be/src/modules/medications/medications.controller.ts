@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Query
+} from '@nestjs/common';
 import { MedicationsService } from '@/modules/medications/medications.service';
 import { UserInfo } from '@/common/decorators/users.decorator';
 import { IUserFromToken } from '@/modules/users/types/user.type';
@@ -6,9 +17,9 @@ import { UserRole } from '@prisma/client';
 
 @Controller('admin/medications')
 export class MedicationsController {
-  constructor(private readonly medicationsService: MedicationsService) {}
+  constructor(private readonly medicationsService: MedicationsService) { }
 
-  @Get()
+  @Get('get-all')
   async list(
     @UserInfo() user: IUserFromToken,
     @Query('isActive') isActive?: string,
@@ -31,7 +42,14 @@ export class MedicationsController {
 
   @Post()
   async create(
-    @Body() body: { name: string; strength?: string; form?: string; unit?: string; description?: string },
+    @Body()
+    body: {
+      name: string;
+      strength?: string;
+      form?: string;
+      unit?: string;
+      description?: string;
+    },
     @UserInfo() user: IUserFromToken
   ) {
     if (user.roles !== UserRole.ADMIN) {
@@ -43,7 +61,15 @@ export class MedicationsController {
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() body: { name?: string; strength?: string; form?: string; unit?: string; description?: string; isActive?: boolean },
+    @Body()
+    body: {
+      name?: string;
+      strength?: string;
+      form?: string;
+      unit?: string;
+      description?: string;
+      isActive?: boolean;
+    },
     @UserInfo() user: IUserFromToken
   ) {
     if (user.roles !== UserRole.ADMIN) {
@@ -60,5 +86,3 @@ export class MedicationsController {
     return this.medicationsService.deactivate(id);
   }
 }
-
-

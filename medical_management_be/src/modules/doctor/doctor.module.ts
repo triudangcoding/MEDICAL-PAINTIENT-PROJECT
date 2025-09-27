@@ -9,6 +9,4 @@ import { DoctorService } from './doctor.service';
   controllers: [DoctorController],
   providers: [DoctorService]
 })
-export class DoctorModule {}
-
-
+export class DoctorModule { }

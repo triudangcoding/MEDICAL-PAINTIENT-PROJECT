@@ -6,10 +6,10 @@ const RegisterSchema = z
   .object({
     fullName: z.string(),
     phoneNumber: z.string(),
-    password: z.string(),
+    password: z.string()
   })
   .strict();
 
-class RegisterDto extends createZodDto(RegisterSchema) { }
+class RegisterDto extends createZodDto(RegisterSchema) {}
 
 export default RegisterDto;

@@ -3,9 +3,17 @@ import { DatabaseService } from '@/core/database/database.service';
 
 @Injectable()
 export class MedicationsService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
-  async list(isActive?: boolean, params?: { page?: number; limit?: number; sortBy?: string; sortOrder?: 'asc' | 'desc' }) {
+  async list(
+    isActive?: boolean,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    }
+  ) {
     const where = isActive === undefined ? {} : { isActive };
     const page = params?.page && params.page > 0 ? params.page : 1;
     const limit = params?.limit && params.limit > 0 ? params.limit : 20;
@@ -23,7 +31,13 @@ export class MedicationsService {
     return { items, total, page, limit };
   }
 
-  async create(data: { name: string; strength?: string; form?: string; unit?: string; description?: string }) {
+  async create(data: {
+    name: string;
+    strength?: string;
+    form?: string;
+    unit?: string;
+    description?: string;
+  }) {
     return this.databaseService.client.medication.create({
       data
     });
@@ -31,9 +45,18 @@ export class MedicationsService {
 
   async update(
     id: string,
-    data: { name?: string; strength?: string; form?: string; unit?: string; description?: string; isActive?: boolean }
+    data: {
+      name?: string;
+      strength?: string;
+      form?: string;
+      unit?: string;
+      description?: string;
+      isActive?: boolean;
+    }
   ) {
-    const med = await this.databaseService.client.medication.findUnique({ where: { id } });
+    const med = await this.databaseService.client.medication.findUnique({
+      where: { id }
+    });
     if (!med) throw new NotFoundException('Medication not found');
     return this.databaseService.client.medication.update({
       where: { id },
@@ -42,7 +65,9 @@ export class MedicationsService {
   }
 
   async deactivate(id: string) {
-    const med = await this.databaseService.client.medication.findUnique({ where: { id } });
+    const med = await this.databaseService.client.medication.findUnique({
+      where: { id }
+    });
     if (!med) throw new NotFoundException('Medication not found');
     return this.databaseService.client.medication.update({
       where: { id },
@@ -50,5 +75,3 @@ export class MedicationsService {
     });
   }
 }
-
-

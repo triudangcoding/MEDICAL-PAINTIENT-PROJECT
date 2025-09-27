@@ -1,17 +1,71 @@
-import { Body, Controller, Get, HttpException, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Param,
+  Post,
+  Query
+} from '@nestjs/common';
 import { PatientService } from './patient.service';
 import { UserInfo } from '@/common/decorators/users.decorator';
 import { IUserFromToken } from '@/modules/users/types/user.type';
 import { AdherenceStatus, UserRole } from '@prisma/client';
+import { Public, SkipPermission } from '@/common/decorators/isPublicRoute';
 
 @Controller('patient')
 export class PatientController {
-  constructor(private readonly patientService: PatientService) {}
+  constructor(private readonly patientService: PatientService) { }
 
   private ensurePatient(user: IUserFromToken) {
     if (user.roles !== UserRole.PATIENT) {
       throw new HttpException('Bạn không có quyền', HttpStatus.FORBIDDEN);
     }
+  }
+
+  // Danh sách tất cả bệnh nhân (Admin/Doctor dùng để tra cứu)
+  @Get('get-all')
+  @Public()
+  @SkipPermission()
+  async listPatients() {
+    return this.patientService.listAllPatients();
+  }
+
+  // Tìm kiếm bệnh nhân theo tên/số điện thoại
+  @Get('search')
+  @Public()
+  @SkipPermission()
+  async search(
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    return this.patientService.searchPatients({
+      q,
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined
+    });
+  }
+
+  // Cập nhật thông tin bệnh nhân
+  @Post(':id')
+  async updatePatient(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      fullName?: string;
+      phoneNumber?: string;
+      profile?: { gender?: string; birthDate?: string; address?: string };
+    }
+  ) {
+    return this.patientService.updatePatient(id, body);
+  }
+
+  // Xóa bệnh nhân
+  @Post(':id/delete')
+  async deletePatient(@Param('id') id: string) {
+    return this.patientService.deletePatient(id);
   }
 
   // Đơn thuốc & nhắc nhở
@@ -20,13 +74,16 @@ export class PatientController {
     this.ensurePatient(user);
     return this.patientService.listActivePrescriptions(user.id);
   }
-
+  // Chi tiết đơn thuốc
   @Get('prescriptions/:id')
-  async prescriptionDetail(@Param('id') id: string, @UserInfo() user: IUserFromToken) {
+  async prescriptionDetail(
+    @Param('id') id: string,
+    @UserInfo() user: IUserFromToken
+  ) {
     this.ensurePatient(user);
     return this.patientService.getPrescriptionDetail(user.id, id);
   }
-
+  // Lịch sử đơn thuốc
   @Get('history')
   async history(
     @UserInfo() user: IUserFromToken,
@@ -43,7 +100,7 @@ export class PatientController {
       sortOrder
     });
   }
-
+  // Lịch sử uống thuốc
   @Get('reminders')
   async reminders(@UserInfo() user: IUserFromToken) {
     this.ensurePatient(user);
@@ -86,5 +143,3 @@ export class PatientController {
     return this.patientService.listAlerts(user.id);
   }
 }
-
-

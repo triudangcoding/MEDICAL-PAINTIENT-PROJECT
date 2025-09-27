@@ -8,8 +8,12 @@ const PHONE_REGEX = /^0[0-9]{9,10}$/;
 const UpdateSchema = z
   .object({
     fullName: z.string().optional(),
-    phoneNumber: z.string()
-      .regex(PHONE_REGEX, 'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại từ 10-11 số, bắt đầu bằng 0')
+    phoneNumber: z
+      .string()
+      .regex(
+        PHONE_REGEX,
+        'Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại từ 10-11 số, bắt đầu bằng 0'
+      )
       .optional(),
     password: z.string().optional(),
     oldPassword: z.string().optional(),
@@ -31,7 +35,7 @@ const UpdateSchema = z
     }
   );
 
-class UpdatePatientDto extends createZodDto(UpdateSchema) { }
-class UpdateUserDto extends createZodDto(UpdateSchema) { }
+class UpdatePatientDto extends createZodDto(UpdateSchema) {}
+class UpdateUserDto extends createZodDto(UpdateSchema) {}
 
 export { UpdatePatientDto, UpdateUserDto };

@@ -5,7 +5,10 @@ import { DatabaseService } from '@/core/database/database.service';
 export class NotificationsService {
   constructor(private readonly databaseService: DatabaseService) {}
 
-  async listForDoctor(doctorId: string, params?: { page?: number; limit?: number }) {
+  async listForDoctor(
+    doctorId: string,
+    params?: { page?: number; limit?: number }
+  ) {
     const page = params?.page && params.page > 0 ? params.page : 1;
     const limit = params?.limit && params.limit > 0 ? params.limit : 20;
     const [items, total] = await Promise.all([
@@ -20,7 +23,10 @@ export class NotificationsService {
     return { items, total, page, limit };
   }
 
-  async listForPatient(patientId: string, params?: { page?: number; limit?: number }) {
+  async listForPatient(
+    patientId: string,
+    params?: { page?: number; limit?: number }
+  ) {
     const page = params?.page && params.page > 0 ? params.page : 1;
     const limit = params?.limit && params.limit > 0 ? params.limit : 20;
     const [items, total] = await Promise.all([
@@ -36,8 +42,9 @@ export class NotificationsService {
   }
 
   async resolve(id: string) {
-    return this.databaseService.client.alert.update({ where: { id }, data: { resolved: true } });
+    return this.databaseService.client.alert.update({
+      where: { id },
+      data: { resolved: true }
+    });
   }
 }
-
-

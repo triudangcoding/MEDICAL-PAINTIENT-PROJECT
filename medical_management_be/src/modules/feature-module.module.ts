@@ -11,7 +11,7 @@ const modules = [
   ReportsModule,
   DoctorModule,
   PatientModule,
-  NotificationsModule,
+  NotificationsModule
 ];
 
 @Global()

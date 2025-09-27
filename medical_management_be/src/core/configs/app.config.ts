@@ -9,7 +9,7 @@ const envSchema = z.object({
     .optional()
     .default(EEnvironment.Development),
   BACKEND_PORT: z.coerce.number().min(0).max(65535).optional(),
-  FRONTEND_URL: z.string(),
+  FRONTEND_URL: z.string()
 });
 
 export default registerAs<IAppConfig>('globalAppConfig', () => {
