@@ -1,4 +1,5 @@
-// Mocked doctor API for FE-only flow
+// Real doctor API calls to backend
+import { axiosInstance } from "../axios";
 import {
   AvailableDoctorsResponse,
   DoctorSchedule,
@@ -20,14 +21,26 @@ export const doctorApi = {
     });
   },
 
-  getDoctorList: async (): Promise<DoctorListResponse> => {
-    return Promise.resolve({
-      data: [
-        { id: "d1", fullName: "Dr. A", phoneNumber: "0900000001", majorDoctor: "DINH_DUONG", status: "ACTIVE" } as unknown as User,
-        { id: "d2", fullName: "Dr. B", phoneNumber: "0900000002", majorDoctor: "TAM_THAN", status: "ACTIVE" } as unknown as User,
-      ],
-      statusCode: 200,
-    });
+  getDoctorList: async (params?: {
+    q?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc';
+  }): Promise<DoctorListResponse> => {
+    const queryParams = new URLSearchParams();
+    if (params?.q) queryParams.append('q', params.q);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.sortBy) queryParams.append('sortBy', params.sortBy);
+    if (params?.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+
+    const res = await axiosInstance.get(`/doctor/doctor?${queryParams.toString()}`);
+    return {
+      data: res.data.data || res.data.items || [],
+      total: res.data.total || 0,
+      statusCode: res.status || 200,
+    };
   },
 
   getPatientList: async (): Promise<DoctorListResponse> => {
@@ -101,14 +114,21 @@ export const doctorApi = {
   },
 
   createDoctor: async (data: CreateDoctorData): Promise<User> => {
-    return Promise.resolve({ id: "d-new", ...data } as unknown as User);
+    const res = await axiosInstance.post('/doctor/doctor', data);
+    return res.data.data || res.data;
   },
 
-  updateDoctor: async (_id: string, data: UpdateDoctorData): Promise<User> => {
-    return Promise.resolve({ id: _id, ...data } as unknown as User);
+  updateDoctor: async (id: string, data: UpdateDoctorData): Promise<User> => {
+    const res = await axiosInstance.put(`/doctor/doctor/${id}`, data);
+    return res.data.data || res.data;
   },
 
-  deleteDoctor: async (_id: string): Promise<void> => {
-    return Promise.resolve();
+  deleteDoctor: async (id: string): Promise<void> => {
+    await axiosInstance.delete(`/doctor/doctor/${id}`);
+  },
+
+  getDoctor: async (id: string): Promise<User> => {
+    const res = await axiosInstance.get(`/doctor/doctor/${id}`);
+    return res.data.data || res.data;
   },
 };

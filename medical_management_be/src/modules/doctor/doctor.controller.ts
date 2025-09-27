@@ -25,6 +25,25 @@ export class DoctorController {
     }
   }
 
+  @Get('doctor')
+  async ListDoctor(
+    @UserInfo() user: IUserFromToken,
+    @Query('q') q?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc'
+  ) {
+    // Ensure user has permission to view doctors list
+    this.ensureDoctor(user);
+    return this.doctorService.ListDoctor(user.id, q, {
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined,
+      sortBy,
+      sortOrder
+    });
+  }
+
   // Hồ sơ bệnh nhân
   @Get('patients')
   async listPatients(
@@ -205,5 +224,56 @@ export class DoctorController {
   ) {
     this.ensureDoctor(user);
     return this.doctorService.resolveAlert(id);
+  }
+
+  // CRUD Operations for Doctor Management
+  @Post('doctor')
+  async createDoctor(
+    @Body() body: {
+      fullName: string;
+      phoneNumber: string;
+      password: string;
+      majorDoctor: string;
+    },
+    @UserInfo() user: IUserFromToken
+  ) {
+    this.ensureDoctor(user);
+    const doctor = await this.doctorService.createDoctor(body);
+    return { data: doctor };
+  }
+
+  @Put('doctor/:id')
+  async updateDoctor(
+    @Param('id') id: string,
+    @Body() body: {
+      fullName?: string;
+      phoneNumber?: string;
+      majorDoctor?: string;
+      status?: string;
+    },
+    @UserInfo() user: IUserFromToken
+  ) {
+    this.ensureDoctor(user);
+    const doctor = await this.doctorService.updateDoctor(id, body);
+    return { data: doctor };
+  }
+
+  @Delete('doctor/:id')
+  async deleteDoctor(
+    @Param('id') id: string,
+    @UserInfo() user: IUserFromToken
+  ) {
+    this.ensureDoctor(user);
+    return this.doctorService.deleteDoctor(id);
+  }
+
+  @Get('doctor/:id')
+  async getDoctor(
+    @Param('id') id: string,
+    @UserInfo() user: IUserFromToken
+  ) {
+    this.ensureDoctor(user);
+    const doctor = await this.doctorService.getDoctor(id);
+    return { data: doctor };
   }
 }

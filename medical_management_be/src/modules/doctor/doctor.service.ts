@@ -9,7 +9,9 @@ import {
   AdherenceStatus,
   PrescriptionStatus,
   UserRole,
-  Gender
+  Gender,
+  MajorDoctor,
+  UserStatus
 } from '@prisma/client';
 
 @Injectable()
@@ -30,6 +32,38 @@ export class DoctorService {
     return null;
   }
 
+  
+  async ListDoctor(
+    doctorId: string,
+    q?: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: string;
+      sortOrder?: 'asc' | 'desc';
+    }
+  ) {
+    const where: any = {
+      role: 'DOCTOR',
+      deletedAt: null,
+      ...(q ? { fullName: { contains: q, mode: 'insensitive' } } : {})
+    };
+    const page = params?.page && params.page > 0 ? params.page : 1;
+    const limit = params?.limit && params.limit > 0 ? params.limit : 20;
+    const orderByField = params?.sortBy || 'createdAt';
+    const orderDir = params?.sortOrder || 'desc';
+    const [items, total] = await Promise.all([
+      this.databaseService.client.user.findMany({
+        where,
+        include: { profile: true },
+        orderBy: { [orderByField]: orderDir },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      this.databaseService.client.user.count({ where })
+    ]);
+    return { data: items, total, page, limit };
+  }
   // Patients
   async listPatients(
     doctorId: string,
@@ -398,5 +432,128 @@ export class DoctorService {
       where: { id },
       data: { resolved: true }
     });
+  }
+
+  // CRUD Operations for Doctor Management
+  async createDoctor(body: {
+    fullName: string;
+    phoneNumber: string;
+    password: string;
+    majorDoctor: string;
+  }) {
+    // Validation
+    if (!body.fullName?.trim()) {
+      throw new UnprocessableEntityException('Full name is required');
+    }
+    if (!body.phoneNumber?.trim()) {
+      throw new UnprocessableEntityException('Phone number is required');
+    }
+    if (!body.password?.trim()) {
+      throw new UnprocessableEntityException('Password is required');
+    }
+    if (!body.majorDoctor?.trim()) {
+      throw new UnprocessableEntityException('Major doctor is required');
+    }
+
+    // Check if phone number already exists
+    const existing = await this.databaseService.client.user.findFirst({
+      where: { phoneNumber: body.phoneNumber }
+    });
+    if (existing) {
+      throw new UnprocessableEntityException('Phone number already exists');
+    }
+
+    // Validate majorDoctor enum
+    const validMajors = Object.values(MajorDoctor);
+    if (!validMajors.includes(body.majorDoctor as MajorDoctor)) {
+      throw new UnprocessableEntityException('Invalid major doctor');
+    }
+
+    const hashedPassword = await Utils.HashUtils.hashPassword(body.password);
+    
+    const doctor = await this.databaseService.client.user.create({
+      data: {
+        fullName: body.fullName,
+        phoneNumber: body.phoneNumber,
+        password: hashedPassword,
+        role: UserRole.DOCTOR,
+        majorDoctor: body.majorDoctor as MajorDoctor,
+        status: UserStatus.ACTIVE
+      }
+    });
+
+    return doctor;
+  }
+
+  async updateDoctor(id: string, body: {
+    fullName?: string;
+    phoneNumber?: string;
+    majorDoctor?: string;
+    status?: string;
+  }) {
+    const doctor = await this.getDoctor(id);
+
+    // Validate majorDoctor if provided
+    if (body.majorDoctor) {
+      const validMajors = Object.values(MajorDoctor);
+      if (!validMajors.includes(body.majorDoctor as MajorDoctor)) {
+        throw new UnprocessableEntityException('Invalid major doctor');
+      }
+    }
+
+    // Validate status if provided
+    if (body.status) {
+      const validStatuses = Object.values(UserStatus);
+      if (!validStatuses.includes(body.status as UserStatus)) {
+        throw new UnprocessableEntityException('Invalid status');
+      }
+    }
+
+    // Check phone number uniqueness if being updated
+    if (body.phoneNumber && body.phoneNumber !== doctor.phoneNumber) {
+      const existing = await this.databaseService.client.user.findFirst({
+        where: { phoneNumber: body.phoneNumber }
+      });
+      if (existing) {
+        throw new UnprocessableEntityException('Phone number already exists');
+      }
+    }
+
+    const updatedDoctor = await this.databaseService.client.user.update({
+      where: { id },
+      data: {
+        fullName: body.fullName,
+        phoneNumber: body.phoneNumber,
+        majorDoctor: body.majorDoctor as MajorDoctor,
+        status: body.status as UserStatus
+      }
+    });
+
+    return updatedDoctor;
+  }
+
+  async deleteDoctor(id: string) {
+    const doctor = await this.getDoctor(id);
+    
+    // Soft delete
+    await this.databaseService.client.user.update({
+      where: { id },
+      data: { deletedAt: new Date() }
+    });
+
+    return { message: 'Doctor deleted successfully' };
+  }
+
+  async getDoctor(id: string) {
+    const doctor = await this.databaseService.client.user.findUnique({
+      where: { id },
+      include: { profile: true }
+    });
+
+    if (!doctor || doctor.role !== UserRole.DOCTOR || doctor.deletedAt) {
+      throw new NotFoundException('Doctor not found');
+    }
+
+    return doctor;
   }
 }
