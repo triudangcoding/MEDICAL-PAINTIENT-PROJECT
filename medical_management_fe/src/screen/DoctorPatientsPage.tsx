@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import toast from 'react-hot-toast'
+import { X } from 'lucide-react'
 
 export default function DoctorPatientsPage() {
   const [page, setPage] = useState(1)
@@ -328,10 +329,10 @@ export default function DoctorPatientsPage() {
               </div>
               <div className="h-40 w-full overflow-y-auto rounded-md border border-border/20 bg-background/50 p-2">
                 <div className='space-y-2'>
-                  {customFields.map((row, idx) => (
-                    <div key={idx} className='grid grid-cols-5 gap-3'>
+                {customFields.map((row, idx) => (
+                  <div key={idx} className='grid grid-cols-6 gap-3 items-center'>
                       <Input 
-                        className='col-span-2 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
+                      className='col-span-2 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
                         placeholder='Khóa (ví dụ: Nhóm máu)' 
                         value={row.key} 
                         onChange={(e) => {
@@ -339,16 +340,26 @@ export default function DoctorPatientsPage() {
                         }} 
                       />
                       <Input 
-                        className='col-span-3 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
+                      className='col-span-3 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
                         placeholder='Giá trị (ví dụ: O+)'
                         value={row.value}
                         onChange={(e) => setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, value: e.target.value } : r))}
                       />
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      className='justify-self-end h-8 w-8 p-0 hover:bg-accent/50'
+                      onClick={() => setCustomFields((prev) => prev.filter((_, i) => i !== idx))}
+                      aria-label='Xóa dòng'
+                    >
+                      <X className='h-4 w-4 text-muted-foreground' />
+                    </Button>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className='flex items-center gap-2 pt-2'>
+            <div className='flex items-center gap-2 pt-2'>
                 <Button 
                   type='button' 
                   variant='outline' 
@@ -358,17 +369,6 @@ export default function DoctorPatientsPage() {
                 >
                   Thêm dòng
                 </Button>
-                {customFields.length > 1 && (
-                  <Button 
-                    type='button' 
-                    variant='outline' 
-                    size='sm' 
-                    className="transition-all duration-200 hover:bg-accent/50"
-                    onClick={() => setCustomFields((p) => p.slice(0, -1))}
-                  >
-                    Bớt dòng
-                  </Button>
-                )}
               </div>
             </div>
           </div>

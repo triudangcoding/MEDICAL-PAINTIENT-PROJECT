@@ -22,7 +22,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff, X } from "lucide-react"
 import { useState } from "react"
 // import { Checkbox } from "@/components/ui/checkbox"
 import toast from "react-hot-toast"
@@ -380,10 +380,10 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
               </div>
               <div className="h-40 w-full overflow-y-auto rounded-md border border-border/20 bg-background/50 p-2">
                 <div className='space-y-2'>
-                  {customFields.map((row, idx) => (
-                    <div key={idx} className='grid grid-cols-5 gap-3'>
+                {customFields.map((row, idx) => (
+                  <div key={idx} className='grid grid-cols-6 gap-3 items-center'>
                       <Input 
-                        className='col-span-2 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
+                      className='col-span-2 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
                         placeholder='Khóa (ví dụ: Nhóm máu)' 
                         value={row.key} 
                         onChange={(e) => {
@@ -391,16 +391,26 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                         }} 
                       />
                       <Input 
-                        className='col-span-3 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
+                      className='col-span-3 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
                         placeholder='Giá trị (ví dụ: O+)'
                         value={row.value}
                         onChange={(e) => setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, value: e.target.value } : r))}
                       />
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      className='justify-self-end h-8 w-8 p-0 hover:bg-accent/50'
+                      onClick={() => setCustomFields((prev) => prev.filter((_, i) => i !== idx))}
+                      aria-label='Xóa dòng'
+                    >
+                      <X className='h-4 w-4 text-muted-foreground' />
+                    </Button>
                     </div>
                   ))}
                 </div>
               </div>
-              <div className='flex items-center gap-2 pt-2'>
+            <div className='flex items-center gap-2 pt-2'>
                 <Button 
                   type='button' 
                   variant='outline' 
@@ -410,17 +420,6 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                 >
                   Thêm dòng
                 </Button>
-                {customFields.length > 1 && (
-                  <Button 
-                    type='button' 
-                    variant='outline' 
-                    size='sm' 
-                    className="transition-all duration-200 hover:bg-accent/50"
-                    onClick={() => setCustomFields((p) => p.slice(0, -1))}
-                  >
-                    Bớt dòng
-                  </Button>
-                )}
               </div>
             </div>
             <DialogFooter className="gap-3">
