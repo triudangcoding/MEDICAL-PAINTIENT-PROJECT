@@ -107,6 +107,7 @@ export class DoctorController {
       lifestyle?: string;
       currentMedications?: string[];
       notes?: string;
+      extras?: Record<string, any>;
     },
     @UserInfo() user: IUserFromToken
   ) {

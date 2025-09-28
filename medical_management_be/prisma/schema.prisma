@@ -89,6 +89,8 @@ model PatientMedicalHistory {
   currentMedications String[] @default([])
   // Ghi chú thêm
   notes              String?
+  // Thông tin tùy chỉnh (JSON)
+  extras             Json?
   // Ngày tạo/cập nhật
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt

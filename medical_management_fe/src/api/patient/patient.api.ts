@@ -62,8 +62,25 @@ export const patientApi = {
         const total = payload.total ?? 0;
         const currentPage = payload.page ?? page;
         const perPage = payload.limit ?? limit;
+        
+        // Transform backend data structure to match frontend expectations
+        const transformedItems = items.map((item: any) => ({
+            id: item.id,
+            fullName: item.fullName,
+            phoneNumber: item.phoneNumber,
+            status: item.status || 'ACTIVE',
+            role: item.role || 'PATIENT',
+            userInfo: item.profile ? {
+                id: item.id,
+                gender: item.profile.gender || 'OTHER',
+                birthYear: item.profile.birthDate ? new Date(item.profile.birthDate).getFullYear() : null,
+                specificAddress: item.profile.address || ''
+            } : null,
+            medicalHistory: item.medicalHistory || null
+        }));
+        
         return {
-            data: items,
+            data: transformedItems,
             pagination: {
                 total,
                 limit: perPage,
@@ -145,6 +162,21 @@ export const patientApi = {
 
     async getAlerts() {
         const res = await axiosInstance.get('/patient/alerts');
+        return res.data?.data ?? res.data;
+    },
+
+    // Doctor endpoints for patient history management
+    async updatePatientHistory(patientId: string, historyData: {
+        conditions?: string[];
+        allergies?: string[];
+        surgeries?: string[];
+        familyHistory?: string;
+        lifestyle?: string;
+        currentMedications?: string[];
+        notes?: string;
+        extras?: Record<string, string>;
+    }) {
+        const res = await axiosInstance.put(`/doctor/patients/${patientId}/history`, historyData);
         return res.data?.data ?? res.data;
     },
 };

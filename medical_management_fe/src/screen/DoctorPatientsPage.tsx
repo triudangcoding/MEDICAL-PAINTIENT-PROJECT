@@ -49,38 +49,71 @@ export default function DoctorPatientsPage() {
   const statusColor = (status?: string) =>
     status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : status === 'INACTIVE' ? 'bg-zinc-100 text-zinc-600' : 'bg-amber-100 text-amber-700'
 
-  const openHistory = (p: any) => {
-    setHistoryPatient(p)
-    // Preload from patient.userInfo/medicalHistory if available
-    const mh = p.medicalHistory || {}
-    setHistoryForm({
-      conditions: mh.conditions || [],
-      allergies: mh.allergies || [],
-      surgeries: mh.surgeries || [],
-      familyHistory: mh.familyHistory || '',
-      lifestyle: mh.lifestyle || '',
-      currentMedications: mh.currentMedications || [],
-      notes: mh.notes || '',
-      conditionsOther: mh.conditionsOther || '',
-      allergiesOther: mh.allergiesOther || '',
-      surgeriesOther: mh.surgeriesOther || ''
-    })
-    const extras = mh.extras || {}
-    const rows = Object.keys(extras).length > 0 ? Object.entries(extras).map(([k,v]: any) => ({ key: k, value: String(v) })) : [{ key: '', value: '' }]
-    setCustomFields(rows)
-    setIsHistoryOpen(true)
+  const openHistory = async (p: any) => {
+    try {
+      // Always fetch latest detail to ensure UI shows persisted values
+      const latest = await patientApi.getPatientDetailForDoctor(p.id)
+      const patient = latest?.data ?? latest ?? p
+      setHistoryPatient(patient)
+      const mh = patient.medicalHistory || {}
+      setHistoryForm({
+        conditions: mh.conditions || [],
+        allergies: mh.allergies || [],
+        surgeries: mh.surgeries || [],
+        familyHistory: mh.familyHistory || '',
+        lifestyle: mh.lifestyle || '',
+        currentMedications: mh.currentMedications || [],
+        notes: mh.notes || '',
+        conditionsOther: mh.conditionsOther || '',
+        allergiesOther: mh.allergiesOther || '',
+        surgeriesOther: mh.surgeriesOther || ''
+      })
+      const extras = mh.extras || {}
+      const rows = Object.keys(extras).length > 0 ? Object.entries(extras).map(([k, v]: any) => ({ key: String(k), value: String(v) })) : [{ key: '', value: '' }]
+      setCustomFields(rows)
+      setIsHistoryOpen(true)
+    } catch (error) {
+      console.error('Failed to load latest patient detail:', error)
+      // fallback to existing data
+      setHistoryPatient(p)
+      setIsHistoryOpen(true)
+    }
   }
 
   const saveHistory = async () => {
     if (!historyPatient?.id) return
     try {
+      // Merge "Khác" inputs into arrays before saving
+      const mergedConditions = Array.from(new Set([
+        ...((historyForm.conditions || []).map(s => s.trim()).filter(Boolean)),
+        ...(historyForm.conditionsOther?.trim() ? [historyForm.conditionsOther.trim()] : [])
+      ]))
+      const mergedAllergies = Array.from(new Set([
+        ...((historyForm.allergies || []).map(s => s.trim()).filter(Boolean)),
+        ...(historyForm.allergiesOther?.trim() ? [historyForm.allergiesOther.trim()] : [])
+      ]))
+      const mergedSurgeries = Array.from(new Set([
+        ...((historyForm.surgeries || []).map(s => s.trim()).filter(Boolean)),
+        ...(historyForm.surgeriesOther?.trim() ? [historyForm.surgeriesOther.trim()] : [])
+      ]))
+
       const extras = customFields.filter(f => f.key && f.value).reduce((acc, cur) => { acc[cur.key] = cur.value; return acc; }, {} as Record<string, string>)
-      await patientApi.updatePatientHistory(historyPatient.id, { ...historyForm, extras })
+      await patientApi.updatePatientHistory(historyPatient.id, {
+        conditions: mergedConditions,
+        allergies: mergedAllergies,
+        surgeries: mergedSurgeries,
+        familyHistory: historyForm.familyHistory,
+        lifestyle: historyForm.lifestyle,
+        currentMedications: (historyForm.currentMedications || []).map(s => s.trim()).filter(Boolean),
+        notes: historyForm.notes,
+        extras
+      })
       toast.success('Lưu tiền sử bệnh án thành công')
       setIsHistoryOpen(false)
       setHistoryPatient(null)
       refetch()
-    } catch {
+    } catch (error) {
+      console.error('Error saving medical history:', error);
       toast.error('Không thể lưu tiền sử bệnh án')
     }
   }
@@ -131,7 +164,9 @@ export default function DoctorPatientsPage() {
                       </div>
                       <div className="mt-1 text-xs text-muted-foreground truncate">{p.phoneNumber}</div>
                       {p.userInfo && (
-                        <div className="mt-2 text-xs text-muted-foreground truncate">{p.userInfo.gender} • {p.userInfo.birthYear}</div>
+                        <div className="mt-2 text-xs text-muted-foreground truncate">
+                          {p.userInfo.gender} • {p.userInfo.birthYear || 'N/A'}
+                        </div>
                       )}
                       <div className="mt-3 flex items-center gap-2">
                         <Button variant="outline" size="sm" onClick={() => setEditPatient(p)}>Sửa</Button>
@@ -199,130 +234,158 @@ export default function DoctorPatientsPage() {
 
       {/* Medical History Dialog */}
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent className="sm:max-w-[720px]">
+        <DialogContent className="sm:max-w-[800px]">
           <DialogHeader>
-            <DialogTitle>Tiền sử bệnh án</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">Tiền sử bệnh án</DialogTitle>
             <DialogDescription>Nhập/điều chỉnh thông tin tiền sử cho bệnh nhân</DialogDescription>
           </DialogHeader>
-          <div className='space-y-6'>
+          <div className='space-y-4'>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <div>
-                <div className='text-sm font-medium text-foreground mb-2'>Bệnh nền</div>
-                <div className='flex flex-wrap gap-2'>
-                  {['Đái tháo đường', 'Tăng huyết áp', 'Hen phế quản', 'Tim mạch'].map((c) => (
-                    <label key={c} className='inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border/30 text-sm cursor-pointer'>
-                      <Checkbox checked={historyForm.conditions.includes(c)} onCheckedChange={(v) => {
-                        const checked = !!v;
-                        setHistoryForm((prev) => ({
-                          ...prev,
-                          conditions: checked ? Array.from(new Set([...prev.conditions, c])) : prev.conditions.filter(x => x !== c)
-                        }));
-                      }} />
-                      <span>{c}</span>
-                    </label>
-                  ))}
+              <div className='rounded-xl border border-border/20 bg-gradient-to-br from-background to-background/50 p-4 shadow-sm'>
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                  <h3 className="text-sm font-semibold text-foreground">Tình trạng sức khỏe</h3>
                 </div>
-                <div className='mt-2 grid grid-cols-5 gap-2 items-center'>
-                  <span className='text-xs text-muted-foreground col-span-1'>Khác</span>
-                  <Input className='col-span-4' placeholder='Nhập bệnh nền khác'
-                    value={historyForm.conditionsOther || ''}
-                    onChange={(e) => setHistoryForm((p) => ({ ...p, conditionsOther: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div>
-                <div className='text-sm font-medium text-foreground mb-2'>Dị ứng</div>
-                <div className='flex flex-wrap gap-2'>
-                  {['Penicillin', 'Hải sản', 'Phấn hoa'].map((c) => (
-                    <label key={c} className='inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border/30 text-sm cursor-pointer'>
-                      <Checkbox checked={historyForm.allergies.includes(c)} onCheckedChange={(v) => {
-                        const checked = !!v;
-                        setHistoryForm((prev) => ({
-                          ...prev,
-                          allergies: checked ? Array.from(new Set([...prev.allergies, c])) : prev.allergies.filter(x => x !== c)
-                        }));
-                      }} />
-                      <span>{c}</span>
-                    </label>
-                  ))}
-                </div>
-                <div className='mt-2 grid grid-cols-5 gap-2 items-center'>
-                  <span className='text-xs text-muted-foreground col-span-1'>Khác</span>
-                  <Input className='col-span-4' placeholder='Nhập dị ứng khác'
-                    value={historyForm.allergiesOther || ''}
-                    onChange={(e) => setHistoryForm((p) => ({ ...p, allergiesOther: e.target.value }))}
-                  />
+                <div className='grid gap-3'>
+                  <div>
+                    <label className='text-xs font-medium text-muted-foreground mb-2 block'>Bệnh nền</label>
+                    <Input 
+                      placeholder='Ví dụ: Đái tháo đường, Tăng huyết áp...'
+                      className="transition-all duration-200 focus:ring-2 focus:ring-emerald-500/20"
+                      value={historyForm.conditions.join(', ')}
+                      onChange={(e) => setHistoryForm((p) => ({ ...p, conditions: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                    />
+                  </div>
+                  <div>
+                    <label className='text-xs font-medium text-muted-foreground mb-2 block'>Dị ứng</label>
+                    <Input 
+                      placeholder='Ví dụ: Penicillin, Hải sản...'
+                      className="transition-all duration-200 focus:ring-2 focus:ring-emerald-500/20"
+                      value={historyForm.allergies.join(', ')}
+                      onChange={(e) => setHistoryForm((p) => ({ ...p, allergies: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                    />
+                  </div>
+                  <div>
+                    <label className='text-xs font-medium text-muted-foreground mb-2 block'>Phẫu thuật</label>
+                    <Input 
+                      placeholder='Ví dụ: Cắt ruột thừa, Mổ tim...'
+                      className="transition-all duration-200 focus:ring-2 focus:ring-emerald-500/20"
+                      value={historyForm.surgeries.join(', ')}
+                      onChange={(e) => setHistoryForm((p) => ({ ...p, surgeries: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                    />
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className='text-sm font-medium text-foreground mb-2'>Phẫu thuật</div>
-                <div className='flex flex-wrap gap-2'>
-                  {['Cắt ruột thừa', 'Mổ tim', 'Mổ đẻ'].map((c) => (
-                    <label key={c} className='inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border/30 text-sm cursor-pointer'>
-                      <Checkbox checked={historyForm.surgeries.includes(c)} onCheckedChange={(v) => {
-                        const checked = !!v;
-                        setHistoryForm((prev) => ({
-                          ...prev,
-                          surgeries: checked ? Array.from(new Set([...prev.surgeries, c])) : prev.surgeries.filter(x => x !== c)
-                        }));
-                      }} />
-                      <span>{c}</span>
-                    </label>
-                  ))}
+              <div className='rounded-xl border border-border/20 bg-gradient-to-br from-background to-background/50 p-4 shadow-sm'>
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+                  <h3 className="text-sm font-semibold text-foreground">Thông tin bổ sung</h3>
                 </div>
-                <div className='mt-2 grid grid-cols-5 gap-2 items-center'>
-                  <span className='text-xs text-muted-foreground col-span-1'>Khác</span>
-                  <Input className='col-span-4' placeholder='Nhập phẫu thuật khác'
-                    value={historyForm.surgeriesOther || ''}
-                    onChange={(e) => setHistoryForm((p) => ({ ...p, surgeriesOther: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className='grid gap-3'>
-                <div>
-                  <div className='text-sm font-medium text-foreground mb-2'>Tiền sử gia đình</div>
-                  <Input placeholder='Ví dụ: Tiểu đường, tim mạch...' value={historyForm.familyHistory || ''} onChange={(e) => setHistoryForm((p) => ({ ...p, familyHistory: e.target.value }))} />
-                </div>
-                <div>
-                  <div className='text-sm font-medium text-foreground mb-2'>Lối sống</div>
-                  <Input placeholder='Ví dụ: Hút thuốc, rượu bia, ít vận động...' value={historyForm.lifestyle || ''} onChange={(e) => setHistoryForm((p) => ({ ...p, lifestyle: e.target.value }))} />
-                </div>
-                <div>
-                  <div className='text-sm font-medium text-foreground mb-2'>Thuốc đang dùng</div>
-                  <Input placeholder='Nhập tên thuốc, ngăn cách bởi dấu phẩy' value={historyForm.currentMedications.join(', ')} onChange={(e) => setHistoryForm((p) => ({ ...p, currentMedications: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} />
-                </div>
-                <div>
-                  <div className='text-sm font-medium text-foreground mb-2'>Ghi chú</div>
-                  <Input placeholder='Ghi chú khác' value={historyForm.notes || ''} onChange={(e) => setHistoryForm((p) => ({ ...p, notes: e.target.value }))} />
+                <div className='grid gap-3'>
+                  <div>
+                    <label className='text-xs font-medium text-muted-foreground mb-2 block'>Tiền sử gia đình</label>
+                    <Input 
+                      placeholder='Ví dụ: Tiểu đường, tim mạch...' 
+                      className="transition-all duration-200 focus:ring-2 focus:ring-amber-500/20"
+                      value={historyForm.familyHistory || ''} 
+                      onChange={(e) => setHistoryForm((p) => ({ ...p, familyHistory: e.target.value }))} 
+                    />
+                  </div>
+                  <div>
+                    <label className='text-xs font-medium text-muted-foreground mb-2 block'>Lối sống</label>
+                    <Input 
+                      placeholder='Ví dụ: Hút thuốc, rượu bia, ít vận động...' 
+                      className="transition-all duration-200 focus:ring-2 focus:ring-amber-500/20"
+                      value={historyForm.lifestyle || ''} 
+                      onChange={(e) => setHistoryForm((p) => ({ ...p, lifestyle: e.target.value }))} 
+                    />
+                  </div>
+                  <div>
+                    <label className='text-xs font-medium text-muted-foreground mb-2 block'>Thuốc đang dùng</label>
+                    <Input 
+                      placeholder='Ví dụ: Aspirin, Metformin...' 
+                      className="transition-all duration-200 focus:ring-2 focus:ring-amber-500/20"
+                      value={historyForm.currentMedications.join(', ')} 
+                      onChange={(e) => setHistoryForm((p) => ({ ...p, currentMedications: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))} 
+                    />
+                  </div>
+                  <div>
+                    <label className='text-xs font-medium text-muted-foreground mb-2 block'>Ghi chú</label>
+                    <Input 
+                      placeholder='Ghi chú khác' 
+                      className="transition-all duration-200 focus:ring-2 focus:ring-amber-500/20"
+                      value={historyForm.notes || ''} 
+                      onChange={(e) => setHistoryForm((p) => ({ ...p, notes: e.target.value }))} 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-            <div className='grid gap-3'>
-              <div className='text-sm font-medium text-foreground'>Thông tin khác</div>
-              <div className='space-y-2'>
-                {customFields.map((row, idx) => (
-                  <div key={idx} className='grid grid-cols-5 gap-2'>
-                    <Input className='col-span-2' placeholder='Khóa (ví dụ: Nhóm máu)'
-                      value={row.key}
-                      onChange={(e) => setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, key: e.target.value } : r))}
-                    />
-                    <Input className='col-span-3' placeholder='Giá trị (ví dụ: O+)'
-                      value={row.value}
-                      onChange={(e) => setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, value: e.target.value } : r))}
-                    />
-                  </div>) )}
-                <div className='flex items-center gap-2'>
-                  <Button type='button' variant='outline' size='sm' onClick={() => setCustomFields((p) => [...p, { key: '', value: '' }])}>Thêm dòng</Button>
-                  {customFields.length > 1 && (
-                    <Button type='button' variant='outline' size='sm' onClick={() => setCustomFields((p) => p.slice(0, -1))}>Bớt dòng</Button>
-                  )}
+            <div className='rounded-xl border border-border/20 bg-gradient-to-br from-background to-background/50 p-4 shadow-sm'>
+              <div className="mb-3 flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-purple-500"></div>
+                <h3 className="text-sm font-semibold text-foreground">Thông tin tùy chỉnh</h3>
+              </div>
+              <div className="h-40 w-full overflow-y-auto rounded-md border border-border/20 bg-background/50 p-2">
+                <div className='space-y-2'>
+                  {customFields.map((row, idx) => (
+                    <div key={idx} className='grid grid-cols-5 gap-3'>
+                      <Input 
+                        className='col-span-2 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
+                        placeholder='Khóa (ví dụ: Nhóm máu)' 
+                        value={row.key} 
+                        onChange={(e) => {
+                          setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, key: e.target.value } : r))
+                        }} 
+                      />
+                      <Input 
+                        className='col-span-3 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20' 
+                        placeholder='Giá trị (ví dụ: O+)'
+                        value={row.value}
+                        onChange={(e) => setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, value: e.target.value } : r))}
+                      />
+                    </div>
+                  ))}
                 </div>
+              </div>
+              <div className='flex items-center gap-2 pt-2'>
+                <Button 
+                  type='button' 
+                  variant='outline' 
+                  size='sm' 
+                  className="transition-all duration-200 hover:bg-accent/50"
+                  onClick={() => setCustomFields((p) => [...p, { key: '', value: '' }])}
+                >
+                  Thêm dòng
+                </Button>
+                {customFields.length > 1 && (
+                  <Button 
+                    type='button' 
+                    variant='outline' 
+                    size='sm' 
+                    className="transition-all duration-200 hover:bg-accent/50"
+                    onClick={() => setCustomFields((p) => p.slice(0, -1))}
+                  >
+                    Bớt dòng
+                  </Button>
+                )}
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant='outline' onClick={() => setIsHistoryOpen(false)}>Đóng</Button>
-            <Button onClick={saveHistory} className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">Lưu</Button>
+          <DialogFooter className="gap-3">
+            <Button 
+              variant='outline' 
+              className="transition-all duration-200 hover:bg-accent/50"
+              onClick={() => setIsHistoryOpen(false)}
+            >
+              Đóng
+            </Button>
+            <Button 
+              onClick={saveHistory} 
+              className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm transition-all duration-200 hover:shadow-md hover:from-emerald-600 hover:to-teal-600"
+            >
+              Lưu tiền sử
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

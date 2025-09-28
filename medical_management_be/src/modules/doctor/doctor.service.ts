@@ -211,6 +211,7 @@ export class DoctorService {
       lifestyle?: string;
       currentMedications?: string[];
       notes?: string;
+      extras?: Record<string, any>;
     }
   ) {
     const user = await this.getPatient(id);
@@ -228,7 +229,8 @@ export class DoctorService {
           familyHistory: body.familyHistory,
           lifestyle: body.lifestyle,
           currentMedications: body.currentMedications ?? [],
-          notes: body.notes
+          notes: body.notes,
+          extras: body.extras
         }
       });
     } else {
@@ -241,7 +243,8 @@ export class DoctorService {
           familyHistory: body.familyHistory,
           lifestyle: body.lifestyle,
           currentMedications: body.currentMedications,
-          notes: body.notes
+          notes: body.notes,
+          extras: body.extras
         }
       });
     }
