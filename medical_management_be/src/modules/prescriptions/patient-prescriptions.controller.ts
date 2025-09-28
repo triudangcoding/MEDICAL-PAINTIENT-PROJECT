@@ -25,6 +25,12 @@ export class PatientPrescriptionsController {
     @Query('limit') limit?: string,
     @Query('status') status?: PrescriptionStatus
   ) {
+    console.log('=== PATIENT GET PRESCRIPTIONS DEBUG ===');
+    console.log('User:', user);
+    console.log('User roles:', user.roles);
+    console.log('User ID:', user.id);
+    console.log('Query params:', { page, limit, status });
+    
     if (user.roles !== UserRole.PATIENT) {
       throw new HttpException('Chỉ bệnh nhân mới có thể xem đơn thuốc của mình', HttpStatus.FORBIDDEN);
     }
@@ -34,6 +40,30 @@ export class PatientPrescriptionsController {
       limit: limit ? parseInt(limit) : undefined,
       status
     });
+  }
+
+  @Get(':id')
+  async getPrescriptionDetail(
+    @Param('id') prescriptionId: string,
+    @UserInfo() user: IUserFromToken
+  ) {
+    console.log('=== PATIENT GET PRESCRIPTION DETAIL DEBUG ===');
+    console.log('User:', user);
+    console.log('Prescription ID:', prescriptionId);
+    
+    if (user.roles !== UserRole.PATIENT) {
+      throw new HttpException('Chỉ bệnh nhân mới có thể xem chi tiết đơn thuốc', HttpStatus.FORBIDDEN);
+    }
+
+    const prescription = await this.prescriptionsService.getPrescriptionById(prescriptionId);
+    
+    // Verify prescription belongs to patient
+    if (prescription.patientId !== user.id) {
+      throw new HttpException('Bạn không có quyền xem đơn thuốc này', HttpStatus.FORBIDDEN);
+    }
+
+    console.log('Prescription found:', { id: prescription.id, patientId: prescription.patientId, doctorId: prescription.doctorId });
+    return prescription;
   }
 
   @Get('schedule')

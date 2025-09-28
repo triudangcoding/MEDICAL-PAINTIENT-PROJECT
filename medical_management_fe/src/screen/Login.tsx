@@ -20,8 +20,8 @@ export default function Login() {
       let target = "/dashboard";
       try {
         const role = rolesRaw ? (JSON.parse(rolesRaw) as string[])[0] : null;
-        if (role === "DOCTOR") target = "/dashboard/patients";
-        else if (role === "PATIENT") target = "/dashboard/health-overview";
+        if (role === "DOCTOR") target = "/dashboard/doctor-patients";
+        else if (role === "PATIENT") target = "/dashboard/patients";
       } catch {}
       navigate(target);
     }
@@ -78,7 +78,7 @@ export default function Login() {
 
       // Navigate based on role
       const role = res.user.role;
-      const target = role === "DOCTOR" ? "/dashboard/patients" : role === "PATIENT" ? "/dashboard/health-overview" : "/dashboard";
+      const target = role === "DOCTOR" ? "/dashboard/doctor-patients" : role === "PATIENT" ? "/dashboard/patients" : "/dashboard";
 
       toast.success("Login successful! Redirecting...", {
         duration: 800,

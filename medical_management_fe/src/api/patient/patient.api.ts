@@ -150,7 +150,7 @@ export const patientApi = {
     },
 
     async confirmIntake(prescriptionId: string, body: { prescriptionItemId: string; takenAt: string; status: string; notes?: string }) {
-        const res = await axiosInstance.post(`/patient/prescriptions/${prescriptionId}/confirm`, body);
+        const res = await axiosInstance.post(`/patient/prescriptions/${prescriptionId}/confirm-taken`, body);
         return res.data?.data ?? res.data;
     },
 

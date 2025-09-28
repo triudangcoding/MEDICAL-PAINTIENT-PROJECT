@@ -49,7 +49,7 @@ const adminMenuItems = [
 const doctorOnlyMenuItems = [
   {
     title: "Bệnh nhân",
-    url: "/dashboard/patients",
+    url: "/dashboard/doctor-patients",
     icon: Users,
   }
 ];

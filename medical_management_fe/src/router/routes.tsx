@@ -29,8 +29,8 @@ const getPrimaryRole = (): "ADMIN" | "DOCTOR" | "PATIENT" | null => {
 
 const roleToDefaultPath = (role: ReturnType<typeof getPrimaryRole>) => {
   if (role === "ADMIN") return "/dashboard";
-  if (role === "DOCTOR") return "/dashboard/patients";
-  if (role === "PATIENT") return "/dashboard/health-overview";
+  if (role === "DOCTOR") return "/dashboard/doctor-patients";
+  if (role === "PATIENT") return "/dashboard/patients";
   return "/dashboard";
 };
 
@@ -68,6 +68,10 @@ export const routes: RouteObject[] = [
       },
       {
         path: "patients",
+        element: <PatientPage />,
+      },
+      {
+        path: "doctor-patients",
         element: <DoctorPatientsPage />,
       },
       {

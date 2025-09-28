@@ -317,6 +317,10 @@ export class PrescriptionsService {
     limit?: number;
     status?: PrescriptionStatus;
   }) {
+    console.log('=== GET PRESCRIPTIONS BY PATIENT DEBUG ===');
+    console.log('Patient ID:', patientId);
+    console.log('Params:', params);
+    
     const page = params?.page && params.page > 0 ? params.page : 1;
     const limit = params?.limit && params.limit > 0 ? params.limit : 20;
     
@@ -324,6 +328,8 @@ export class PrescriptionsService {
     if (params?.status) {
       where.status = params.status;
     }
+    
+    console.log('Where clause:', where);
 
     const [items, total] = await Promise.all([
       this.databaseService.client.prescription.findMany({
@@ -355,6 +361,11 @@ export class PrescriptionsService {
       }),
       this.databaseService.client.prescription.count({ where })
     ]);
+
+    console.log('Query results:');
+    console.log('Items count:', items.length);
+    console.log('Total count:', total);
+    console.log('Items:', items.map(item => ({ id: item.id, patientId: item.patientId, status: item.status })));
 
     return { items, total, page, limit };
   }
