@@ -109,6 +109,8 @@ export default function DoctorPatientsPage() {
 
   const [historyPatient, setHistoryPatient] = useState<any | null>(null)
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
+  const [selectedPrescriptionId, setSelectedPrescriptionId] = useState<string | null>(null)
+  const [isPrescriptionDetailOpen, setIsPrescriptionDetailOpen] = useState(false)
   const [historyForm, setHistoryForm] = useState<{
     conditions: string[];
     allergies: string[];
@@ -224,6 +226,13 @@ export default function DoctorPatientsPage() {
       console.log('Current patient ID:', historyPatient?.id);
       return filtered;
     }
+  });
+
+  // Prescription detail query
+  const { data: prescriptionDetail, isLoading: loadingPrescriptionDetail } = useQuery({
+    queryKey: ['prescription-detail', selectedPrescriptionId],
+    queryFn: () => DoctorApi.getPrescription(selectedPrescriptionId!),
+    enabled: !!selectedPrescriptionId && isPrescriptionDetailOpen,
   });
 
   // Create prescription mutation
@@ -1234,10 +1243,25 @@ export default function DoctorPatientsPage() {
                     <div className="text-center py-8 text-red-500">
                       <p className="text-sm">Lỗi tải đơn thuốc: {prescriptionsError.message}</p>
                     </div>
-                  ) : patientPrescriptions && patientPrescriptions.length > 0 ? (
+                  ) : (() => {
+                    console.log('=== UI RENDER DEBUG ===');
+                    console.log('patientPrescriptions:', patientPrescriptions);
+                    console.log('patientPrescriptions type:', typeof patientPrescriptions);
+                    console.log('patientPrescriptions isArray:', Array.isArray(patientPrescriptions));
+                    console.log('patientPrescriptions length:', patientPrescriptions?.length);
+                    console.log('Condition check:', patientPrescriptions && patientPrescriptions.length > 0);
+                    return patientPrescriptions && patientPrescriptions.length > 0;
+                  })() ? (
                     <div className="space-y-4">
                       {patientPrescriptions.map((prescription: any) => (
-                        <div key={prescription.id} className="p-4 border border-border/20 rounded-lg bg-gradient-to-br from-muted/10 to-muted/5">
+                        <div 
+                          key={prescription.id} 
+                          className="p-4 border border-border/20 rounded-lg bg-gradient-to-br from-muted/10 to-muted/5 cursor-pointer hover:shadow-md transition-all duration-200"
+                          onClick={() => {
+                            setSelectedPrescriptionId(prescription.id);
+                            setIsPrescriptionDetailOpen(true);
+                          }}
+                        >
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
                               <Badge variant="outline" className="text-xs">
@@ -1469,6 +1493,209 @@ export default function DoctorPatientsPage() {
                 Lưu tiền sử
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Prescription Detail Dialog */}
+      <Dialog open={isPrescriptionDetailOpen} onOpenChange={setIsPrescriptionDetailOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pill className="h-5 w-5 text-primary" />
+              Chi tiết đơn thuốc
+            </DialogTitle>
+            <DialogDescription>
+              Thông tin chi tiết về đơn thuốc và lịch sử uống thuốc
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingPrescriptionDetail ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-3 text-muted-foreground">Đang tải chi tiết đơn thuốc...</span>
+            </div>
+          ) : prescriptionDetail ? (
+            <div className="space-y-6">
+              {/* Prescription Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Thông tin đơn thuốc</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Mã đơn thuốc</label>
+                      <p className="text-sm font-mono bg-muted/20 p-2 rounded">{prescriptionDetail.id}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Trạng thái</label>
+                      <div className="mt-1">
+                        <Badge variant={prescriptionDetail.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                          {prescriptionDetail.status === 'ACTIVE' ? 'Đang điều trị' : prescriptionDetail.status}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Ngày bắt đầu</label>
+                      <p className="text-sm">
+                        {prescriptionDetail.startDate ? 
+                          new Date(prescriptionDetail.startDate).toLocaleDateString('vi-VN') : 'N/A'
+                        }
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Ngày kết thúc</label>
+                      <p className="text-sm">
+                        {prescriptionDetail.endDate ? 
+                          new Date(prescriptionDetail.endDate).toLocaleDateString('vi-VN') : 'Đang điều trị'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {prescriptionDetail.notes && (
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Ghi chú</label>
+                      <p className="text-sm bg-muted/20 p-3 rounded mt-1">{prescriptionDetail.notes}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Patient Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Thông tin bệnh nhân</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Họ và tên</label>
+                      <p className="text-sm font-medium">{prescriptionDetail.patient?.fullName || 'Chưa cập nhật'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Số điện thoại</label>
+                      <p className="text-sm">{prescriptionDetail.patient?.phoneNumber || 'Chưa cập nhật'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Doctor Info */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Thông tin bác sĩ</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Họ và tên</label>
+                      <p className="text-sm font-medium">{prescriptionDetail.doctor?.fullName || 'Chưa cập nhật'}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-muted-foreground">Chuyên khoa</label>
+                      <p className="text-sm">{prescriptionDetail.doctor?.majorDoctor || 'Chưa cập nhật'}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Medications */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Danh sách thuốc</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {prescriptionDetail.items?.map((item: any, idx: number) => (
+                      <div key={idx} className="border border-border/20 rounded-lg p-4 bg-muted/10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">Tên thuốc</label>
+                            <p className="text-sm font-medium">{item.medication?.name || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">Liều lượng</label>
+                            <p className="text-sm">{item.dosage || 'Chưa xác định'}</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">Tần suất</label>
+                            <p className="text-sm">{item.frequencyPerDay} lần/ngày</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">Thời gian uống</label>
+                            <p className="text-sm">{item.timesOfDay?.join(', ') || 'Chưa xác định'}</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">Số ngày</label>
+                            <p className="text-sm">{item.durationDays} ngày</p>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium text-muted-foreground">Đường dùng</label>
+                            <p className="text-sm">{item.route || 'Chưa xác định'}</p>
+                          </div>
+                        </div>
+                        {item.instructions && (
+                          <div className="mt-3">
+                            <label className="text-sm font-medium text-muted-foreground">Hướng dẫn sử dụng</label>
+                            <p className="text-sm bg-muted/20 p-2 rounded mt-1">{item.instructions}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Adherence Logs */}
+              {prescriptionDetail.logs && prescriptionDetail.logs.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Lịch sử uống thuốc</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {prescriptionDetail.logs.map((log: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between p-3 border border-border/20 rounded-lg bg-muted/10">
+                          <div className="flex items-center gap-3">
+                            <Badge variant={log.status === 'TAKEN' ? 'default' : 'destructive'}>
+                              {log.status === 'TAKEN' ? 'Đã uống' : 'Bỏ lỡ'}
+                            </Badge>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {new Date(log.takenAt).toLocaleDateString('vi-VN')} {new Date(log.takenAt).toLocaleTimeString('vi-VN')}
+                              </p>
+                              {log.amount && (
+                                <p className="text-xs text-muted-foreground">Liều lượng: {log.amount}</p>
+                              )}
+                            </div>
+                          </div>
+                          {log.notes && (
+                            <p className="text-xs text-muted-foreground max-w-xs truncate">{log.notes}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <Pill className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">Không tìm thấy đơn thuốc</h3>
+              <p className="text-muted-foreground">Đơn thuốc này có thể đã bị xóa hoặc không tồn tại</p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsPrescriptionDetailOpen(false)}
+            >
+              Đóng
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

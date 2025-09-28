@@ -94,7 +94,7 @@ export const DoctorApi = {
 
   getPrescription: async (id: string) => {
     const res = await axiosInstance.get(`/doctor/prescriptions/${id}`);
-    return res.data;
+    return res.data?.data ?? res.data;
   },
 
   createPrescription: async (dto: {

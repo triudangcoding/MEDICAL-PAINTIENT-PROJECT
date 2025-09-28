@@ -95,6 +95,30 @@ export class DoctorPrescriptionsController {
     });
   }
 
+  @Get(':id')
+  async getPrescriptionDetail(
+    @Param('id') prescriptionId: string,
+    @UserInfo() user: IUserFromToken
+  ) {
+    console.log('=== DOCTOR GET PRESCRIPTION DETAIL DEBUG ===');
+    console.log('Doctor user:', user);
+    console.log('Prescription ID:', prescriptionId);
+    
+    if (user.roles !== UserRole.DOCTOR) {
+      throw new HttpException('Chỉ bác sĩ mới có thể xem chi tiết đơn thuốc', HttpStatus.FORBIDDEN);
+    }
+
+    const prescription = await this.prescriptionsService.getPrescriptionById(prescriptionId);
+    
+    // Verify prescription belongs to doctor
+    if (prescription.doctorId !== user.id) {
+      throw new HttpException('Bạn không có quyền xem đơn thuốc này', HttpStatus.FORBIDDEN);
+    }
+
+    console.log('Prescription found:', { id: prescription.id, doctorId: prescription.doctorId, patientId: prescription.patientId });
+    return prescription;
+  }
+
   @Patch(':id')
   async updatePrescription(
     @Param('id') prescriptionId: string,
