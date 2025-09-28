@@ -513,11 +513,39 @@ export class PrescriptionsService {
     if (data.prescriptionItemId) {
       const item = await this.databaseService.client.prescriptionItem.findUnique({
         where: { id: data.prescriptionItemId },
-        select: { id: true, prescriptionId: true }
+        select: { id: true, prescriptionId: true, frequencyPerDay: true }
       });
 
       if (!item || item.prescriptionId !== data.prescriptionId) {
         throw new BadRequestException('Dòng đơn thuốc không hợp lệ');
+      }
+
+      // Check if already taken today (only for TAKEN status)
+      if (data.status === 'TAKEN') {
+        const today = new Date();
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+        const existingLogsToday = await this.databaseService.client.adherenceLog.count({
+          where: {
+            prescriptionItemId: data.prescriptionItemId,
+            patientId: data.patientId,
+            status: 'TAKEN',
+            takenAt: {
+              gte: startOfDay,
+              lt: endOfDay
+            }
+          }
+        });
+
+        console.log('=== ADHERENCE CHECK DEBUG ===');
+        console.log('Prescription item frequency:', item.frequencyPerDay);
+        console.log('Existing logs today:', existingLogsToday);
+        console.log('Date range:', { startOfDay, endOfDay });
+
+        if (existingLogsToday >= item.frequencyPerDay) {
+          throw new BadRequestException(`Bạn đã xác nhận uống thuốc đủ ${item.frequencyPerDay} lần trong ngày hôm nay`);
+        }
       }
     }
 

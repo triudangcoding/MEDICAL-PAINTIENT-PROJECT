@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { patientApi } from "@/api/patient/patient.api";
 import { authApi } from "@/api/auth/auth.api";
 import { useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -226,18 +227,35 @@ export default function PatientPage() {
 
   const handleConfirmIntake = async () => {
     if (!selectedPrescriptionId || !confirmItemId) return;
-    await patientApi.confirmIntake(selectedPrescriptionId, {
-      prescriptionItemId: confirmItemId,
-      takenAt: new Date().toISOString(),
-      status: "TAKEN",
-    });
-    // Refresh detail and overview/adherence
-    queryClient.invalidateQueries({
-      queryKey: ["patient-prescription-detail", selectedPrescriptionId],
-    });
-    queryClient.invalidateQueries({ queryKey: ["patient-overview"] });
-    queryClient.invalidateQueries({ queryKey: ["patient-adherence"] });
-    setConfirmItemId("");
+    
+    try {
+      await patientApi.confirmIntake(selectedPrescriptionId, {
+        prescriptionItemId: confirmItemId,
+        takenAt: new Date().toISOString(),
+        status: "TAKEN",
+      });
+      
+      // Refresh detail and overview/adherence
+      queryClient.invalidateQueries({
+        queryKey: ["patient-prescription-detail", selectedPrescriptionId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["patient-overview"] });
+      queryClient.invalidateQueries({ queryKey: ["patient-adherence"] });
+      setConfirmItemId("");
+      
+      toast.success("Xác nhận uống thuốc thành công!", {
+        duration: 3000,
+        position: "top-center",
+        style: { background: "#10B981", color: "#fff" },
+      });
+    } catch (error: any) {
+      console.error('Confirm intake error:', error);
+      toast.error(error?.response?.data?.message || "Có lỗi xảy ra khi xác nhận uống thuốc", {
+        duration: 4000,
+        position: "top-center",
+        style: { background: "#EF4444", color: "#fff" },
+      });
+    }
   };
 
   // ============== PATIENT SELF-SERVICE ONLY ==============
