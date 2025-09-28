@@ -82,7 +82,10 @@ export class DoctorController {
     @UserInfo() user: IUserFromToken
   ) {
     this.ensureDoctor(user);
-    return this.doctorService.createPatient(body);
+    console.log('🚀 DOCTOR CREATE PATIENT ENDPOINT HIT!');
+    console.log('Doctor user:', user);
+    console.log('Request body:', body);
+    return this.doctorService.createPatient(body, user.id);
   }
 
   @Put('patients/:id/profile')

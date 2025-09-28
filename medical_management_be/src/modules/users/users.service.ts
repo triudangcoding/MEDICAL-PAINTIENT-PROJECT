@@ -27,20 +27,43 @@ export class UsersService {
     private readonly configService: ConfigService
   ) {}
 
-  async createUser(user: RegisterDto) {
+  async createUser(user: RegisterDto, createdBy?: string) {
+    console.log('=== CREATE USER DEBUG ===');
+    console.log('Input user data:', { 
+      phoneNumber: user.phoneNumber, 
+      fullName: user.fullName, 
+      role: user.role, 
+      createdBy 
+    });
+    
     const userExist = await this.databaseService.client.user.findFirst({
       where: { phoneNumber: user.phoneNumber }
     });
     if (userExist) {
       throw new UnprocessableEntityException('Người dùng đã tồn tại');
     }
+    
+    const createData = {
+      phoneNumber: user.phoneNumber,
+      fullName: user.fullName,
+      password: user.password,
+      role: user.role || UserRole.PATIENT,
+      createdBy: createdBy || null
+    };
+    
+    console.log('Data to create:', createData);
+    
     const newUser = await this.databaseService.client.user.create({
-      data: {
-        phoneNumber: user.phoneNumber,
-        fullName: user.fullName,
-        password: user.password
-      }
+      data: createData
     });
+    
+    console.log('Created user result:', { 
+      id: newUser.id, 
+      createdBy: newUser.createdBy,
+      role: newUser.role 
+    });
+    console.log('=== END CREATE USER DEBUG ===');
+    
     return newUser;
   }
 
@@ -227,8 +250,8 @@ export class UsersService {
     return { items, total, page, limit };
   }
 
-  async adminCreateUser(data: RegisterDto) {
-    return this.createUser(data);
+  async adminCreateUser(data: RegisterDto, createdBy?: string) {
+    return this.createUser(data, createdBy);
   }
 
   async adminUpdateUser(id: string, data: UpdateUserDto) {

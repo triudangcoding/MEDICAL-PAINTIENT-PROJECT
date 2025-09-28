@@ -48,6 +48,14 @@ export class PatientController {
     });
   }
 
+  // Chi tiết bệnh nhân cho bác sĩ
+  @Get(':id/detail')
+  @Public()
+  @SkipPermission()
+  async getPatientDetail(@Param('id') id: string) {
+    return this.patientService.getPatientDetailForDoctor(id);
+  }
+
   // Cập nhật thông tin bệnh nhân
   @Post(':id')
   async updatePatient(

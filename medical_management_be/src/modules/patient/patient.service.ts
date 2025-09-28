@@ -163,6 +163,15 @@ export class PatientService {
         id: true,
         fullName: true,
         phoneNumber: true,
+        createdAt: true,
+        createdBy: true,
+        createdByUser: {
+          select: {
+            id: true,
+            fullName: true,
+            role: true
+          }
+        },
         profile: {
           select: {
             gender: true,
@@ -196,6 +205,15 @@ export class PatientService {
           id: true,
           fullName: true,
           phoneNumber: true,
+          createdAt: true,
+          createdBy: true,
+          createdByUser: {
+            select: {
+              id: true,
+              fullName: true,
+              role: true
+            }
+          },
           profile: {
             select: { gender: true, birthDate: true, address: true }
           }
@@ -207,6 +225,60 @@ export class PatientService {
       this.databaseService.client.user.count({ where })
     ]);
     return { data: items, total, page, limit };
+  }
+
+  async getPatientDetailForDoctor(patientId: string) {
+    console.log('=== GET PATIENT DETAIL DEBUG ===');
+    console.log('Patient ID:', patientId);
+    
+    const result = await this.databaseService.client.user.findUnique({
+      where: { id: patientId },
+      select: {
+        id: true,
+        fullName: true,
+        phoneNumber: true,
+        role: true,
+        status: true,
+        createdAt: true,
+        createdBy: true,
+        createdByUser: {
+          select: {
+            id: true,
+            fullName: true,
+            role: true
+          }
+        },
+        profile: {
+          select: {
+            gender: true,
+            birthDate: true,
+            address: true
+          }
+        },
+        medicalHistory: {
+          select: {
+            id: true,
+            conditions: true,
+            allergies: true,
+            surgeries: true,
+            familyHistory: true,
+            lifestyle: true,
+            currentMedications: true,
+            notes: true,
+            extras: true
+          }
+        }
+      }
+    });
+    
+    console.log('Query result:', {
+      id: result?.id,
+      createdBy: result?.createdBy,
+      createdByUser: result?.createdByUser
+    });
+    console.log('=== END GET PATIENT DETAIL DEBUG ===');
+    
+    return result;
   }
 
   async updatePatient(

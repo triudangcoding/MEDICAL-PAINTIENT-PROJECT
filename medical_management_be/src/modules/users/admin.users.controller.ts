@@ -22,9 +22,15 @@ export class AdminUsersController {
   constructor(private readonly usersService: UsersService) {}
 
   private ensureAdmin(user: IUserFromToken) {
+    console.log('🔍 CHECKING ADMIN PERMISSION - User:', user);
+    console.log('🔍 User roles:', user?.roles);
+    console.log('🔍 Is admin?', user?.roles === UserRole.ADMIN);
+    
     if (user.roles !== UserRole.ADMIN) {
+      console.log('❌ ADMIN PERMISSION DENIED');
       throw new HttpException('Bạn không có quyền', HttpStatus.FORBIDDEN);
     }
+    console.log('✅ ADMIN PERMISSION GRANTED');
   }
 
   @Get()
@@ -54,8 +60,15 @@ export class AdminUsersController {
 
   @Post()
   async create(@Body() body: RegisterDto, @UserInfo() user: IUserFromToken) {
+    console.log('🚀 ADMIN CREATE USER ENDPOINT HIT!');
+    console.log('Request body:', body);
+    console.log('User from token:', user);
+    
     this.ensureAdmin(user);
-    return this.usersService.adminCreateUser(body);
+    console.log('Admin creating user - Full user object:', user);
+    console.log('Admin creating user - Body:', body);
+    console.log('Admin creating user - User ID:', user?.id);
+    return this.usersService.adminCreateUser(body, user.id);
   }
 
   @Patch(':id')

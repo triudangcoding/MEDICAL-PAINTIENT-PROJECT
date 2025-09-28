@@ -33,7 +33,7 @@ export class UsersController {
         HttpStatus.FORBIDDEN
       );
     }
-    return await this.usersService.createUser(body);
+    return await this.usersService.createUser(body, user.id);
   }
 
   @Get('me')

@@ -25,7 +25,12 @@ export const createPatientSchema = z.object({
   role: z
     .enum(["ADMIN", "DOCTOR", "PATIENT"], {
       errorMap: () => ({ message: "Vui lòng chọn loại tài khoản hợp lệ" })
-    })
+    }),
+  profile: z.object({
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+    birthDate: z.string().optional(),
+    address: z.string().optional()
+  }).optional()
 })
 
 export type CreatePatientFormData = z.infer<typeof createPatientSchema> 

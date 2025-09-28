@@ -53,7 +53,12 @@ export const createPatientSchema = z.object({
     .min(1, "Vui lòng chọn loại tài khoản")
     .refine((val) => ["ADMIN", "DOCTOR", "PATIENT"].includes(val), {
       message: "Loại tài khoản không hợp lệ"
-    })
+    }),
+  profile: z.object({
+    gender: z.enum(["MALE", "FEMALE", "OTHER"]).optional(),
+    birthDate: z.string().optional(),
+    address: z.string().optional()
+  }).optional()
 });
 
 type CreatePatientFormData = z.infer<typeof createPatientSchema>;
@@ -95,7 +100,12 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
     fullName: '',
     phoneNumber: '',
     password: '',
-    role: defaultRole || ''
+    role: defaultRole || '',
+    profile: {
+      gender: undefined,
+      birthDate: undefined,
+      address: undefined,
+    }
   };
 
   const form = useForm<CreatePatientFormData>({
@@ -125,13 +135,17 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
       // Move to history step
       setIsHistoryStep(true)
     },
-    onError: () => {
-      toast.error("Có lỗi xảy ra khi tạo bệnh nhân");
+    onError: (error: any) => {
+      console.error('Create patient error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Có lỗi xảy ra khi tạo bệnh nhân";
+      toast.error(errorMessage);
     },
   });
 
   const onSubmit = (data: CreatePatientFormData) => {
     const payload = { ...data, role: lockRole ? (defaultRole || 'PATIENT') : data.role } as CreatePatientFormData;
+    console.log('Frontend creating patient with payload:', payload);
+    console.log('Profile data:', payload.profile);
     createPatientMutation.mutate(payload);
   };
 
@@ -306,6 +320,102 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                       )}
                     />
                   )}
+                </div>
+              </div>
+
+              {/* Profile Information */}
+              <div className="rounded-xl border border-border/20 bg-gradient-to-br from-background to-background/50 p-4 shadow-sm">
+                <div className="mb-3 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                  <h3 className="text-sm font-semibold text-foreground">Thông tin cá nhân</h3>
+                </div>
+                <div className="grid gap-3">
+                  <FormField
+                    control={form.control}
+                    name="profile.gender"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel className="text-sm font-medium">Giới tính</FormLabel>
+                          <FormMessage />
+                        </div>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-emerald-500/20">
+                              <SelectValue placeholder="Chọn giới tính" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="MALE">Nam</SelectItem>
+                            <SelectItem value="FEMALE">Nữ</SelectItem>
+                            <SelectItem value="OTHER">Khác</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="profile.birthDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel className="text-sm font-medium">Ngày sinh</FormLabel>
+                          <FormMessage />
+                        </div>
+                        <FormControl>
+                          <Input 
+                            type="date"
+                            className="transition-all duration-200 focus:ring-2 focus:ring-emerald-500/20"
+                            {...field} 
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Age Preview */}
+                  {form.watch('profile.birthDate') && (
+                    <div className="rounded-md border border-border/20 bg-muted/30 p-3">
+                      <div className="text-xs text-muted-foreground mb-1">Tuổi</div>
+                      <div className="text-sm font-medium text-foreground">
+                        {(() => {
+                          const birthDateStr = form.watch('profile.birthDate');
+                          if (!birthDateStr) return '0 tuổi';
+                          
+                          const birthDate = new Date(birthDateStr);
+                          const today = new Date();
+                          let age = today.getFullYear() - birthDate.getFullYear();
+                          const monthDiff = today.getMonth() - birthDate.getMonth();
+                          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                            age--;
+                          }
+                          return `${age} tuổi`;
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  <FormField
+                    control={form.control}
+                    name="profile.address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex items-center justify-between">
+                          <FormLabel className="text-sm font-medium">Địa chỉ</FormLabel>
+                          <FormMessage />
+                        </div>
+                        <FormControl>
+                          <Input 
+                            placeholder="Nhập địa chỉ" 
+                            className="transition-all duration-200 focus:ring-2 focus:ring-emerald-500/20"
+                            {...field} 
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
 

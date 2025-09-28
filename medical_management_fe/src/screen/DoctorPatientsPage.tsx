@@ -262,8 +262,9 @@ export default function DoctorPatientsPage() {
   }
 
   const calculateAge = (patient: any) => {
-    if (patient.userInfo?.birthYear) {
-      return new Date().getFullYear() - patient.userInfo.birthYear;
+    // Check profile first, then userInfo
+    if (patient.profile?.birthYear) {
+      return new Date().getFullYear() - patient.profile.birthYear;
     }
     if (patient.profile?.birthDate) {
       const birthDate = new Date(patient.profile.birthDate);
@@ -274,6 +275,9 @@ export default function DoctorPatientsPage() {
         age--;
       }
       return age;
+    }
+    if (patient.userInfo?.birthYear) {
+      return new Date().getFullYear() - patient.userInfo.birthYear;
     }
     return null;
   };
@@ -530,6 +534,61 @@ export default function DoctorPatientsPage() {
             <DialogTitle className="text-xl font-semibold">Quản lý bệnh nhân</DialogTitle>
             <DialogDescription>Quản lý thông tin và tiền sử bệnh án của bệnh nhân</DialogDescription>
           </DialogHeader>
+          
+          {/* Patient Info Summary */}
+          {historyPatient && (
+            <div className="rounded-lg border border-border/20 bg-gradient-to-br from-background to-background/50 p-4 shadow-sm">
+              <div className="text-xs text-muted-foreground mb-3">Thông tin bệnh nhân</div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <div className="text-sm font-medium text-foreground">{historyPatient.fullName}</div>
+                  <div className="text-xs text-muted-foreground">{historyPatient.phoneNumber}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Giới tính</div>
+                  <div className="text-sm text-foreground">
+                    {historyPatient.profile?.gender === 'MALE' ? 'Nam' : 
+                     historyPatient.profile?.gender === 'FEMALE' ? 'Nữ' : 
+                     historyPatient.userInfo?.gender === 'MALE' ? 'Nam' : 
+                     historyPatient.userInfo?.gender === 'FEMALE' ? 'Nữ' : 'Chưa cập nhật'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Tuổi</div>
+                  <div className="text-sm text-foreground">{calculateAge(historyPatient) ? `${calculateAge(historyPatient)} tuổi` : 'Chưa cập nhật'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">Trạng thái</div>
+                  <div className="text-sm text-foreground">{historyPatient.status || 'ACTIVE'}</div>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Địa chỉ</div>
+                  <div className="text-sm text-foreground">
+                    {historyPatient.profile?.address || historyPatient.userInfo?.address || 'Chưa cập nhật'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-1">Người tạo</div>
+                  <div className="text-sm text-foreground flex items-center gap-2">
+                    {historyPatient.createdByUser ? (
+                      <>
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
+                        {historyPatient.createdByUser.fullName}
+                        <span className="text-xs text-muted-foreground">
+                          ({historyPatient.createdByUser.role === 'ADMIN' ? 'Quản trị viên' : 
+                            historyPatient.createdByUser.role === 'DOCTOR' ? 'Bác sĩ' : 'Bệnh nhân'})
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">Tự đăng ký</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Tabs */}
           <div className="border-b border-border/20">

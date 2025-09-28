@@ -24,6 +24,8 @@ model User {
   majorDoctor MajorDoctor?
   // Trạng thái hoạt động
   status      UserStatus @default(ACTIVE)
+  // Người tạo bệnh nhân (chỉ áp dụng cho PATIENT)
+  createdBy   String?
   // Ngày tạo
   createdAt   DateTime   @default(now())
   // Ngày cập nhật gần nhất
@@ -46,6 +48,10 @@ model User {
   alertsAsDoctor         Alert[]                @relation("DoctorAlerts")
   // Tiền sử bệnh nhân (nếu là PATIENT)
   medicalHistory         PatientMedicalHistory?
+  // Quan hệ với người tạo (self-referencing)
+  createdByUser          User?                   @relation("CreatedBy", fields: [createdBy], references: [id])
+  // Các bệnh nhân do user này tạo
+  createdPatients        User[]                  @relation("CreatedBy")
 }
 
 // Optional basic patient info

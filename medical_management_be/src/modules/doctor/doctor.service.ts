@@ -114,7 +114,11 @@ export class DoctorService {
     phoneNumber: string;
     password: string;
     profile?: { gender?: string; birthDate?: string; address?: string };
-  }) {
+  }, createdBy?: string) {
+    console.log('=== DOCTOR CREATE PATIENT DEBUG ===');
+    console.log('Input body:', body);
+    console.log('Created by:', createdBy);
+    
     // Basic validations to avoid 500 from invalid data shapes
     if (!body.fullName?.trim()) {
       throw new UnprocessableEntityException('Full name is required');
@@ -136,29 +140,52 @@ export class DoctorService {
     const existing = await this.databaseService.client.user.findFirst({
       where: { phoneNumber: body.phoneNumber }
     });
-    if (existing)
-      throw new UnprocessableEntityException('Phone number already exists');
-    const password = await Utils.HashUtils.hashPassword(body.password);
-    const user = await this.databaseService.client.user.create({
-      data: {
-        fullName: body.fullName,
-        phoneNumber: body.phoneNumber,
-        password,
-        role: UserRole.PATIENT
-      }
-    });
-    if (body.profile) {
-      await this.databaseService.client.patientProfile.create({
-        data: {
-          userId: user.id,
-          gender: this.mapGender(body.profile.gender),
-          birthDate: body.profile.birthDate
-            ? new Date(body.profile.birthDate)
-            : null,
-          address: body.profile.address ?? null
-        }
-      });
+    if (existing) {
+      console.log('❌ Phone number already exists:', body.phoneNumber);
+      throw new UnprocessableEntityException('Số điện thoại này đã được sử dụng. Vui lòng chọn số khác.');
     }
+    const password = await Utils.HashUtils.hashPassword(body.password);
+    
+    const createData = {
+      fullName: body.fullName,
+      phoneNumber: body.phoneNumber,
+      password,
+      role: UserRole.PATIENT,
+      createdBy: createdBy || null
+    };
+    
+    console.log('Data to create user:', createData);
+    
+    const user = await this.databaseService.client.user.create({
+      data: createData
+    });
+    
+    console.log('Created user:', { id: user.id, createdBy: user.createdBy });
+    
+    if (body.profile) {
+      console.log('Creating profile with data:', body.profile);
+      console.log('Gender mapping:', { input: body.profile.gender, mapped: this.mapGender(body.profile.gender) });
+      
+      const profileData = {
+        userId: user.id,
+        gender: this.mapGender(body.profile.gender),
+        birthDate: body.profile.birthDate
+          ? new Date(body.profile.birthDate)
+          : null,
+        address: body.profile.address ?? null
+      };
+      
+      console.log('Profile data to create:', profileData);
+      
+      await this.databaseService.client.patientProfile.create({
+        data: profileData
+      });
+      console.log('Profile created successfully');
+    } else {
+      console.log('No profile data provided');
+    }
+    
+    console.log('=== END DOCTOR CREATE PATIENT DEBUG ===');
     return this.getPatient(user.id);
   }
 

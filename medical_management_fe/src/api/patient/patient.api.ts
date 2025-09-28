@@ -70,12 +70,16 @@ export const patientApi = {
             phoneNumber: item.phoneNumber,
             status: item.status || 'ACTIVE',
             role: item.role || 'PATIENT',
+            createdAt: item.createdAt,
+            createdBy: item.createdBy,
+            createdByUser: item.createdByUser,
             userInfo: item.profile ? {
                 id: item.id,
                 gender: item.profile.gender || 'OTHER',
                 birthYear: item.profile.birthDate ? new Date(item.profile.birthDate).getFullYear() : null,
                 specificAddress: item.profile.address || ''
             } : null,
+            profile: item.profile,
             medicalHistory: item.medicalHistory || null
         }));
         
@@ -94,7 +98,7 @@ export const patientApi = {
     },
 
     async getPatientDetailForDoctor(id: string) {
-        const res = await axiosInstance.get(`/doctor/patients/${id}`);
+        const res = await axiosInstance.get(`/patient/${id}/detail`);
         return (res.data?.data ?? res.data);
     },
 
