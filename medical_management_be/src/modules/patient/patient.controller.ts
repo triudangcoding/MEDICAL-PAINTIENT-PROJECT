@@ -84,21 +84,8 @@ export class PatientController {
     return this.patientService.deletePatient(id);
   }
 
-  // Đơn thuốc & nhắc nhở
-  @Get('prescriptions')
-  async activePrescriptions(@UserInfo() user: IUserFromToken) {
-    this.ensurePatient(user);
-    return this.patientService.listActivePrescriptions(user.id);
-  }
-  // Chi tiết đơn thuốc
-  @Get('prescriptions/:id')
-  async prescriptionDetail(
-    @Param('id') id: string,
-    @UserInfo() user: IUserFromToken
-  ) {
-    this.ensurePatient(user);
-    return this.patientService.getPrescriptionDetail(user.id, id);
-  }
+  // Đơn thuốc & nhắc nhở - moved to PatientPrescriptionsController
+  // Prescriptions routes moved to PatientPrescriptionsController
   // Lịch sử đơn thuốc
   @Get('history')
   async history(
@@ -123,22 +110,7 @@ export class PatientController {
     return this.patientService.getReminders(user.id);
   }
 
-  // Xác nhận uống thuốc
-  @Post('prescriptions/:id/confirm')
-  async confirm(
-    @Param('id') id: string,
-    @Body()
-    body: {
-      prescriptionItemId: string;
-      takenAt: string;
-      status: AdherenceStatus;
-      notes?: string;
-    },
-    @UserInfo() user: IUserFromToken
-  ) {
-    this.ensurePatient(user);
-    return this.patientService.confirmIntake(user.id, id, body);
-  }
+  // Prescriptions confirmation moved to PatientPrescriptionsController
 
   @Get('adherence')
   async adherence(@UserInfo() user: IUserFromToken) {

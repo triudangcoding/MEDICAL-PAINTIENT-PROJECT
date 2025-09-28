@@ -1,13 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { patientApi } from '@/api/patient/patient.api'
+import { DoctorApi } from '@/api/doctor'
+import { MedicationsApi } from '@/api/medications'
 import { Button } from '@/components/ui/button'
 import { CreatePatientDialog } from '@/components/dialogs/patients/create-patient.dialog'
 import { ConfirmDeletePatientDialog } from '@/components/dialogs/patients/confirm-delete-patient.dialog'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Eye, EyeOff } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Eye, EyeOff, Plus, Trash2, Pill, Calendar, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { X } from 'lucide-react'
 import { useForm } from 'react-hook-form'
@@ -74,7 +78,25 @@ const updateBasicInfoSchema = z.object({
   path: ["root"]
 });
 
+// Schema for prescription form
+const prescriptionItemSchema = z.object({
+  medicationId: z.string().min(1, "Vui lòng chọn thuốc"),
+  dosage: z.string().min(1, "Vui lòng nhập liều lượng"),
+  frequencyPerDay: z.number().min(1, "Tần suất phải ít nhất 1 lần/ngày").max(10, "Tần suất không được quá 10 lần/ngày"),
+  timesOfDay: z.array(z.string()).min(1, "Vui lòng chọn ít nhất 1 thời điểm"),
+  durationDays: z.number().min(1, "Thời gian điều trị phải ít nhất 1 ngày").max(365, "Thời gian điều trị không được quá 365 ngày"),
+  route: z.string().optional(),
+  instructions: z.string().optional(),
+});
+
+const prescriptionSchema = z.object({
+  items: z.array(prescriptionItemSchema).min(1, "Vui lòng thêm ít nhất 1 loại thuốc"),
+  notes: z.string().optional(),
+});
+
 type UpdateBasicInfoData = z.infer<typeof updateBasicInfoSchema>;
+type PrescriptionData = z.infer<typeof prescriptionSchema>;
+type PrescriptionItemData = z.infer<typeof prescriptionItemSchema>;
 
 export default function DoctorPatientsPage() {
   const queryClient = useQueryClient()
@@ -101,6 +123,21 @@ export default function DoctorPatientsPage() {
   }>({ conditions: [], allergies: [], surgeries: [], currentMedications: [] })
   const [customFields, setCustomFields] = useState<Array<{ key: string; value: string }>>([{ key: '', value: '' }])
   const [showPassword, setShowPassword] = useState(false)
+
+  // Prescription form states
+  const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItemData[]>([
+    {
+      medicationId: '',
+      dosage: '',
+      frequencyPerDay: 1,
+      timesOfDay: [],
+      durationDays: 7,
+      route: '',
+      instructions: ''
+    }
+  ])
+  const [prescriptionNotes, setPrescriptionNotes] = useState('')
+  const [showCreatePrescriptionForm, setShowCreatePrescriptionForm] = useState(false)
 
   // Form for basic info editing
   const basicInfoForm = useForm<UpdateBasicInfoData>({
@@ -157,6 +194,73 @@ export default function DoctorPatientsPage() {
     },
   });
 
+  // Medications query
+  const { data: medications, isLoading: loadingMedications, error: medicationsError } = useQuery({
+    queryKey: ['medications'],
+    queryFn: () => MedicationsApi.list({ page: 1, limit: 100, isActive: true }),
+    enabled: activeDialogTab === 'prescriptions'
+  });
+
+  // Patient prescriptions query
+  const { data: patientPrescriptions, refetch: refetchPrescriptions, isLoading: loadingPrescriptions, error: prescriptionsError } = useQuery({
+    queryKey: ['patient-prescriptions', historyPatient?.id],
+    queryFn: () => DoctorApi.listPrescriptions({ page: 1, limit: 100 }),
+    enabled: !!historyPatient && activeDialogTab === 'prescriptions',
+    select: (data) => {
+      console.log('Raw prescriptions data:', data);
+      console.log('data.data type:', typeof data?.data);
+      console.log('data.data isArray:', Array.isArray(data?.data));
+      console.log('data.data:', data?.data);
+      
+      // Check if data.data.items is an array
+      if (!Array.isArray(data?.data?.items)) {
+        console.log('data.data.items is not an array, returning empty array');
+        return [];
+      }
+      
+      // Filter prescriptions for current patient
+      const filtered = data.data.items.filter((prescription: any) => prescription.patientId === historyPatient?.id) || [];
+      console.log('Patient prescriptions filtered:', filtered);
+      console.log('Current patient ID:', historyPatient?.id);
+      return filtered;
+    }
+  });
+
+  // Create prescription mutation
+  const createPrescriptionMutation = useMutation({
+    mutationFn: (data: PrescriptionData) => 
+      DoctorApi.createPrescription({
+        patientId: historyPatient?.id,
+        ...data
+      }),
+    onSuccess: () => {
+      toast.success("Tạo đơn thuốc thành công");
+      
+      // Invalidate and refetch prescriptions
+      queryClient.invalidateQueries({ queryKey: ['patient-prescriptions', historyPatient?.id] });
+      queryClient.invalidateQueries({ queryKey: ['doctor-prescriptions'] });
+      refetchPrescriptions();
+      
+      // Reset form
+      setPrescriptionItems([{
+        medicationId: '',
+        dosage: '',
+        frequencyPerDay: 1,
+        timesOfDay: [],
+        durationDays: 7,
+        route: '',
+        instructions: ''
+      }]);
+      setPrescriptionNotes('');
+      
+      // Close form
+      setShowCreatePrescriptionForm(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Có lỗi xảy ra khi tạo đơn thuốc");
+    }
+  });
+
   // Reset form when patient changes
   useEffect(() => {
     if (historyPatient) {
@@ -192,6 +296,61 @@ export default function DoctorPatientsPage() {
   useEffect(() => {
     refetch()
   }, [page, limit, search, refetch])
+
+  // Prescription helper functions
+  const addPrescriptionItem = () => {
+    setPrescriptionItems(prev => [...prev, {
+      medicationId: '',
+      dosage: '',
+      frequencyPerDay: 1,
+      timesOfDay: [],
+      durationDays: 7,
+      route: '',
+      instructions: ''
+    }]);
+  };
+
+  const removePrescriptionItem = (index: number) => {
+    if (prescriptionItems.length > 1) {
+      setPrescriptionItems(prev => prev.filter((_, i) => i !== index));
+    }
+  };
+
+  const updatePrescriptionItem = (index: number, field: keyof PrescriptionItemData, value: any) => {
+    setPrescriptionItems(prev => prev.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const toggleTimeOfDay = (itemIndex: number, time: string) => {
+    setPrescriptionItems(prev => prev.map((item, i) => 
+      i === itemIndex 
+        ? { 
+            ...item, 
+            timesOfDay: item.timesOfDay.includes(time)
+              ? item.timesOfDay.filter(t => t !== time)
+              : [...item.timesOfDay, time]
+          }
+        : item
+    ));
+  };
+
+  const handleCreatePrescription = () => {
+    const prescriptionData: PrescriptionData = {
+      items: prescriptionItems,
+      notes: prescriptionNotes
+    };
+
+    // Validate form
+    try {
+      prescriptionSchema.parse(prescriptionData);
+      createPrescriptionMutation.mutate(prescriptionData);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0]?.message || "Vui lòng kiểm tra lại thông tin");
+      }
+    }
+  };
 
   // Submit handler for basic info
   const onSubmitBasicInfo = (data: UpdateBasicInfoData) => {
@@ -268,6 +427,9 @@ export default function DoctorPatientsPage() {
     }
     if (patient.profile?.birthDate) {
       const birthDate = new Date(patient.profile.birthDate);
+      if (isNaN(birthDate.getTime())) {
+        return 'N/A';
+      }
       const today = new Date();
       let age = today.getFullYear() - birthDate.getFullYear();
       const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -775,11 +937,365 @@ export default function DoctorPatientsPage() {
           )}
           
           {activeDialogTab === 'prescriptions' && (
-            <div className="flex items-center justify-center h-40 text-muted-foreground">
-              <div className="text-center">
-                <h3 className="text-lg font-medium mb-2">Đơn thuốc</h3>
-                <p className="text-sm">Tính năng đang được phát triển...</p>
+            <div className="space-y-6">
+              {/* Button to show/hide create form */}
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold flex items-center gap-2">
+                  <Pill className="h-5 w-5 text-primary" />
+                  Đơn thuốc của bệnh nhân
+                </h3>
+                <Button
+                  type="button"
+                  onClick={() => setShowCreatePrescriptionForm(!showCreatePrescriptionForm)}
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  {showCreatePrescriptionForm ? 'Ẩn form tạo mới' : 'Tạo đơn thuốc mới'}
+                </Button>
               </div>
+
+              {/* Create Prescription Form */}
+              {showCreatePrescriptionForm && (
+                <Card className="border-border/20 bg-gradient-to-br from-background to-background/50">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Pill className="h-5 w-5 text-primary" />
+                      Tạo đơn thuốc mới
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      {medicationsError && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.location.reload()}
+                          className="text-xs"
+                        >
+                          🔄 Tải lại
+                        </Button>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {loadingMedications ? "Đang tải..." : 
+                         medicationsError ? "Lỗi" : 
+                         medications?.items?.length || 0} thuốc
+                      </span>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Prescription Items */}
+                  {prescriptionItems.map((item, index) => (
+                    <div key={index} className="p-4 border border-border/20 rounded-lg bg-gradient-to-br from-muted/20 to-muted/10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium text-sm text-foreground">Thuốc {index + 1}</h4>
+                        {prescriptionItems.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removePrescriptionItem(index)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Medication Selection */}
+                        <div className="md:col-span-2">
+                          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                            Tên thuốc *
+                          </label>
+                          <Select
+                            value={item.medicationId}
+                            onValueChange={(value) => updatePrescriptionItem(index, 'medicationId', value)}
+                            disabled={loadingMedications}
+                          >
+                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                              <SelectValue placeholder={
+                                loadingMedications 
+                                  ? "Đang tải danh sách thuốc..." 
+                                  : medicationsError 
+                                    ? "Lỗi tải danh sách thuốc"
+                                    : "Chọn thuốc"
+                              } />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {loadingMedications ? (
+                                <SelectItem value="loading" disabled>
+                                  <div className="flex items-center gap-2">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                                    Đang tải...
+                                  </div>
+                                </SelectItem>
+                              ) : medicationsError ? (
+                                <SelectItem value="error" disabled>
+                                  <span className="text-red-500">Lỗi tải danh sách thuốc</span>
+                                </SelectItem>
+                              ) : medications?.items?.length > 0 ? (
+                                medications.items.map((med: any) => (
+                                  <SelectItem key={med.id} value={med.id}>
+                                    {med.name} - {med.strength} {med.unit}
+                                  </SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="empty" disabled>
+                                  <span className="text-muted-foreground">Chưa có thuốc nào</span>
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          {medicationsError && (
+                            <p className="text-xs text-red-500 mt-1">
+                              Không thể tải danh sách thuốc. Vui lòng thử lại sau.
+                            </p>
+                          )}
+                          {!loadingMedications && !medicationsError && medications?.items?.length === 0 && (
+                            <p className="text-xs text-yellow-600 mt-1">
+                              ⚠️ Chưa có thuốc nào trong hệ thống. Admin cần thêm thuốc trước.
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Dosage */}
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                            Liều lượng *
+                          </label>
+                          <Input
+                            placeholder="Ví dụ: 500mg"
+                            value={item.dosage}
+                            onChange={(e) => updatePrescriptionItem(index, 'dosage', e.target.value)}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        {/* Frequency */}
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                            Tần suất/ngày *
+                          </label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10"
+                            value={item.frequencyPerDay}
+                            onChange={(e) => updatePrescriptionItem(index, 'frequencyPerDay', parseInt(e.target.value) || 1)}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        {/* Duration */}
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                            Thời gian điều trị (ngày) *
+                          </label>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="365"
+                            value={item.durationDays}
+                            onChange={(e) => updatePrescriptionItem(index, 'durationDays', parseInt(e.target.value) || 7)}
+                            className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                          />
+                        </div>
+
+                        {/* Route */}
+                        <div>
+                          <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                            Đường dùng
+                          </label>
+                          <Select
+                            value={item.route}
+                            onValueChange={(value) => updatePrescriptionItem(index, 'route', value)}
+                          >
+                            <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-primary/20">
+                              <SelectValue placeholder="Chọn đường dùng" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="ORAL">Uống</SelectItem>
+                              <SelectItem value="INJECTION">Tiêm</SelectItem>
+                              <SelectItem value="TOPICAL">Bôi ngoài</SelectItem>
+                              <SelectItem value="INHALATION">Hít</SelectItem>
+                              <SelectItem value="OTHER">Khác</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      {/* Times of Day */}
+                      <div className="mt-4">
+                        <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                          Thời điểm uống thuốc *
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          {['Sáng', 'Trưa', 'Chiều', 'Tối'].map((time) => (
+                            <Button
+                              key={time}
+                              type="button"
+                              variant={item.timesOfDay.includes(time) ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => toggleTimeOfDay(index, time)}
+                              className="transition-all duration-200"
+                            >
+                              <Clock className="h-3 w-3 mr-1" />
+                              {time}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Instructions */}
+                      <div className="mt-4">
+                        <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                          Hướng dẫn sử dụng
+                        </label>
+                        <textarea
+                          placeholder="Ví dụ: Uống sau khi ăn, không uống với sữa..."
+                          value={item.instructions}
+                          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => updatePrescriptionItem(index, 'instructions', e.target.value)}
+                          className="w-full min-h-[60px] px-3 py-2 text-sm border border-border rounded-md bg-background transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:outline-none resize-none"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add Medication Button */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={addPrescriptionItem}
+                    className="w-full border-dashed border-2 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-all duration-200"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Thêm thuốc khác
+                  </Button>
+
+                  {/* Notes */}
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                      Ghi chú đơn thuốc
+                    </label>
+                    <textarea
+                      placeholder="Ghi chú chung cho đơn thuốc..."
+                      value={prescriptionNotes}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrescriptionNotes(e.target.value)}
+                      className="w-full min-h-[80px] px-3 py-2 text-sm border border-border rounded-md bg-background transition-all duration-200 focus:ring-2 focus:ring-primary/20 focus:outline-none resize-none"
+                      rows={3}
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    onClick={handleCreatePrescription}
+                    disabled={createPrescriptionMutation.isPending}
+                    className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
+                  >
+                    {createPrescriptionMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Đang tạo đơn thuốc...
+                      </>
+                    ) : (
+                      <>
+                        <Pill className="h-4 w-4 mr-2" />
+                        Tạo đơn thuốc
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+              )}
+
+              {/* Patient Prescriptions List */}
+              <Card className="border-border/20 bg-gradient-to-br from-background to-background/50">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    Danh sách đơn thuốc
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    console.log('Rendering prescriptions:', patientPrescriptions);
+                    console.log('Loading prescriptions:', loadingPrescriptions);
+                    console.log('Prescriptions error:', prescriptionsError);
+                    return null;
+                  })()}
+                  {loadingPrescriptions ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                      <p className="text-sm">Đang tải đơn thuốc...</p>
+                    </div>
+                  ) : prescriptionsError ? (
+                    <div className="text-center py-8 text-red-500">
+                      <p className="text-sm">Lỗi tải đơn thuốc: {prescriptionsError.message}</p>
+                    </div>
+                  ) : patientPrescriptions && patientPrescriptions.length > 0 ? (
+                    <div className="space-y-4">
+                      {patientPrescriptions.map((prescription: any) => (
+                        <div key={prescription.id} className="p-4 border border-border/20 rounded-lg bg-gradient-to-br from-muted/10 to-muted/5">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-xs">
+                                {prescription.id}
+                              </Badge>
+                              <Badge 
+                                variant={prescription.status === 'ACTIVE' ? 'default' : 'secondary'}
+                                className="text-xs"
+                              >
+                                {prescription.status === 'ACTIVE' ? 'Đang điều trị' : prescription.status}
+                              </Badge>
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {prescription.startDate ? 
+                                (() => {
+                                  const date = new Date(prescription.startDate);
+                                  return isNaN(date.getTime()) ? 'N/A' : 
+                                    `${date.toLocaleDateString('vi-VN')} ${date.toLocaleTimeString('vi-VN', { 
+                                      hour: '2-digit', 
+                                      minute: '2-digit' 
+                                    })}`;
+                                })() 
+                                : 'N/A'
+                              }
+                            </span>
+                          </div>
+                          
+                          {prescription.notes && (
+                            <p className="text-sm text-muted-foreground mb-3">
+                              <strong>Ghi chú:</strong> {prescription.notes}
+                            </p>
+                          )}
+
+                          <div className="space-y-2">
+                            <h5 className="text-sm font-medium text-foreground">Danh sách thuốc:</h5>
+                            {prescription.items?.map((item: any, idx: number) => (
+                              <div key={idx} className="text-sm text-muted-foreground bg-muted/20 p-2 rounded">
+                                <strong>{item.medication?.name}</strong> - {item.dosage} - 
+                                {item.frequencyPerDay} lần/ngày - {item.durationDays} ngày
+                                {item.instructions && (
+                                  <div className="text-xs mt-1 text-muted-foreground/80">
+                                    <strong>HD:</strong> {item.instructions}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Pill className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="text-sm">Chưa có đơn thuốc nào</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
           

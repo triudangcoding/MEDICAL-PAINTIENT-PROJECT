@@ -216,111 +216,111 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                   <h3 className="text-sm font-semibold text-foreground">Thông tin tài khoản</h3>
                 </div>
                 <div className="grid gap-3">
-                  <FormField
-                    control={form.control}
-                    name="fullName"
-                    render={({ field }) => (
-                      <FormItem>
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
                         <div className="flex items-center justify-between">
                           <FormLabel className="text-sm font-medium">Họ và tên</FormLabel>
-                          <FormMessage />
-                        </div>
-                        <FormControl>
+                      <FormMessage />
+                    </div>
+                    <FormControl>
                           <Input 
                             placeholder="Nhập họ và tên đầy đủ" 
                             className="transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                             {...field} 
                           />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-                  <FormField
-                    control={form.control}
-                    name="phoneNumber"
-                    render={({ field }) => (
-                      <FormItem>
+              <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
                         <div className="flex items-center justify-between">
                           <FormLabel className="text-sm font-medium">Số điện thoại</FormLabel>
-                          <FormMessage />
-                        </div>
-                        <FormControl>
+                      <FormMessage />
+                    </div>
+                    <FormControl>
                           <Input 
                             type="tel" 
                             placeholder="Nhập số điện thoại 10-11 chữ số" 
                             className="transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
                             {...field} 
                           />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
                         <div className="flex items-center justify-between">
                           <FormLabel className="text-sm font-medium">Mật khẩu</FormLabel>
-                          <FormMessage />
-                        </div>
-                        <FormControl>
-                          <div className="relative">
-                            <Input 
-                              type={showPassword ? "text" : "password"} 
+                      <FormMessage />
+                    </div>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          type={showPassword ? "text" : "password"} 
                               placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
                               className="pr-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
-                              {...field}
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
+                          {...field}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
                               className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 rounded-md hover:bg-accent/50"
-                              onClick={togglePasswordVisibility}
-                              aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-4 w-4 text-muted-foreground" />
-                              ) : (
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                          onClick={togglePasswordVisibility}
+                          aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </Button>
+                      </div>
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
-                  {!lockRole && (
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                        <FormItem>
+              {!lockRole && (
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
                           <div className="flex items-center justify-between">
                             <FormLabel className="text-sm font-medium">Loại tài khoản</FormLabel>
-                            <FormMessage />
-                          </div>
-                          <FormControl>
-                            <Select value={field.value} onValueChange={field.onChange}>
+                        <FormMessage />
+                      </div>
+                      <FormControl>
+                        <Select value={field.value} onValueChange={field.onChange}>
                               <SelectTrigger className="transition-all duration-200 focus:ring-2 focus:ring-blue-500/20">
-                                <SelectValue placeholder="Chọn vai trò" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="ADMIN">Quản trị viên</SelectItem>
-                                <SelectItem value="DOCTOR">Bác sĩ</SelectItem>
-                                <SelectItem value="PATIENT">Bệnh nhân</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
+                            <SelectValue placeholder="Chọn vai trò" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ADMIN">Quản trị viên</SelectItem>
+                            <SelectItem value="DOCTOR">Bác sĩ</SelectItem>
+                            <SelectItem value="PATIENT">Bệnh nhân</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </FormItem>
                   )}
-                </div>
+                />
+              )}
+              </div>
               </div>
 
               {/* Profile Information */}
@@ -464,15 +464,15 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                             : '—'
                           }
                         </div>
-                      </div>
-                    </div>
+                </div>
+              </div>
                     {createdPatientInfo.address && (
                       <div>
                         <div className='text-xs text-muted-foreground'>Địa chỉ</div>
                         <div className='text-sm text-foreground'>{createdPatientInfo.address}</div>
                       </div>
                     )}
-                    <div>
+              <div>
                       <div className='text-xs text-muted-foreground'>Trạng thái</div>
                       <div className='text-sm text-foreground'>ACTIVE</div>
                     </div>
@@ -485,9 +485,9 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                           <div><span className='font-medium'>Phẫu thuật:</span> {createdPatientInfo.medicalHistory.surgeries?.length ? createdPatientInfo.medicalHistory.surgeries.join(', ') : 'Chưa có'}</div>
                           <div><span className='font-medium'>Thuốc:</span> {createdPatientInfo.medicalHistory.currentMedications?.length ? createdPatientInfo.medicalHistory.currentMedications.join(', ') : 'Chưa có'}</div>
                         </div>
-                      </div>
+                </div>
                     )}
-                  </div>
+                </div>
                 ) : (
                   <div className='text-sm text-muted-foreground'>Chưa có thông tin bệnh nhân</div>
                 )}
@@ -521,8 +521,8 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                         value={historyForm.allergies.join(', ')}
                         onChange={(e) => setHistoryForm((p) => ({ ...p, allergies: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
                       />
-                    </div>
-                    <div>
+              </div>
+              <div>
                       <label className='text-xs font-medium text-muted-foreground mb-2 block'>Phẫu thuật</label>
                       <Input 
                         placeholder='Ví dụ: Cắt ruột thừa, Mổ tim...'
@@ -531,7 +531,7 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                         onChange={(e) => setHistoryForm((p) => ({ ...p, surgeries: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
                       />
                     </div>
-                  </div>
+                </div>
                 </div>
 
                 {/* Thông tin bổ sung */}
@@ -539,9 +539,9 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                   <div className="mb-3 flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                     <h3 className="text-sm font-semibold text-foreground">Thông tin bổ sung</h3>
-                  </div>
-                  <div className='grid gap-3'>
-                    <div>
+              </div>
+              <div className='grid gap-3'>
+                <div>
                       <label className='text-xs font-medium text-muted-foreground mb-2 block'>Tiền sử gia đình</label>
                       <Input 
                         placeholder='Ví dụ: Tiểu đường, tim mạch...'
@@ -558,8 +558,8 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                         value={historyForm.lifestyle || ''}
                         onChange={(e) => setHistoryForm((p) => ({ ...p, lifestyle: e.target.value }))}
                       />
-                    </div>
-                    <div>
+                </div>
+                <div>
                       <label className='text-xs font-medium text-muted-foreground mb-2 block'>Thuốc đang dùng</label>
                       <Input 
                         placeholder='Nhập tên thuốc, ngăn cách bởi dấu phẩy'
@@ -567,8 +567,8 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                         value={historyForm.currentMedications.join(', ')}
                         onChange={(e) => setHistoryForm((p) => ({ ...p, currentMedications: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
                       />
-                    </div>
-                    <div>
+                </div>
+                <div>
                       <label className='text-xs font-medium text-muted-foreground mb-2 block'>Ghi chú</label>
                       <Input 
                         placeholder='Ghi chú khác'
@@ -590,23 +590,23 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                   <h3 className="text-sm font-semibold text-foreground">Thông tin tùy chỉnh</h3>
                 </div>
                 <div className='space-y-2 h-60 overflow-y-auto rounded-md border border-border/20 bg-background/50 p-2'>
-                  {customFields.map((row, idx) => (
+                {customFields.map((row, idx) => (
                     <div key={idx} className='space-y-2'>
                       <Input 
                         placeholder='Khóa (ví dụ: Nhóm máu)'
                         className="transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
                         value={row.key}
                         onChange={(e) => {
-                          setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, key: e.target.value } : r))
+                      setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, key: e.target.value } : r))
                         }}
                       />
                       <div className='flex gap-2'>
                         <Input 
                           placeholder='Giá trị (ví dụ: O+)'
                           className="flex-1 transition-all duration-200 focus:ring-2 focus:ring-purple-500/20"
-                          value={row.value}
-                          onChange={(e) => setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, value: e.target.value } : r))}
-                        />
+                      value={row.value}
+                      onChange={(e) => setCustomFields((prev) => prev.map((r, i) => i === idx ? { ...r, value: e.target.value } : r))}
+                    />
                         <Button 
                           type="button" 
                           variant="outline" 
@@ -617,9 +617,9 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
-                  <div className='flex items-center gap-2'>
+                  </div>
+                ))}
+                <div className='flex items-center gap-2'>
                     <Button 
                       type="button" 
                       variant="outline" 

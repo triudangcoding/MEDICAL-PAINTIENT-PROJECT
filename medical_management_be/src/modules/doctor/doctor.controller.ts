@@ -118,86 +118,9 @@ export class DoctorController {
     return this.doctorService.updatePatientHistory(id, body);
   }
 
-  // Kê đơn thuốc
-  @Post('prescriptions')
-  async createPrescription(
-    @Body()
-    body: {
-      patientId: string;
-      items: Array<{
-        medicationId: string;
-        dosage: string;
-        frequencyPerDay: number;
-        timesOfDay: string[];
-        durationDays: number;
-        route?: string;
-        instructions?: string;
-      }>;
-      notes?: string;
-    },
-    @UserInfo() user: IUserFromToken
-  ) {
-    this.ensureDoctor(user);
-    return this.doctorService.createPrescription(user.id, body);
-  }
+  // Kê đơn thuốc - moved to DoctorPrescriptionsController
 
-  @Get('prescriptions')
-  async listPrescriptions(
-    @UserInfo() user: IUserFromToken,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('sortBy') sortBy?: string,
-    @Query('sortOrder') sortOrder?: 'asc' | 'desc'
-  ) {
-    this.ensureDoctor(user);
-    return this.doctorService.listPrescriptions(user.id, {
-      page: page ? parseInt(page) : undefined,
-      limit: limit ? parseInt(limit) : undefined,
-      sortBy,
-      sortOrder
-    });
-  }
-
-  @Get('prescriptions/:id')
-  async getPrescription(
-    @Param('id') id: string,
-    @UserInfo() user: IUserFromToken
-  ) {
-    this.ensureDoctor(user);
-    return this.doctorService.getPrescription(id);
-  }
-
-  @Put('prescriptions/:id')
-  async updatePrescription(
-    @Param('id') id: string,
-    @Body()
-    body: {
-      items?: Array<{
-        id?: string;
-        medicationId: string;
-        dosage: string;
-        frequencyPerDay: number;
-        timesOfDay: string[];
-        durationDays: number;
-        route?: string;
-        instructions?: string;
-      }>;
-      notes?: string;
-    },
-    @UserInfo() user: IUserFromToken
-  ) {
-    this.ensureDoctor(user);
-    return this.doctorService.updatePrescription(id, body);
-  }
-
-  @Delete('prescriptions/:id')
-  async cancelPrescription(
-    @Param('id') id: string,
-    @UserInfo() user: IUserFromToken
-  ) {
-    this.ensureDoctor(user);
-    return this.doctorService.cancelPrescription(id);
-  }
+  // Prescriptions routes moved to DoctorPrescriptionsController
 
   // Theo dõi điều trị
   @Get('overview')

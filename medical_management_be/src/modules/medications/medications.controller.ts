@@ -14,12 +14,14 @@ import { MedicationsService } from '@/modules/medications/medications.service';
 import { UserInfo } from '@/common/decorators/users.decorator';
 import { IUserFromToken } from '@/modules/users/types/user.type';
 import { UserRole } from '@prisma/client';
+import { SkipPermission } from '@/common/decorators/isPublicRoute';
 
 @Controller('admin/medications')
 export class MedicationsController {
   constructor(private readonly medicationsService: MedicationsService) { }
 
   @Get('get-all')
+  @SkipPermission()
   async list(
     @UserInfo() user: IUserFromToken,
     @Query('isActive') isActive?: string,
@@ -28,9 +30,6 @@ export class MedicationsController {
     @Query('sortBy') sortBy?: string,
     @Query('sortOrder') sortOrder?: 'asc' | 'desc'
   ) {
-    if (user.roles !== UserRole.ADMIN) {
-      throw new HttpException('Bạn không có quyền', HttpStatus.FORBIDDEN);
-    }
     const active = isActive === undefined ? undefined : isActive === 'true';
     return this.medicationsService.list(active, {
       page: page ? parseInt(page) : undefined,
