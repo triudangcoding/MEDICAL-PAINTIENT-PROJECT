@@ -13,7 +13,6 @@ import {
   AlertTriangle, 
   CheckCircle, 
   XCircle,
-  TrendingUp,
   User,
   Activity
 } from "lucide-react";
@@ -23,6 +22,10 @@ import {
   formatTimeSlot, 
   getCurrentTimeInVietnamese 
 } from "@/utils/timeValidation";
+import { 
+  translateRoute, 
+  translateStatus
+} from "@/utils/vietnameseEnums";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Types for better type safety
@@ -64,23 +67,12 @@ interface Alert {
   prescriptionId?: string;
 }
 
-interface Reminder {
-  id: string;
-  medicationName: string;
-  dosage: string;
-  time: string;
-  date: string;
-  prescriptionId?: string;
-  prescriptionItemId?: string;
-  status: 'PENDING' | 'TAKEN' | 'MISSED' | 'SKIPPED';
-  route?: string;
-  instructions?: string;
-}
 
 interface OverviewData {
   activePrescriptions: number;
+  takenLogs: number;
+  missedLogs: number;
   unresolvedAlerts: number;
-  adherenceRate: number;
 }
 
 type PatientTab = "overview" | "prescriptions" | "history" | "reminders" | "alerts" | "adherence";
@@ -162,22 +154,7 @@ export default function PatientPage() {
   };
 
   const getStatusText = (status: string): string => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'Đang điều trị';
-      case 'COMPLETED':
-        return 'Hoàn thành';
-      case 'CANCELLED':
-        return 'Đã hủy';
-      case 'TAKEN':
-        return 'Đã uống';
-      case 'MISSED':
-        return 'Bỏ liều';
-      case 'SKIPPED':
-        return 'Bỏ qua';
-      default:
-        return status;
-    }
+    return translateStatus(status);
   };
 
   // Sync tab with query param
@@ -198,8 +175,21 @@ export default function PatientPage() {
   // Lightweight queries for overview aggregation
   const { data: ovReminders, isLoading: loadingOvReminders } = useQuery({
     queryKey: ["patient-ov-reminders"],
+    queryFn: () => patientApi.getReminders(), // Get today's reminders for overview
     enabled: role === "PATIENT" && activeTab === "overview",
   });
+
+  // Filter upcoming reminders (PENDING status only) and sort by time
+  const upcomingReminders = ovReminders?.filter((reminder: any) => reminder.status === 'PENDING')
+    .sort((a: any, b: any) => {
+      const timeOrder = ['Sáng', 'Trưa', 'Chiều', 'Tối', 'Đêm'];
+      const aTimeIndex = timeOrder.indexOf(a.time);
+      const bTimeIndex = timeOrder.indexOf(b.time);
+      if (aTimeIndex !== -1 && bTimeIndex !== -1) {
+        return aTimeIndex - bTimeIndex;
+      }
+      return a.time.localeCompare(b.time);
+    }) || [];
 
   const { data: ovAlerts, isLoading: loadingOvAlerts } = useQuery({
     queryKey: ["patient-ov-alerts"],
@@ -218,6 +208,9 @@ export default function PatientPage() {
     queryFn: patientApi.getActivePrescriptions,
     enabled: role === "PATIENT" && activeTab === "overview",
   });
+  
+  // Extract items from paginated response
+  const prescriptionsList = ovPrescriptions?.items || [];
 
   const { data: prescriptions, isLoading: loadingPres } = useQuery({
     queryKey: ["patient-prescriptions"],
@@ -549,16 +542,32 @@ export default function PatientPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground">
-                          Tỉ lệ tuân thủ
+                          Đã uống thuốc
                         </p>
-                        <p className="text-2xl font-bold text-foreground">
-                          {(overview as OverviewData)?.adherenceRate != null
-                            ? `${Math.round((overview as OverviewData).adherenceRate * 100)}%`
-                            : "0%"}
+                        <p className="text-2xl font-bold text-emerald-600">
+                          {(overview as OverviewData)?.takenLogs ?? 0}
                         </p>
                       </div>
                       <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                        <TrendingUp className="h-4 w-4" />
+                        <CheckCircle className="h-4 w-4" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-border/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Bỏ lỡ thuốc
+                        </p>
+                        <p className="text-2xl font-bold text-red-600">
+                          {(overview as OverviewData)?.missedLogs ?? 0}
+                        </p>
+                      </div>
+                      <div className="h-8 w-8 rounded-lg bg-red-100 text-red-700 flex items-center justify-center">
+                        <XCircle className="h-4 w-4" />
                       </div>
                     </div>
                   </CardContent>
@@ -594,9 +603,9 @@ export default function PatientPage() {
                         <Pill className="h-4 w-4 text-primary" />
                         Đơn thuốc đang hoạt động
                       </span>
-                      {!loadingOvRx && Array.isArray(ovPrescriptions) && ovPrescriptions.length > 0 && (
+                      {!loadingOvRx && prescriptionsList.length > 0 && (
                         <Badge variant="secondary" className="text-xs">
-                          {ovPrescriptions.length}
+                          {prescriptionsList.length}
                         </Badge>
                       )}
                     </CardTitle>
@@ -607,9 +616,9 @@ export default function PatientPage() {
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                         <span className="ml-2 text-sm text-muted-foreground">Đang tải...</span>
                       </div>
-                    ) : Array.isArray(ovPrescriptions) && ovPrescriptions.length > 0 ? (
-                      <div className="space-y-3">
-                        {ovPrescriptions.slice(0, 3).map((pr: Prescription) => (
+                    ) : prescriptionsList.length > 0 ? (
+                      <div className="max-h-96 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+                        {prescriptionsList.map((pr: Prescription) => (
                           <div key={pr.id} className="rounded-lg border border-border/20 p-3 hover:bg-muted/50 transition-colors">
                             <div className="flex items-center justify-between mb-2">
                               <Badge className={`text-xs ${getStatusColor(pr.status)}`}>
@@ -631,10 +640,14 @@ export default function PatientPage() {
                             )}
                           </div>
                         ))}
-                        {ovPrescriptions.length > 3 && (
-                          <p className="text-xs text-muted-foreground text-center">
-                            +{ovPrescriptions.length - 3} đơn thuốc khác
-                          </p>
+
+                        {/* Scroll indicator */}
+                        {prescriptionsList.length > 4 && (
+                          <div className="text-center py-2">
+                            <p className="text-xs text-muted-foreground">
+                              Cuộn để xem thêm đơn thuốc
+                            </p>
+                          </div>
                         )}
                       </div>
                     ) : (
@@ -652,11 +665,11 @@ export default function PatientPage() {
                     <CardTitle className="flex items-center justify-between text-base">
                       <span className="flex items-center gap-2">
                         <Clock className="h-4 w-4 text-blue-600" />
-                        Nhắc nhở sắp tới
+                        Nhắc nhở hôm nay
                       </span>
-                      {!loadingOvReminders && Array.isArray(ovReminders) && ovReminders.length > 0 && (
+                      {!loadingOvReminders && upcomingReminders.length > 0 && (
                         <Badge variant="secondary" className="text-xs">
-                          {ovReminders.length}
+                          {upcomingReminders.length}
                         </Badge>
                       )}
                     </CardTitle>
@@ -667,50 +680,71 @@ export default function PatientPage() {
                         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                         <span className="ml-2 text-sm text-muted-foreground">Đang tải...</span>
                       </div>
-                    ) : Array.isArray(ovReminders) && ovReminders.length > 0 ? (
-                      <div className="space-y-3">
-                        {ovReminders.slice(0, 5).map((r: Reminder, idx: number) => (
-                          <div key={idx} className="flex items-center justify-between rounded-lg border border-border/20 p-3 hover:bg-muted/50 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold ${
-                                r.status === 'TAKEN' ? 'bg-green-100 text-green-700' :
-                                r.status === 'MISSED' ? 'bg-amber-100 text-amber-700' :
-                                r.status === 'SKIPPED' ? 'bg-gray-100 text-gray-700' :
-                                'bg-blue-100 text-blue-700'
-                              }`}>
-                                {r.time?.slice(0, 5) || "--:--"}
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-foreground">
-                                  {r.medicationName || "Thuốc"} • {r.dosage}
-                                </p>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-xs text-muted-foreground">
-                                    {r.date}
-                                  </p>
-                                  <Badge 
-                                    variant={r.status === 'TAKEN' ? 'default' : r.status === 'MISSED' ? 'destructive' : r.status === 'SKIPPED' ? 'secondary' : 'outline'}
-                                    className="text-xs"
-                                  >
-                                    {r.status === 'TAKEN' ? 'Đã uống' : 
-                                     r.status === 'MISSED' ? 'Bỏ lỡ' : 
-                                     r.status === 'SKIPPED' ? 'Bỏ qua' : 'Chưa uống'}
-                                  </Badge>
+                    ) : upcomingReminders.length > 0 ? (
+                      <div className="max-h-96 overflow-y-auto space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400">
+                        {upcomingReminders.map((r: any, idx: number) => (
+                          <div key={idx} className="rounded-lg border border-border/20 p-4 hover:shadow-md transition-all duration-200">
+                            <div className="flex items-start gap-3">
+                              {/* Time Badge */}
+                              <div className="shrink-0">
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white flex flex-col items-center justify-center">
+                                  <div className="text-sm font-bold">
+                                    {r.time}
+                                  </div>
                                 </div>
+                              </div>
+
+                              {/* Medication Info */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <div className="min-w-0">
+                                    <h4 className="text-sm font-semibold text-foreground">
+                                      {r.medicationName || "Thuốc"}
+                                    </h4>
+                                    <div className="flex items-center gap-1 mt-1">
+                                      <Badge variant="secondary" className="text-xs">
+                                        {r.dosage}
+                                      </Badge>
+                                      <Badge variant="outline" className="text-xs">
+                                        {translateRoute(r.route) || "Đường uống"}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <div className="shrink-0">
+                                    <Badge 
+                                      variant={r.status === 'TAKEN' ? 'default' : r.status === 'MISSED' ? 'destructive' : 'outline'}
+                                      className="text-xs"
+                                    >
+                                      {translateStatus(r.status)}
+                                    </Badge>
+                                  </div>
+                                </div>
+
+                                {/* Instructions */}
+                                {r.instructions && (
+                                  <p className="text-xs text-muted-foreground">
+                                    {r.instructions}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           </div>
                         ))}
-                        {ovReminders.length > 5 && (
-                          <p className="text-xs text-muted-foreground text-center">
-                            +{ovReminders.length - 5} nhắc nhở khác
-                          </p>
+                        
+                        {/* Scroll indicator */}
+                        {upcomingReminders.length > 4 && (
+                          <div className="text-center py-2">
+                            <p className="text-xs text-muted-foreground">
+                              Cuộn để xem thêm nhắc nhở
+                            </p>
+                          </div>
                         )}
                       </div>
                     ) : (
                       <div className="text-center py-8">
                         <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground/50" />
-                        <p className="text-sm text-muted-foreground">Không có nhắc nhở</p>
+                        <p className="text-sm text-muted-foreground">Không có nhắc nhở hôm nay</p>
+                        <p className="text-xs text-muted-foreground mt-1">Tất cả thuốc đã được uống</p>
                       </div>
                     )}
                   </CardContent>
@@ -1350,7 +1384,7 @@ export default function PatientPage() {
                                       {r.dosage}
                                     </Badge>
                                     <Badge variant="outline" className="text-xs">
-                                      {r.route || "Đường uống"}
+                                      {translateRoute(r.route) || "Đường uống"}
                                     </Badge>
                                   </div>
                                 </div>
@@ -1359,9 +1393,7 @@ export default function PatientPage() {
                                     variant={r.status === 'TAKEN' ? 'default' : r.status === 'MISSED' ? 'destructive' : r.status === 'SKIPPED' ? 'secondary' : 'outline'}
                                     className="text-xs"
                                   >
-                                    {r.status === 'TAKEN' ? 'Đã uống' : 
-                                     r.status === 'MISSED' ? 'Đã bỏ lỡ' : 
-                                     r.status === 'SKIPPED' ? 'Đã bỏ qua' : 'Chưa uống'}
+                                    {translateStatus(r.status)}
                                   </Badge>
                                 </div>
                               </div>
@@ -1576,8 +1608,7 @@ export default function PatientPage() {
                     const skipped = logs.filter(
                       (l) => l.status === "SKIPPED"
                     ).length;
-                    const total = logs.length || 1;
-                    const rate = Math.round((taken / total) * 100);
+                    // Remove rate calculation since we're not showing adherence rate anymore
                     // group by date
                     const groups: Record<string, any[]> = {};
                     logs.forEach((l) => {
@@ -1593,15 +1624,7 @@ export default function PatientPage() {
                     );
                     return (
                       <>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                          <div className="rounded-lg border border-border/20 p-4">
-                            <div className="text-[11px] text-muted-foreground">
-                              Tỉ lệ tuân thủ
-                            </div>
-                            <div className="mt-1 text-2xl font-bold text-foreground">
-                              {rate}%
-                            </div>
-                          </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                           <div className="rounded-lg border border-border/20 p-4">
                             <div className="text-[11px] text-muted-foreground">
                               Đã uống

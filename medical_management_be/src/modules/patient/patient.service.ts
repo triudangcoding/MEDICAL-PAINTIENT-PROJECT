@@ -203,7 +203,7 @@ export class PatientService {
   }
 
   async overview(patientId: string) {
-    const [activePrescriptions, takenLogs, totalItems, unresolvedAlerts] =
+    const [activePrescriptions, takenLogs, missedLogs, unresolvedAlerts] =
       await Promise.all([
         this.databaseService.client.prescription.count({
           where: { patientId, status: 'ACTIVE' }
@@ -211,15 +211,14 @@ export class PatientService {
         this.databaseService.client.adherenceLog.count({
           where: { patientId, status: AdherenceStatus.TAKEN }
         }),
-        this.databaseService.client.prescriptionItem.count({
-          where: { prescription: { patientId } }
+        this.databaseService.client.adherenceLog.count({
+          where: { patientId, status: AdherenceStatus.MISSED }
         }),
         this.databaseService.client.alert.count({
           where: { patientId, resolved: false }
         })
       ]);
-    const adherenceRate = totalItems > 0 ? takenLogs / totalItems : 0;
-    return { activePrescriptions, adherenceRate, unresolvedAlerts };
+    return { activePrescriptions, takenLogs, missedLogs, unresolvedAlerts };
   }
 
   // Danh sách tất cả bệnh nhân (join User + PatientProfile)
