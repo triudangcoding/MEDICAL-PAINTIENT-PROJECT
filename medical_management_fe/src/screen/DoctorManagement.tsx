@@ -758,6 +758,10 @@ const DoctorManagement: React.FC = () => {
                     }
                   }}
                 >
+                  {/* Overlay with blur - only render when dialog is open */}
+                  {openMedDialog && (
+                    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0" aria-hidden="true" />
+                  )}
                   <DialogTrigger asChild>
                     <Button className="relative bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-primary/20">
                       <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-md opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
@@ -767,7 +771,7 @@ const DoctorManagement: React.FC = () => {
                       </div>
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-[500px]">
+                  <DialogContent className="sm:max-w-[500px] rounded-2xl border border-border/20 shadow-2xl bg-card/95 backdrop-blur-md">
                     <DialogHeader>
                       <DialogTitle>
                         {editingMedId ? "Sửa thuốc" : "Thêm thuốc"}
@@ -1162,7 +1166,11 @@ const DoctorManagement: React.FC = () => {
                   })
                 }
               >
-                <DialogContent className="sm:max-w-[500px]">
+                {/* Overlay with blur - only render when dialog is open */}
+                {openEditProfile.open && (
+                  <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0" aria-hidden="true" />
+                )}
+                <DialogContent className="sm:max-w-[500px] rounded-2xl border border-border/20 shadow-2xl bg-card/95 backdrop-blur-md">
                   <DialogHeader>
                     <DialogTitle>Cập nhật hồ sơ</DialogTitle>
                   </DialogHeader>
