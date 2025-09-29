@@ -55,6 +55,11 @@ const doctorOnlyMenuItems = [
     url: "/dashboard/doctor-prescriptions",
     icon: AlertTriangle,
   },
+  {
+    title: "Loại thuốc",
+    url: "/dashboard/doctor-medications",
+    icon: Pill,
+  },
 
 ];
 
