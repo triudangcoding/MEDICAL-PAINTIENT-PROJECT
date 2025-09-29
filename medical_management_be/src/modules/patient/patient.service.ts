@@ -66,16 +66,16 @@ export class PatientService {
     return { items, total, page, limit };
   }
 
-  async getReminders(patientId: string) {
+  async getReminders(patientId: string, date?: string) {
     const items = await this.databaseService.client.prescriptionItem.findMany({
       where: { prescription: { patientId, status: PrescriptionStatus.ACTIVE } },
       include: { prescription: true, medication: true }
     });
     
-    // Get adherence logs for today to check status
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    // Use provided date or default to today
+    const targetDate = date ? new Date(date) : new Date();
+    const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1);
     
     const adherenceLogs = await this.databaseService.client.adherenceLog.findMany({
       where: {
@@ -131,7 +131,7 @@ export class PatientService {
           }
           
           reminders.push({
-            id: uniqueDoseId, // Unique ID for each specific dose
+            id: uniqueDoseId, // Unique ID for each specific doseh
             date: reminderDate,
             time: t,
             prescriptionId: item.prescriptionId,
@@ -147,10 +147,11 @@ export class PatientService {
       }
     }
     
-    // Filter to only show today's reminders
-    const todayReminders = reminders.filter(r => r.date === today.toISOString().slice(0, 10));
+    // Filter to only show reminders for the target date
+    const targetDateString = targetDate.toISOString().slice(0, 10);
+    const filteredReminders = reminders.filter(r => r.date === targetDateString);
     
-    return todayReminders;
+    return filteredReminders;
   }
 
   async confirmIntake(

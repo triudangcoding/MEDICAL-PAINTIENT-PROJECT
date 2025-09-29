@@ -105,9 +105,9 @@ export class PatientController {
   }
   // Lịch sử uống thuốc
   @Get('reminders')
-  async reminders(@UserInfo() user: IUserFromToken) {
+  async reminders(@UserInfo() user: IUserFromToken, @Query('date') date?: string) {
     this.ensurePatient(user);
-    return this.patientService.getReminders(user.id);
+    return this.patientService.getReminders(user.id, date);
   }
 
   // Prescriptions confirmation moved to PatientPrescriptionsController

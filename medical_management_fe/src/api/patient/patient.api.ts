@@ -144,8 +144,9 @@ export const patientApi = {
         return res.data?.data ?? res.data;
     },
 
-    async getReminders() {
-        const res = await axiosInstance.get('/patient/reminders');
+    async getReminders(date?: string) {
+        const params = date ? { date } : {};
+        const res = await axiosInstance.get('/patient/reminders', { params });
         return res.data?.data ?? res.data;
     },
 

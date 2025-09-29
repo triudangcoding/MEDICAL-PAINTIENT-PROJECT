@@ -17,6 +17,13 @@ import {
   User,
   Activity
 } from "lucide-react";
+import { TimeValidationDialog } from "@/components/dialogs/TimeValidationDialog";
+import { 
+  isWithinTimeSlot, 
+  formatTimeSlot, 
+  getCurrentTimeInVietnamese 
+} from "@/utils/timeValidation";
+import { Calendar } from "lucide-react";
 
 // Types for better type safety
 interface Prescription {
@@ -93,6 +100,36 @@ export default function PatientPage() {
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState<string | null>(null);
   const [confirmItemId, setConfirmItemId] = useState<string>("");
   const [loadingActions, setLoadingActions] = useState<Record<string, boolean>>({});
+  
+  // Time validation dialog state
+  const [timeValidationDialog, setTimeValidationDialog] = useState<{
+    open: boolean;
+    reminder: any | null;
+  }>({
+    open: false,
+    reminder: null,
+  });
+
+  // Date picker state for reminders
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().slice(0, 10));
+
+  // Debug dialog state changes
+  useEffect(() => {
+    console.log('Dialog state changed:', timeValidationDialog);
+  }, [timeValidationDialog]);
+
+  // Test function to force show dialog
+  const testShowDialog = () => {
+    console.log('Testing dialog show');
+    setTimeValidationDialog({
+      open: true,
+      reminder: {
+        medicationName: 'Test Medication',
+        time: 'Sáng',
+        uniqueDoseId: 'test-id'
+      }
+    });
+  };
 
   // Utility functions
   const formatDate = (dateString: string): string => {
@@ -165,7 +202,6 @@ export default function PatientPage() {
   // Lightweight queries for overview aggregation
   const { data: ovReminders, isLoading: loadingOvReminders } = useQuery({
     queryKey: ["patient-ov-reminders"],
-    queryFn: patientApi.getReminders,
     enabled: role === "PATIENT" && activeTab === "overview",
   });
 
@@ -213,8 +249,8 @@ export default function PatientPage() {
   });
 
   const { data: reminders, isLoading: loadingReminders } = useQuery({
-    queryKey: ["patient-reminders"],
-    queryFn: patientApi.getReminders,
+    queryKey: ["patient-reminders", selectedDate],
+    queryFn: () => patientApi.getReminders(selectedDate),
     enabled: role === "PATIENT" && activeTab === "reminders",
     staleTime: 0, // Always refetch to get latest status
   });
@@ -267,6 +303,51 @@ export default function PatientPage() {
   const handleConfirmIntakeFromReminder = async (reminder: any) => {
     if (!reminder.prescriptionId || !reminder.prescriptionItemId) return;
     
+    console.log('=== CONFIRM INTAKE DEBUG ===');
+    console.log('Reminder:', reminder);
+    console.log('Reminder time:', reminder.time);
+    
+    // Check if current time is within the expected time slot
+    const isWithinTime = isWithinTimeSlot(reminder.time);
+    console.log('Is within time slot:', isWithinTime);
+    
+    if (!isWithinTime) {
+      console.log('Showing time validation dialog');
+      
+      // Test with simple alert first
+      const message = `Bạn đang xác nhận uống thuốc ${reminder.medicationName} ngoài khung giờ.\n\n` +
+        `Khung giờ dự kiến: ${formatTimeSlot(reminder.time)}\n` +
+        `Thời gian hiện tại: ${getCurrentTimeInVietnamese()}\n\n` +
+        `Bạn có chắc chắn muốn xác nhận uống thuốc vào thời điểm này không?`;
+      
+      console.log('Alert message:', message);
+      console.log('About to show window.confirm');
+      
+      const confirmed = window.confirm(message);
+      console.log('User confirmed:', confirmed);
+      
+      if (confirmed) {
+        console.log('User confirmed, proceeding with action');
+        await confirmIntakeAction(reminder);
+      } else {
+        console.log('User cancelled');
+      }
+      return;
+      
+      // Original dialog code (commented out for now)
+      // setTimeValidationDialog({
+      //   open: true,
+      //   reminder: reminder,
+      // });
+      // return;
+    }
+    
+    console.log('Proceeding with normal confirmation');
+    // Proceed with normal confirmation if within time slot
+    await confirmIntakeAction(reminder);
+  };
+
+  const confirmIntakeAction = async (reminder: any) => {
     const actionKey = `confirm-${reminder.id}`;
     setLoadingActions(prev => ({ ...prev, [actionKey]: true }));
     
@@ -289,7 +370,7 @@ export default function PatientPage() {
       ]);
       
       // Force refetch reminders immediately
-      queryClient.refetchQueries({ queryKey: ["patient-reminders"] });
+      queryClient.refetchQueries({ queryKey: ["patient-reminders", selectedDate] });
       
       toast.success("Xác nhận uống thuốc thành công!", {
         duration: 3000,
@@ -311,6 +392,39 @@ export default function PatientPage() {
   const handleMarkMissedFromReminder = async (reminder: any) => {
     if (!reminder.prescriptionId) return;
     
+    console.log('=== MARK MISSED DEBUG ===');
+    console.log('Reminder:', reminder);
+    console.log('Reminder time:', reminder.time);
+    
+    // Check if current time is within the expected time slot
+    const isWithinTime = isWithinTimeSlot(reminder.time);
+    console.log('Is within time slot:', isWithinTime);
+    
+    // Always show confirmation for marking missed (regardless of time slot)
+    console.log('Showing missed validation dialog');
+    
+    // Test with simple alert first - warning for marking missed
+    const message = `Bạn đang đánh dấu bỏ lỡ thuốc ${reminder.medicationName}.\n\n` +
+      `Khung giờ dự kiến: ${formatTimeSlot(reminder.time)}\n` +
+      `Thời gian hiện tại: ${getCurrentTimeInVietnamese()}\n\n` +
+      `Bạn có chắc chắn muốn đánh dấu bỏ lỡ thuốc này không?`;
+    
+    console.log('Missed alert message:', message);
+    console.log('About to show window.confirm for missed');
+    
+    const confirmed = window.confirm(message);
+    console.log('User confirmed missed:', confirmed);
+    
+    if (!confirmed) {
+      console.log('User cancelled missed action');
+      return; // User cancelled
+    }
+    
+    // Proceed with marking missed
+    await markMissedAction(reminder);
+  };
+
+  const markMissedAction = async (reminder: any) => {
     const actionKey = `missed-${reminder.id}`;
     setLoadingActions(prev => ({ ...prev, [actionKey]: true }));
     
@@ -331,7 +445,7 @@ export default function PatientPage() {
       ]);
       
       // Force refetch reminders immediately
-      queryClient.refetchQueries({ queryKey: ["patient-reminders"] });
+      queryClient.refetchQueries({ queryKey: ["patient-reminders", selectedDate] });
       
       toast.success("Đã đánh dấu bỏ lỡ thuốc!", {
         duration: 3000,
@@ -357,17 +471,6 @@ export default function PatientPage() {
     return (
       <main className="flex-1 overflow-auto p-6">
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">
-                Thông tin bệnh nhân
-              </h1>
-              <p className="text-muted-foreground">
-                Quản lý đơn thuốc, lịch sử, nhắc nhở và theo dõi
-              </p>
-            </div>
-          </div>
-
           {/* Overview */}
           {activeTab === "overview" && (
             <div className="space-y-6">
@@ -1067,12 +1170,37 @@ export default function PatientPage() {
                 <div>
                   <h2 className="text-xl font-semibold text-foreground">Nhắc nhở uống thuốc</h2>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Lịch trình uống thuốc hôm nay
+                    Lịch trình uống thuốc theo ngày
                   </p>
                 </div>
                 <Badge variant="outline" className="text-xs">
                   {Array.isArray(reminders) ? reminders.length : 0} nhắc nhở
                 </Badge>
+              </div>
+
+              {/* Date Picker */}
+              <div className="flex items-center gap-3 p-4 bg-muted/30 rounded-lg">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <label htmlFor="reminder-date" className="text-sm font-medium">
+                    Chọn ngày:
+                  </label>
+                  <input
+                    id="reminder-date"
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="px-3 py-1 text-sm border border-border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setSelectedDate(new Date().toISOString().slice(0, 10))}
+                  className="text-xs"
+                >
+                  Hôm nay
+                </Button>
               </div>
 
               {/* Reminders List */}
@@ -1442,6 +1570,24 @@ export default function PatientPage() {
           </p>
         </div>
       </div>
+      
+      {/* Time Validation Dialog */}
+      <TimeValidationDialog
+        open={timeValidationDialog.open}
+        onOpenChange={(open) => {
+          console.log('Dialog onOpenChange:', open);
+          setTimeValidationDialog(prev => ({ ...prev, open }));
+        }}
+        onConfirm={() => {
+          console.log('Dialog onConfirm');
+          if (timeValidationDialog.reminder) {
+            confirmIntakeAction(timeValidationDialog.reminder);
+          }
+        }}
+        medicationName={timeValidationDialog.reminder?.medicationName || ''}
+        timeSlot={formatTimeSlot(timeValidationDialog.reminder?.time || '')}
+        currentTimeSlot={getCurrentTimeInVietnamese()}
+      />
     </main>
   );
 }
