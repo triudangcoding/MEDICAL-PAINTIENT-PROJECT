@@ -587,25 +587,6 @@ export default function PatientPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="border-border/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-muted-foreground">
-                          Lần ghi nhận gần nhất
-                        </p>
-                        <p className="text-sm font-bold text-foreground">
-                          {Array.isArray(ovAdherence) && ovAdherence[0]?.takenAt
-                            ? formatDate(ovAdherence[0].takenAt)
-                            : "Chưa có"}
-                        </p>
-                      </div>
-                      <div className="h-8 w-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
-                        <Clock className="h-4 w-4" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </div>
 
               {/* Active prescriptions preview */}

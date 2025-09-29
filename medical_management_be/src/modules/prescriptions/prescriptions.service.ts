@@ -582,6 +582,30 @@ export class PrescriptionsService {
     });
 
     console.log('Created adherence log:', adherenceLog.id);
+
+    // Create alert if status is MISSED
+    if (data.status === 'MISSED') {
+      try {
+        const medicationName = adherenceLog.prescriptionItem?.medication?.name || 'thuốc';
+        const message = `Bạn đã bỏ lỡ liều thuốc ${medicationName}. Vui lòng uống thuốc đúng giờ theo chỉ định của bác sĩ.`;
+        
+        await this.databaseService.client.alert.create({
+          data: {
+            prescriptionId: data.prescriptionId,
+            patientId: data.patientId,
+            type: 'MISSED_DOSE',
+            message: message,
+            resolved: false
+          }
+        });
+        
+        console.log('Created MISSED_DOSE alert for patient:', data.patientId);
+      } catch (error) {
+        console.error('Failed to create MISSED_DOSE alert:', error);
+        // Don't throw error - adherence log was created successfully
+      }
+    }
+
     console.log('=== END LOG ADHERENCE DEBUG ===');
 
     return adherenceLog;
