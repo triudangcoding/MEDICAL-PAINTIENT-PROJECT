@@ -212,10 +212,6 @@ const DoctorManagement: React.FC = () => {
     queryKey: ["doctor-overview"],
     queryFn: () => DoctorApi.overview(),
   });
-  const { data: alertsData, isLoading: loadingAlerts } = useQuery({
-    queryKey: ["doctor-alerts"],
-    queryFn: () => DoctorApi.listAlerts(),
-  });
 
   // Doctor queries
   const doctorsQueryKey = useMemo(
@@ -883,7 +879,7 @@ const DoctorManagement: React.FC = () => {
             className="space-y-6"
           >
             <TabsList className="grid w-full grid-cols-4 bg-gradient-to-r from-background via-muted/30 to-background p-2 rounded-2xl border border-border/20 shadow-lg backdrop-blur-sm">
-            <TabsTrigger
+              <TabsTrigger
                 value="overview"
                 className="group flex items-center gap-2 relative overflow-hidden rounded-xl px-4 py-3 transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-primary/10 hover:scale-102"
               >
@@ -916,7 +912,7 @@ const DoctorManagement: React.FC = () => {
                 <span className="hidden sm:inline font-medium">Bác sĩ</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </TabsTrigger>
-            
+
             </TabsList>
 
             <TabsContent value="patients">
@@ -1046,13 +1042,12 @@ const DoctorManagement: React.FC = () => {
                             </TableCell>
                             <TableCell className="py-4">
                               <span
-                                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
-                                  p.profile?.gender === "Nam"
-                                    ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300/50"
-                                    : p.profile?.gender === "Nữ"
+                                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${p.profile?.gender === "Nam"
+                                  ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300/50"
+                                  : p.profile?.gender === "Nữ"
                                     ? "bg-gradient-to-r from-pink-100 to-pink-200 text-pink-800 border border-pink-300/50"
                                     : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300/50"
-                                }`}
+                                  }`}
                               >
                                 {p.profile?.gender || "-"}
                               </span>
@@ -1094,34 +1089,34 @@ const DoctorManagement: React.FC = () => {
                         {(role !== "PATIENT"
                           ? loadingPatients
                           : currentUserQuery.isLoading) && (
-                          <TableRow>
-                            <TableCell
-                              colSpan={6}
-                              className="text-center py-16 text-muted-foreground"
-                            >
-                              <div className="flex flex-col items-center gap-4">
-                                <div className="relative">
-                                  <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                                  <div
-                                    className="absolute inset-0 w-12 h-12 border-4 border-transparent border-t-primary/40 rounded-full animate-spin"
-                                    style={{
-                                      animationDelay: "0.15s",
-                                      animationDuration: "1.5s",
-                                    }}
-                                  ></div>
+                            <TableRow>
+                              <TableCell
+                                colSpan={6}
+                                className="text-center py-16 text-muted-foreground"
+                              >
+                                <div className="flex flex-col items-center gap-4">
+                                  <div className="relative">
+                                    <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                    <div
+                                      className="absolute inset-0 w-12 h-12 border-4 border-transparent border-t-primary/40 rounded-full animate-spin"
+                                      style={{
+                                        animationDelay: "0.15s",
+                                        animationDuration: "1.5s",
+                                      }}
+                                    ></div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <span className="text-sm font-medium">
+                                      Đang tải dữ liệu...
+                                    </span>
+                                    <p className="text-xs text-muted-foreground/70">
+                                      Vui lòng chờ trong giây lát
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="space-y-1">
-                                  <span className="text-sm font-medium">
-                                    Đang tải dữ liệu...
-                                  </span>
-                                  <p className="text-xs text-muted-foreground/70">
-                                    Vui lòng chờ trong giây lát
-                                  </p>
-                                </div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
+                              </TableCell>
+                            </TableRow>
+                          )}
                       </TableBody>
                     </Table>
                   </div>
@@ -1489,26 +1484,24 @@ const DoctorManagement: React.FC = () => {
                                   </TableCell>
                                   <TableCell className="py-4">
                                     <span
-                                      className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
-                                        pr.status === "COMPLETED" ||
+                                      className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${pr.status === "COMPLETED" ||
                                         pr.status === "completed"
-                                          ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
-                                          : pr.status === "PENDING" ||
-                                            pr.status === "pending"
+                                        ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
+                                        : pr.status === "PENDING" ||
+                                          pr.status === "pending"
                                           ? "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300/50"
                                           : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300/50"
-                                      }`}
+                                        }`}
                                     >
                                       <div
-                                        className={`w-2 h-2 rounded-full mr-2 ${
-                                          pr.status === "COMPLETED" ||
+                                        className={`w-2 h-2 rounded-full mr-2 ${pr.status === "COMPLETED" ||
                                           pr.status === "completed"
-                                            ? "bg-green-600"
-                                            : pr.status === "PENDING" ||
-                                              pr.status === "pending"
+                                          ? "bg-green-600"
+                                          : pr.status === "PENDING" ||
+                                            pr.status === "pending"
                                             ? "bg-yellow-600"
                                             : "bg-gray-600"
-                                        }`}
+                                          }`}
                                       ></div>
                                       {pr.status || "Chưa xác định"}
                                     </span>
@@ -1648,18 +1641,16 @@ const DoctorManagement: React.FC = () => {
                                 </TableCell>
                                 <TableCell className="py-4">
                                   <span
-                                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
-                                      m.isActive
-                                        ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
-                                        : "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300/50"
-                                    }`}
+                                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${m.isActive
+                                      ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
+                                      : "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300/50"
+                                      }`}
                                   >
                                     <div
-                                      className={`w-2 h-2 rounded-full mr-2 ${
-                                        m.isActive
-                                          ? "bg-green-600"
-                                          : "bg-red-600"
-                                      }`}
+                                      className={`w-2 h-2 rounded-full mr-2 ${m.isActive
+                                        ? "bg-green-600"
+                                        : "bg-red-600"
+                                        }`}
                                     ></div>
                                     {m.isActive
                                       ? "Hoạt động"
@@ -1709,11 +1700,10 @@ const DoctorManagement: React.FC = () => {
                                           });
                                         }
                                       }}
-                                      className={`transition-all duration-300 group-hover:scale-105 ${
-                                        m.isActive
-                                          ? "hover:bg-gradient-to-r hover:from-destructive/10 hover:to-destructive/5 hover:border-destructive/30 hover:text-destructive hover:shadow-md hover:shadow-destructive/10"
-                                          : "hover:bg-gradient-to-r hover:from-green-500/10 hover:to-green-500/5 hover:border-green-500/30 hover:text-green-600 hover:shadow-md hover:shadow-green-500/10"
-                                      }`}
+                                      className={`transition-all duration-300 group-hover:scale-105 ${m.isActive
+                                        ? "hover:bg-gradient-to-r hover:from-destructive/10 hover:to-destructive/5 hover:border-destructive/30 hover:text-destructive hover:shadow-md hover:shadow-destructive/10"
+                                        : "hover:bg-gradient-to-r hover:from-green-500/10 hover:to-green-500/5 hover:border-green-500/30 hover:text-green-600 hover:shadow-md hover:shadow-green-500/10"
+                                        }`}
                                     >
                                       {m.isActive ? (
                                         <>
@@ -1733,29 +1723,29 @@ const DoctorManagement: React.FC = () => {
                             ))}
                             {(medsQuery.data?.items || toArray(medsQuery.data))
                               .length === 0 && (
-                              <TableRow>
-                                <TableCell
-                                  colSpan={6}
-                                  className="text-center py-16 text-muted-foreground"
-                                >
-                                  <div className="flex flex-col items-center gap-4">
-                                    <div className="relative">
-                                      <div className="w-16 h-16 bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl flex items-center justify-center">
-                                        <Pill className="h-8 w-8 text-muted-foreground/50" />
+                                <TableRow>
+                                  <TableCell
+                                    colSpan={6}
+                                    className="text-center py-16 text-muted-foreground"
+                                  >
+                                    <div className="flex flex-col items-center gap-4">
+                                      <div className="relative">
+                                        <div className="w-16 h-16 bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl flex items-center justify-center">
+                                          <Pill className="h-8 w-8 text-muted-foreground/50" />
+                                        </div>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <span className="text-sm font-medium">
+                                          Chưa có thuốc nào
+                                        </span>
+                                        <p className="text-xs text-muted-foreground/70">
+                                          Thuốc sẽ xuất hiện ở đây khi được thêm
+                                        </p>
                                       </div>
                                     </div>
-                                    <div className="space-y-1">
-                                      <span className="text-sm font-medium">
-                                        Chưa có thuốc nào
-                                      </span>
-                                      <p className="text-xs text-muted-foreground/70">
-                                        Thuốc sẽ xuất hiện ở đây khi được thêm
-                                      </p>
-                                    </div>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                            )}
+                                  </TableCell>
+                                </TableRow>
+                              )}
                           </TableBody>
                         </Table>
                       </div>
@@ -1835,50 +1825,6 @@ const DoctorManagement: React.FC = () => {
               </div>
             </TabsContent>
 
-            <TabsContent value="alerts">
-              <div className="bg-card rounded-xl shadow p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Cảnh báo</h3>
-                </div>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Mã</TableHead>
-                        <TableHead>Nội dung</TableHead>
-                        <TableHead>Trạng thái</TableHead>
-                        <TableHead className="text-right">Thao tác</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {toArray(alertsData).map((al: any) => (
-                        <TableRow key={al.id}>
-                          <TableCell className="font-medium">{al.id}</TableCell>
-                          <TableCell>{al.message || al.type}</TableCell>
-                          <TableCell>
-                            {al.status || (al.resolved ? "RESOLVED" : "OPEN")}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <ResolveAlertButton id={al.id} />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {loadingAlerts && (
-                        <TableRow>
-                          <TableCell
-                            colSpan={4}
-                            className="text-center py-6 text-muted-foreground"
-                          >
-                            Đang tải...
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            </TabsContent>
-
             <TabsContent value="doctors">
               <div className="bg-gradient-to-br from-card via-card to-card/95 rounded-2xl shadow-xl border border-border/20 p-8 backdrop-blur-sm">
                 {/* Header Section */}
@@ -1914,7 +1860,7 @@ const DoctorManagement: React.FC = () => {
                         className="pl-10 bg-background/50 border-border/30 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300"
                       />
                     </div>
-                    
+
                     {/* Create Doctor Button */}
                     {role === "ADMIN" && (
                       <Dialog
@@ -2097,16 +2043,15 @@ const DoctorManagement: React.FC = () => {
                             </TableCell>
                             <TableCell className="py-4">
                               <span
-                                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
-                                  doctor.status === "ACTIVE"
-                                    ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
-                                    : doctor.status === "INACTIVE"
+                                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${doctor.status === "ACTIVE"
+                                  ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
+                                  : doctor.status === "INACTIVE"
                                     ? "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300/50"
                                     : "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300/50"
-                                }`}
+                                  }`}
                               >
-                                {doctor.status === "ACTIVE" ? "Hoạt động" : 
-                                 doctor.status === "INACTIVE" ? "Tạm dừng" : "Khóa"}
+                                {doctor.status === "ACTIVE" ? "Hoạt động" :
+                                  doctor.status === "INACTIVE" ? "Tạm dừng" : "Khóa"}
                               </span>
                             </TableCell>
                             <TableCell className="text-right py-4">
@@ -2212,7 +2157,7 @@ const DoctorManagement: React.FC = () => {
 
       {/* Edit Doctor Dialog */}
       <Dialog open={openEditDoctor.open} onOpenChange={(open) => setOpenEditDoctor({ open })}>
-                        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Chỉnh sửa bác sĩ</DialogTitle>
           </DialogHeader>
@@ -2305,7 +2250,7 @@ const DoctorManagement: React.FC = () => {
 
       {/* Delete Doctor Dialog */}
       <Dialog open={openDeleteDoctor.open} onOpenChange={(open) => setOpenDeleteDoctor({ open })}>
-                        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Xác nhận xóa bác sĩ</DialogTitle>
           </DialogHeader>

@@ -140,6 +140,7 @@ export default function DoctorPatientsPage() {
   ])
   const [prescriptionNotes, setPrescriptionNotes] = useState('')
   const [showCreatePrescriptionForm, setShowCreatePrescriptionForm] = useState(false)
+  const [editingPrescriptionId, setEditingPrescriptionId] = useState<string | null>(null)
 
   // Form for basic info editing
   const basicInfoForm = useForm<UpdateBasicInfoData>({
@@ -220,8 +221,10 @@ export default function DoctorPatientsPage() {
         return [];
       }
       
-      // Filter prescriptions for current patient
-      const filtered = data.data.items.filter((prescription: any) => prescription.patientId === historyPatient?.id) || [];
+      // Filter prescriptions for current patient and exclude cancelled
+      const filtered = (data.data.items || [])
+        .filter((prescription: any) => prescription.patientId === historyPatient?.id)
+        .filter((prescription: any) => prescription.status !== 'CANCELLED');
       console.log('Patient prescriptions filtered:', filtered);
       console.log('Current patient ID:', historyPatient?.id);
       return filtered;
@@ -267,6 +270,37 @@ export default function DoctorPatientsPage() {
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Có lỗi xảy ra khi tạo đơn thuốc");
+    }
+  });
+
+  // Update prescription mutation
+  const updatePrescriptionMutation = useMutation({
+    mutationFn: (params: { id: string; data: PrescriptionData }) =>
+      DoctorApi.updatePrescription(params.id, {
+        items: params.data.items,
+        notes: params.data.notes,
+      }),
+    onSuccess: async () => {
+      toast.success("Cập nhật đơn thuốc thành công");
+      await queryClient.invalidateQueries({ queryKey: ['patient-prescriptions', historyPatient?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['doctor-prescriptions'] });
+      refetchPrescriptions();
+      // Reset form
+      setEditingPrescriptionId(null);
+      setPrescriptionItems([{
+        medicationId: '',
+        dosage: '',
+        frequencyPerDay: 1,
+        timesOfDay: [],
+        durationDays: 7,
+        route: '',
+        instructions: ''
+      }]);
+      setPrescriptionNotes('');
+      setShowCreatePrescriptionForm(false);
+    },
+    onError: (error: any) => {
+      toast.error(error?.response?.data?.message || "Có lỗi xảy ra khi cập nhật đơn thuốc");
     }
   });
 
@@ -353,11 +387,81 @@ export default function DoctorPatientsPage() {
     // Validate form
     try {
       prescriptionSchema.parse(prescriptionData);
-      createPrescriptionMutation.mutate(prescriptionData);
+      if (editingPrescriptionId) {
+        updatePrescriptionMutation.mutate({ id: editingPrescriptionId, data: prescriptionData });
+      } else {
+        createPrescriptionMutation.mutate(prescriptionData);
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0]?.message || "Vui lòng kiểm tra lại thông tin");
       }
+    }
+  };
+
+  const startEditPrescription = (detail: any) => {
+    if (!detail) return;
+    // Map backend enum/time labels to Vietnamese UI labels
+    const toUiTime = (val: string) => {
+      const map: Record<string, string> = {
+        MORNING: 'Sáng',
+        NOON: 'Trưa',
+        AFTERNOON: 'Chiều',
+        EVENING: 'Tối',
+      };
+      return map[val] || val;
+    };
+    const normalizeTimes = (arr: any): string[] => {
+      if (!Array.isArray(arr)) return [];
+      return arr.map((t) => String(t)).map(toUiTime);
+    };
+    console.log('[Edit Rx] detail:', detail);
+    // Prefill form with existing prescription
+    const items = (detail.items || []).map((i: any) => ({
+      medicationId: i.medicationId || i.medication?.id || '',
+      dosage: i.dosage || '',
+      frequencyPerDay: i.frequencyPerDay || 1,
+      timesOfDay: normalizeTimes(i.timesOfDay),
+      durationDays: i.durationDays || 7,
+      route: i.route || '',
+      instructions: i.instructions || ''
+    }));
+    console.log('[Edit Rx] prefilled items:', items);
+    setPrescriptionItems(items.length ? items : [{ medicationId: '', dosage: '', frequencyPerDay: 1, timesOfDay: [], durationDays: 7, route: '', instructions: '' }]);
+    setPrescriptionNotes(detail.notes || '');
+    setEditingPrescriptionId(detail.id);
+    setIsPrescriptionDetailOpen(false);
+    setActiveDialogTab('prescriptions');
+    setShowCreatePrescriptionForm(true);
+  };
+
+  const cancelPrescription = async (id: string) => {
+    try {
+      const ok = window.confirm('Bạn có chắc muốn hủy đơn thuốc này?');
+      if (!ok) return;
+      // Optimistic update: remove from current cache immediately
+      queryClient.setQueryData(['patient-prescriptions', historyPatient?.id], (old: any) => {
+        if (!old) return old;
+        try {
+          const arr = Array.isArray(old) ? old : old?.data || [];
+          const next = (arr || []).filter((p: any) => p.id !== id);
+          return Array.isArray(old) ? next : { ...(old || {}), data: next };
+        } catch {
+          return old;
+        }
+      });
+      await DoctorApi.cancelPrescription(id);
+      toast.success('Đã hủy đơn thuốc');
+      await queryClient.invalidateQueries({ queryKey: ['patient-prescriptions', historyPatient?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['doctor-prescriptions'] });
+      refetchPrescriptions();
+      setIsPrescriptionDetailOpen(false);
+      // Clear editing state if any
+      if (editingPrescriptionId === id) {
+        setEditingPrescriptionId(null);
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Không thể hủy đơn thuốc');
     }
   };
 
@@ -584,16 +688,12 @@ export default function DoctorPatientsPage() {
                           {p.fullName?.charAt(0)?.toUpperCase() || 'P'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-foreground text-base truncate">{p.fullName}</h3>
+                          <h3 className="font-semibold text-foreground text-sm truncate">{p.fullName}</h3>
                           <p className="text-sm text-muted-foreground truncate">{p.phoneNumber}</p>
                         </div>
                       </div>
-                      <div className={`px-2 py-1 rounded-md text-xs font-medium ${
-                        p.status === 'ACTIVE' 
-                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' 
-                          : 'bg-gray-50 text-gray-600 dark:bg-gray-800/50 dark:text-gray-400'
-                      }`}>
-                        {p.status === 'ACTIVE' ? 'Hoạt động' : 'Không hoạt động'}
+                      <div className="flex items-center gap-1 text-xs" title={p.status === 'ACTIVE' ? 'Hoạt động' : 'Không hoạt động'}>
+                        <span className={`${p.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-red-500'} w-2 h-2 rounded-full`}></span>
                       </div>
                     </div>
 
@@ -1200,18 +1300,18 @@ export default function DoctorPatientsPage() {
                   {/* Submit Button */}
                   <Button
                     onClick={handleCreatePrescription}
-                    disabled={createPrescriptionMutation.isPending}
+                    disabled={createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending}
                     className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
                   >
-                    {createPrescriptionMutation.isPending ? (
+                    {createPrescriptionMutation.isPending || updatePrescriptionMutation.isPending ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Đang tạo đơn thuốc...
+                        {editingPrescriptionId ? 'Đang cập nhật đơn thuốc...' : 'Đang tạo đơn thuốc...'}
                       </>
                     ) : (
                       <>
                         <Pill className="h-4 w-4 mr-2" />
-                        Tạo đơn thuốc
+                        {editingPrescriptionId ? 'Cập nhật đơn thuốc' : 'Tạo đơn thuốc'}
                       </>
                     )}
                   </Button>
@@ -1696,6 +1796,22 @@ export default function DoctorPatientsPage() {
             >
               Đóng
             </Button>
+            {prescriptionDetail && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => startEditPrescription(prescriptionDetail)}
+                >
+                  Sửa đơn
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => cancelPrescription(prescriptionDetail.id)}
+                >
+                  Hủy đơn
+                </Button>
+              </>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>

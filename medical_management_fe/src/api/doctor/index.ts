@@ -117,8 +117,10 @@ export const DoctorApi = {
   updatePrescription: async (
     id: string,
     dto: {
+      status?: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+      startDate?: string;
+      endDate?: string;
       items?: Array<{
-        id?: string;
         medicationId: string;
         dosage: string;
         frequencyPerDay: number;
@@ -130,12 +132,13 @@ export const DoctorApi = {
       notes?: string;
     }
   ) => {
-    const res = await axiosInstance.put(`/doctor/prescriptions/${id}`, dto);
+    const res = await axiosInstance.patch(`/doctor/prescriptions/${id}`, dto);
     return res.data;
   },
 
   cancelPrescription: async (id: string) => {
-    const res = await axiosInstance.delete(`/doctor/prescriptions/${id}`);
+    // Backend không có DELETE, hủy đơn bằng PATCH status
+    const res = await axiosInstance.patch(`/doctor/prescriptions/${id}`, { status: 'CANCELLED' });
     return res.data;
   },
 
@@ -161,7 +164,3 @@ export const DoctorApi = {
     return res.data;
   },
 };
-
-export type { PatientCreateDto, PatientHistoryDto, PatientProfileDto };
-
-
