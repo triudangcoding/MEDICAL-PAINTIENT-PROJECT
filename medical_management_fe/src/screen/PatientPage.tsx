@@ -275,6 +275,8 @@ export default function PatientPage() {
     queryFn: () => patientApi.getReminders(selectedDate),
     enabled: role === "PATIENT" && activeTab === "reminders",
     staleTime: 0, // Always refetch to get latest status
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Always refetch on mount
   });
 
   // Filter reminders by time slot
@@ -399,6 +401,12 @@ export default function PatientPage() {
     const actionKey = `confirm-${reminder.id}`;
     setLoadingActions(prev => ({ ...prev, [actionKey]: true }));
     
+    console.log('=== CONFIRM INTAKE ACTION DEBUG ===');
+    console.log('Reminder:', reminder);
+    console.log('Unique dose ID:', reminder.uniqueDoseId);
+    console.log('Prescription ID:', reminder.prescriptionId);
+    console.log('Prescription Item ID:', reminder.prescriptionItemId);
+    
     try {
       await patientApi.confirmIntake(reminder.prescriptionId, {
         prescriptionItemId: reminder.prescriptionItemId,
@@ -408,6 +416,7 @@ export default function PatientPage() {
       });
       
       // Refresh reminders and related data with more aggressive invalidation
+      console.log('=== REFRESHING CACHE AFTER CONFIRM INTAKE ===');
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["patient-reminders"] }), // This will invalidate all patient-reminders queries
         queryClient.invalidateQueries({ queryKey: ["patient-overview"] }),
@@ -418,7 +427,11 @@ export default function PatientPage() {
       ]);
       
       // Force refetch reminders for the selected date
+      console.log('=== FORCE REFETCH REMINDERS ===');
       await queryClient.refetchQueries({ queryKey: ["patient-reminders", selectedDate] });
+      
+      // Also refetch all reminders queries
+      await queryClient.refetchQueries({ queryKey: ["patient-reminders"] });
       
       toast.success("Xác nhận uống thuốc thành công!", {
         duration: 3000,
@@ -476,6 +489,12 @@ export default function PatientPage() {
     const actionKey = `missed-${reminder.id}`;
     setLoadingActions(prev => ({ ...prev, [actionKey]: true }));
     
+    console.log('=== MARK MISSED ACTION DEBUG ===');
+    console.log('Reminder:', reminder);
+    console.log('Unique dose ID:', reminder.uniqueDoseId);
+    console.log('Prescription ID:', reminder.prescriptionId);
+    console.log('Prescription Item ID:', reminder.prescriptionItemId);
+    
     try {
       await patientApi.markMissed(reminder.prescriptionId, {
         prescriptionItemId: reminder.prescriptionItemId,
@@ -483,6 +502,7 @@ export default function PatientPage() {
       });
       
       // Refresh reminders and related data with more aggressive invalidation
+      console.log('=== REFRESHING CACHE AFTER MARK MISSED ===');
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["patient-reminders"] }), // This will invalidate all patient-reminders queries
         queryClient.invalidateQueries({ queryKey: ["patient-overview"] }),
@@ -493,7 +513,11 @@ export default function PatientPage() {
       ]);
       
       // Force refetch reminders for the selected date
+      console.log('=== FORCE REFETCH REMINDERS AFTER MISSED ===');
       await queryClient.refetchQueries({ queryKey: ["patient-reminders", selectedDate] });
+      
+      // Also refetch all reminders queries
+      await queryClient.refetchQueries({ queryKey: ["patient-reminders"] });
       
       toast.success("Đã đánh dấu bỏ lỡ thuốc!", {
         duration: 3000,
@@ -503,6 +527,44 @@ export default function PatientPage() {
     } catch (error: any) {
       console.error('Mark missed from reminder error:', error);
       toast.error(error?.response?.data?.message || "Có lỗi xảy ra khi đánh dấu bỏ lỡ", {
+        duration: 4000,
+        position: "top-center",
+        style: { background: "#EF4444", color: "#fff" },
+      });
+    } finally {
+      setLoadingActions(prev => ({ ...prev, [actionKey]: false }));
+    }
+  };
+
+  const handleResolveAlert = async (alertId: string) => {
+    const actionKey = `resolve-${alertId}`;
+    setLoadingActions(prev => ({ ...prev, [actionKey]: true }));
+    
+    console.log('=== RESOLVE ALERT DEBUG ===');
+    console.log('Alert ID:', alertId);
+    
+    try {
+      await patientApi.resolveAlert(alertId);
+      
+      // Refresh alerts and related data
+      console.log('=== REFRESHING CACHE AFTER RESOLVE ALERT ===');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["patient-alerts"] }),
+        queryClient.invalidateQueries({ queryKey: ["patient-ov-alerts"] }),
+        queryClient.invalidateQueries({ queryKey: ["patient-overview"] })
+      ]);
+      
+      // Force refetch alerts
+      await queryClient.refetchQueries({ queryKey: ["patient-alerts"] });
+      
+      toast.success("Đã đánh dấu cảnh báo là đã xử lý!", {
+        duration: 3000,
+        position: "top-center",
+        style: { background: "#10B981", color: "#fff" },
+      });
+    } catch (error: any) {
+      console.error('Resolve alert error:', error);
+      toast.error(error?.response?.data?.message || "Có lỗi xảy ra khi đánh dấu cảnh báo", {
         duration: 4000,
         position: "top-center",
         style: { background: "#EF4444", color: "#fff" },
@@ -1682,6 +1744,24 @@ export default function PatientPage() {
                           {a.message && (
                             <div className="mt-2 text-xs text-muted-foreground line-clamp-2">
                               {a.message}
+                            </div>
+                          )}
+                          {!a.resolved && (
+                            <div className="mt-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleResolveAlert(a.id)}
+                                disabled={loadingActions[`resolve-${a.id}`]}
+                                className="text-xs"
+                              >
+                                {loadingActions[`resolve-${a.id}`] ? (
+                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary mr-1"></div>
+                                ) : (
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                )}
+                                Đánh dấu đã xử lý
+                              </Button>
                             </div>
                           )}
                         </div>

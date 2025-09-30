@@ -175,6 +175,11 @@ export const patientApi = {
         return res.data?.data ?? res.data;
     },
 
+    async resolveAlert(alertId: string) {
+        const res = await axiosInstance.put(`/notifications/${alertId}/resolve`);
+        return res.data?.data ?? res.data;
+    },
+
     // Doctor endpoints for patient history management
     async updatePatientHistory(patientId: string, historyData: {
         conditions?: string[];
