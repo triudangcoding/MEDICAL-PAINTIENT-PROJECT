@@ -210,12 +210,19 @@ export const DoctorApi = {
           missed: number;
           skipped: number;
         };
+        todayAdherence: {
+          taken: number;
+          missed: number;
+          skipped: number;
+        };
         alerts: {
           missedDose: number;
           lowAdherence: number;
           other: number;
         };
         primaryStatus: 'TAKEN' | 'MISSED' | 'MIXED';
+        todayStatus: 'COMPLIANT' | 'PARTIAL' | 'MISSED' | 'NO_DATA';
+        todayWarningCount: number;
         totalMissed: number;
         totalTaken: number;
         totalAlerts: number;

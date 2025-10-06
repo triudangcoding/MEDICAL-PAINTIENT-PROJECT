@@ -48,7 +48,9 @@ const DoctorMissisPillPage: React.FC = () => {
       DoctorApi.warnPatient(args.patientId, args.message),
     onSuccess: async () => {
       toast.success("Đã nhắc nhở bệnh nhân!", { duration: 2000 });
-      await queryClient.invalidateQueries({ queryKey: ["doctor-adherence-status"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["doctor-adherence-status"],
+      });
     },
     onError: (error: any) => {
       toast.error(error?.response?.data?.message || "Gửi nhắc nhở thất bại");
@@ -71,7 +73,6 @@ const DoctorMissisPillPage: React.FC = () => {
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
-
 
   const copyPhone = async (phone?: string) => {
     if (!phone) return;
@@ -123,7 +124,7 @@ const DoctorMissisPillPage: React.FC = () => {
             <div className="space-y-3">
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div key={idx} className="grid grid-cols-12 gap-3 items-center">
-                  <div className="col-span-3 flex items-center gap-3">
+                  <div className="col-span-2 flex items-center gap-3">
                     <Skeleton className="h-9 w-9 rounded-full" />
                     <div className="space-y-2 w-2/3">
                       <Skeleton className="h-3 w-2/3" />
@@ -132,6 +133,9 @@ const DoctorMissisPillPage: React.FC = () => {
                   </div>
                   <div className="col-span-2">
                     <Skeleton className="h-3 w-20" />
+                  </div>
+                  <div className="col-span-1">
+                    <Skeleton className="h-6 w-16 mx-auto" />
                   </div>
                   <div className="col-span-1">
                     <Skeleton className="h-6 w-16 mx-auto" />
@@ -172,6 +176,9 @@ const DoctorMissisPillPage: React.FC = () => {
                     </TableHead>
                     <TableHead className="text-center uppercase text-slate-600 text-xs tracking-wider">
                       Trạng thái
+                    </TableHead>
+                    <TableHead className="text-center uppercase text-slate-600 text-xs tracking-wider">
+                      Hôm nay
                     </TableHead>
                     <TableHead className="text-center uppercase text-slate-600 text-xs tracking-wider">
                       Đã uống
@@ -217,17 +224,41 @@ const DoctorMissisPillPage: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge 
+                        <Badge
                           className={
-                            row.primaryStatus === 'TAKEN' 
+                            row.primaryStatus === "TAKEN"
                               ? "bg-green-100 text-green-700 border-green-200"
-                              : row.primaryStatus === 'MISSED'
+                              : row.primaryStatus === "MISSED"
                               ? "bg-red-100 text-red-700 border-red-200"
                               : "bg-amber-100 text-amber-700 border-amber-200"
                           }
                         >
-                          {row.primaryStatus === 'TAKEN' ? 'Đã uống' : 
-                           row.primaryStatus === 'MISSED' ? 'Bỏ lỡ' : 'Hỗn hợp'}
+                          {row.primaryStatus === "TAKEN"
+                            ? "Đã uống"
+                            : row.primaryStatus === "MISSED"
+                            ? "Bỏ lỡ"
+                            : "Hỗn hợp"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge
+                          className={
+                            row.todayStatus === "COMPLIANT"
+                              ? "bg-green-100 text-green-700 border-green-200"
+                              : row.todayStatus === "PARTIAL"
+                              ? "bg-amber-100 text-amber-700 border-amber-200"
+                              : row.todayStatus === "MISSED"
+                              ? "bg-red-100 text-red-700 border-red-200"
+                              : "bg-gray-100 text-gray-700 border-gray-200"
+                          }
+                        >
+                          {row.todayStatus === "COMPLIANT"
+                            ? "Đã tuân thủ"
+                            : row.todayStatus === "PARTIAL"
+                            ? "Một phần"
+                            : row.todayStatus === "MISSED"
+                            ? "Bỏ lỡ"
+                            : "Chưa có dữ liệu"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center">
@@ -258,7 +289,9 @@ const DoctorMissisPillPage: React.FC = () => {
                             </Badge>
                           )}
                           {row.totalAlerts === 0 && (
-                            <span className="text-xs text-muted-foreground">Không có</span>
+                            <span className="text-xs text-muted-foreground">
+                              Không có
+                            </span>
                           )}
                         </div>
                       </TableCell>
@@ -270,8 +303,12 @@ const DoctorMissisPillPage: React.FC = () => {
                                 <Button
                                   size="sm"
                                   className={
-                                    row.primaryStatus === 'TAKEN'
+                                    row.todayStatus === "COMPLIANT"
                                       ? "bg-green-600 hover:bg-green-700 text-white"
+                                      : row.todayStatus === "PARTIAL"
+                                      ? "bg-amber-600 hover:bg-amber-700 text-white"
+                                      : row.todayWarningCount > 0
+                                      ? "bg-orange-600 hover:bg-orange-700 text-white"
                                       : "bg-indigo-600 hover:bg-indigo-700 text-white"
                                   }
                                   onClick={() =>
@@ -279,16 +316,29 @@ const DoctorMissisPillPage: React.FC = () => {
                                       patientId: row.patientId,
                                     })
                                   }
-                                  disabled={warnMutation.isPending}
+                                  disabled={
+                                    warnMutation.isPending ||
+                                    row.todayWarningCount >= 3
+                                  }
                                 >
-                                  {row.primaryStatus === 'TAKEN'
-                                    ? "Đã tuân thủ"
+                                  {row.todayStatus === "COMPLIANT"
+                                    ? "Đã tuân thủ hôm nay"
+                                    : row.todayStatus === "PARTIAL"
+                                    ? "Tuân thủ một phần"
+                                    : row.todayWarningCount > 0
+                                    ? `Đã nhắc nhở bệnh nhân lần (${row.todayWarningCount})`
                                     : "Nhắc nhở tuân thủ"}
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                {row.primaryStatus === 'TAKEN'
-                                  ? "Bệnh nhân đã uống thuốc đầy đủ"
+                                {row.todayStatus === "COMPLIANT"
+                                  ? "Bệnh nhân đã tuân thủ uống thuốc hôm nay"
+                                  : row.todayStatus === "PARTIAL"
+                                  ? "Bệnh nhân tuân thủ một phần hôm nay"
+                                  : row.todayWarningCount >= 3
+                                  ? "Đã nhắc nhở tối đa 3 lần trong ngày"
+                                  : row.todayWarningCount > 0
+                                  ? `Đã nhắc nhở ${row.todayWarningCount} lần hôm nay`
                                   : "Gửi cảnh báo tuân thủ tới bệnh nhân"}
                               </TooltipContent>
                             </Tooltip>
@@ -300,7 +350,7 @@ const DoctorMissisPillPage: React.FC = () => {
                 </TableBody>
                 <TableFooter>
                   <TableRow>
-                    <TableCell colSpan={7}>
+                    <TableCell colSpan={8}>
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-2 text-sm text-muted-foreground py-2">
                         <div>
                           Khoảng thời gian: {sinceDays} ngày • Tổng:{" "}

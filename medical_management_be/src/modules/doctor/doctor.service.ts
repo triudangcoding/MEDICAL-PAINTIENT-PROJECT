@@ -786,6 +786,11 @@ export class DoctorService {
     const sinceDate = new Date();
     sinceDate.setDate(sinceDate.getDate() - sinceDays);
 
+    // Get today's date range for checking today's adherence
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
     // Find all prescriptions of this doctor and collect related patientIds
     const prescriptions =
       await this.databaseService.client.prescription.findMany({
@@ -802,13 +807,28 @@ export class DoctorService {
     );
     const prescriptionIds = prescriptions.map((p) => p.id);
 
-    // Get adherence counts by patient
+    // Get adherence counts by patient (overall period)
     const adherenceCounts =
       await this.databaseService.client.adherenceLog.groupBy({
         by: ['patientId', 'status'],
         where: {
           patientId: { in: patientIds },
           takenAt: { gte: sinceDate },
+          prescriptionId: { in: prescriptionIds }
+        },
+        _count: { _all: true }
+      });
+
+    // Get today's adherence counts by patient
+    const todayAdherenceCounts =
+      await this.databaseService.client.adherenceLog.groupBy({
+        by: ['patientId', 'status'],
+        where: {
+          patientId: { in: patientIds },
+          takenAt: { 
+            gte: startOfToday,
+            lt: endOfToday
+          },
           prescriptionId: { in: prescriptionIds }
         },
         _count: { _all: true }
@@ -825,7 +845,21 @@ export class DoctorService {
       _count: { _all: true }
     });
 
-    // Process adherence data
+    // Get today's warning count by patient (LOW_ADHERENCE alerts created today)
+    const todayWarningCounts = await this.databaseService.client.alert.groupBy({
+      by: ['patientId'],
+      where: {
+        patientId: { in: patientIds },
+        type: 'LOW_ADHERENCE',
+        createdAt: { 
+          gte: startOfToday,
+          lt: endOfToday
+        }
+      },
+      _count: { _all: true }
+    });
+
+    // Process overall adherence data
     const adherenceMap: Record<
       string,
       { taken: number; missed: number; skipped: number }
@@ -842,6 +876,25 @@ export class DoctorService {
       if (status === 'TAKEN') adherenceMap[patientId].taken = count;
       else if (status === 'MISSED') adherenceMap[patientId].missed = count;
       else if (status === 'SKIPPED') adherenceMap[patientId].skipped = count;
+    }
+
+    // Process today's adherence data
+    const todayAdherenceMap: Record<
+      string,
+      { taken: number; missed: number; skipped: number }
+    > = {};
+    for (const row of todayAdherenceCounts) {
+      const patientId = row.patientId;
+      const status = row.status as string;
+      const count = (row as any)._count._all as number;
+
+      if (!todayAdherenceMap[patientId]) {
+        todayAdherenceMap[patientId] = { taken: 0, missed: 0, skipped: 0 };
+      }
+
+      if (status === 'TAKEN') todayAdherenceMap[patientId].taken = count;
+      else if (status === 'MISSED') todayAdherenceMap[patientId].missed = count;
+      else if (status === 'SKIPPED') todayAdherenceMap[patientId].skipped = count;
     }
 
     // Process alert data
@@ -864,6 +917,14 @@ export class DoctorService {
       else if (type === 'OTHER') alertMap[patientId].other = count;
     }
 
+    // Process today's warning count data
+    const todayWarningMap: Record<string, number> = {};
+    for (const row of todayWarningCounts) {
+      const patientId = row.patientId;
+      const count = (row as any)._count._all as number;
+      todayWarningMap[patientId] = count;
+    }
+
     // Fetch patient basic info
     const patients = await this.databaseService.client.user.findMany({
       where: { id: { in: patientIds } },
@@ -876,13 +937,19 @@ export class DoctorService {
         missed: 0,
         skipped: 0
       };
+      const todayAdherence = todayAdherenceMap[patient.id] || {
+        taken: 0,
+        missed: 0,
+        skipped: 0
+      };
       const alerts = alertMap[patient.id] || {
         missedDose: 0,
         lowAdherence: 0,
         other: 0
       };
+      const todayWarningCount = todayWarningMap[patient.id] || 0;
 
-      // Determine primary status
+      // Determine primary status based on overall adherence
       let primaryStatus: 'TAKEN' | 'MISSED' | 'MIXED' = 'TAKEN';
       if (adherence.missed > 0 && adherence.taken === 0) {
         primaryStatus = 'MISSED';
@@ -890,13 +957,26 @@ export class DoctorService {
         primaryStatus = 'MIXED';
       }
 
+      // Determine today's status
+      let todayStatus: 'COMPLIANT' | 'PARTIAL' | 'MISSED' | 'NO_DATA' = 'NO_DATA';
+      if (todayAdherence.taken > 0 && todayAdherence.missed === 0) {
+        todayStatus = 'COMPLIANT'; // Đã tuân thủ hôm nay
+      } else if (todayAdherence.taken > 0 && todayAdherence.missed > 0) {
+        todayStatus = 'PARTIAL'; // Tuân thủ một phần
+      } else if (todayAdherence.missed > 0 && todayAdherence.taken === 0) {
+        todayStatus = 'MISSED'; // Bỏ lỡ hôm nay
+      }
+
       return {
         patientId: patient.id,
         fullName: patient.fullName,
         phoneNumber: patient.phoneNumber,
         adherence,
+        todayAdherence,
         alerts,
         primaryStatus,
+        todayStatus,
+        todayWarningCount,
         totalMissed: adherence.missed,
         totalTaken: adherence.taken,
         totalAlerts: alerts.missedDose + alerts.lowAdherence + alerts.other
