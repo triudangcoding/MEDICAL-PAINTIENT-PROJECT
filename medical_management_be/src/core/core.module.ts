@@ -31,4 +31,4 @@ import { APP_PIPE } from '@nestjs/core';
   ],
   exports: [ErrorService, LoggerModule, DatabaseModule, AuthModule]
 })
-export class CoreModule { }
+export class CoreModule {}
