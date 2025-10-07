@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from "react";
+import React, { useMemo, useCallback, useState, useEffect, useRef } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { authApi } from "@/api/auth/auth.api";
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Users, Bell, ChevronDown, HelpCircle, LogOut, Loader2, Stethoscope, UserRound, Pill, Clock, AlarmClock, AlertTriangle, Activity } from "lucide-react";
+import { Home, Users, Bell, ChevronDown, HelpCircle, LogOut, Loader2, Stethoscope, UserRound, Pill, Clock, AlarmClock, AlertTriangle, Activity, Phone, MapPin } from "lucide-react";
 
 const adminMenuItems = [
   {
@@ -125,6 +125,8 @@ MenuItem.displayName = "MenuItem";
 const AppSidebar: React.FC<AppSidebarProps> = React.memo(({ userData }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isSidebarUserDropdownOpen, setIsSidebarUserDropdownOpen] = useState(false);
+  const sidebarDropdownRef = useRef<HTMLDivElement>(null);
 
   // Memoize menu items to prevent unnecessary recalculations
   const menuItems = useMemo(() => {
@@ -142,6 +144,23 @@ const AppSidebar: React.FC<AppSidebarProps> = React.memo(({ userData }) => {
     authApi.logout();
     navigate("/");
   }, [navigate]);
+
+  // Đóng sidebar dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sidebarDropdownRef.current && !sidebarDropdownRef.current.contains(event.target as Node)) {
+        setIsSidebarUserDropdownOpen(false);
+      }
+    };
+
+    if (isSidebarUserDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isSidebarUserDropdownOpen]);
 
   return (
     <Sidebar className="border-r border-border/20 bg-background/95 backdrop-blur-sm">
@@ -184,19 +203,89 @@ const AppSidebar: React.FC<AppSidebarProps> = React.memo(({ userData }) => {
 
       <SidebarFooter className="px-4 py-6 border-t border-border/10 space-y-4">
         {/* User Info */}
-        <div className="flex items-center gap-3 px-3 py-2 rounded-xl bg-accent/10 border border-accent/20">
-          <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center text-white text-sm font-semibold">
-            {userData?.data.fullName?.charAt(0) || "U"}
+        <div className="relative" ref={sidebarDropdownRef}>
+          <div 
+            className="flex items-center gap-3 px-3 py-2 rounded-xl bg-accent/10 border border-accent/20 cursor-pointer group hover:bg-accent/20 transition-colors duration-200"
+            onClick={() => setIsSidebarUserDropdownOpen(!isSidebarUserDropdownOpen)}
+          >
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center text-white text-sm font-semibold">
+              {userData?.data.fullName?.charAt(0) || "U"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-foreground truncate">
+                {userData?.data.fullName || "User"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {userData?.data.role === "DOCTOR" ? "Bác sĩ" : 
+                 userData?.data.role === "ADMIN" ? "Quản trị viên" : "Bệnh nhân"}
+              </p>
+            </div>
+            <ChevronDown className={cn(
+              "h-4 w-4 text-muted-foreground group-hover:text-foreground transition-all duration-200",
+              isSidebarUserDropdownOpen && "rotate-180"
+            )} />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              {userData?.data.fullName || "User"}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {userData?.data.role === "DOCTOR" ? "Bác sĩ" : 
-               userData?.data.role === "ADMIN" ? "Quản trị viên" : "Bệnh nhân"}
-            </p>
-          </div>
+
+          {/* Sidebar User Info Dropdown */}
+          {isSidebarUserDropdownOpen && (
+            <div className="absolute bottom-full left-0 mb-2 w-72 bg-background border border-border/20 rounded-xl shadow-lg z-50 overflow-hidden">
+              <div className="p-4 border-b border-border/10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center text-white text-sm font-semibold">
+                    {userData?.data.fullName?.charAt(0) || "U"}
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground text-sm">
+                      {userData?.data.fullName || "User"}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {userData?.data.role === "DOCTOR"
+                        ? "Bác sĩ"
+                        : userData?.data.role === "ADMIN"
+                          ? "Quản trị viên"
+                          : "Bệnh nhân"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 space-y-2">
+                {/* Thông tin cơ bản */}
+                <div className="space-y-1">
+                  <h4 className="text-xs font-medium text-foreground flex items-center gap-1">
+                    <UserRound className="h-3 w-3" />
+                    Thông tin cá nhân
+                  </h4>
+                  <div className="space-y-1 pl-4">
+                    {userData?.data.phoneNumber && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        <span>{userData.data.phoneNumber}</span>
+                      </div>
+                    )}
+                    {userData?.data.userInfo?.[0]?.specificAddress && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span className="truncate">{userData.data.userInfo[0].specificAddress}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 border-t border-border/10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start text-muted-foreground hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-colors duration-200 text-xs h-8"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-3 w-3 mr-2 stroke-[1.5]" />
+                  <span>Đăng xuất</span>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Logout Button */}
@@ -217,10 +306,30 @@ const AppSidebar: React.FC<AppSidebarProps> = React.memo(({ userData }) => {
 AppSidebar.displayName = "AppSidebar";
 
 const DashboardLayout: React.FC = () => {
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const { data: userData, isLoading, isError } = useQuery({
     queryKey: ["currentUser"],
     queryFn: authApi.getCurrentUser,
   });
+
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+
+    if (isUserDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isUserDropdownOpen]);
 
   // Preloader component
   if (isLoading) {
@@ -322,7 +431,11 @@ const DashboardLayout: React.FC = () => {
                 <div className="h-6 w-px bg-border/40" />
 
                 {/* User Profile */}
-                <div className="flex items-center gap-3 cursor-pointer group hover:bg-accent/30 rounded-xl p-2 transition-colors duration-200">
+                <div className="relative" ref={dropdownRef}>
+                  <div 
+                    className="flex items-center gap-3 cursor-pointer group hover:bg-accent/30 rounded-xl p-2 transition-colors duration-200"
+                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                  >
                   <div className="relative">
                     <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center text-white text-sm font-semibold">
                       {userData?.data.fullName?.charAt(0) || "U"}
@@ -341,7 +454,75 @@ const DashboardLayout: React.FC = () => {
                           : "Bệnh nhân"}
                     </span>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground hidden lg:block group-hover:text-foreground transition-colors duration-200" />
+                    <ChevronDown className={cn(
+                      "h-4 w-4 text-muted-foreground hidden lg:block group-hover:text-foreground transition-all duration-200",
+                      isUserDropdownOpen && "rotate-180"
+                    )} />
+                  </div>
+
+                  {/* User Info Dropdown */}
+                  {isUserDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-background border border-border/20 rounded-xl shadow-lg z-50 overflow-hidden">
+                      <div className="p-4 border-b border-border/10">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary/70 rounded-xl flex items-center justify-center text-white text-lg font-semibold">
+                            {userData?.data.fullName?.charAt(0) || "U"}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-foreground text-base">
+                              {userData?.data.fullName || "User"}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {userData?.data.role === "DOCTOR"
+                                ? "Bác sĩ"
+                                : userData?.data.role === "ADMIN"
+                                  ? "Quản trị viên"
+                                  : "Bệnh nhân"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 space-y-3">
+                        {/* Thông tin cơ bản */}
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <UserRound className="h-4 w-4" />
+                            Thông tin cá nhân
+                          </h4>
+                          <div className="space-y-2 pl-6">
+                            {userData?.data.phoneNumber && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Phone className="h-3 w-3" />
+                                <span>{userData.data.phoneNumber}</span>
+                              </div>
+                            )}
+                            {userData?.data.userInfo?.[0]?.specificAddress && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <MapPin className="h-3 w-3" />
+                                <span>{userData.data.userInfo[0].specificAddress}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-4 border-t border-border/10">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-start text-muted-foreground hover:text-red-500 hover:bg-red-50/50 dark:hover:bg-red-950/20 transition-colors duration-200"
+                          onClick={() => {
+                            authApi.logout();
+                            navigate("/");
+                          }}
+                        >
+                          <LogOut className="h-4 w-4 mr-3 stroke-[1.5]" />
+                          <span className="text-sm">Đăng xuất</span>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

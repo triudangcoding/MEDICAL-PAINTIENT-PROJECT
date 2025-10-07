@@ -181,7 +181,18 @@ export class UsersService {
   async getMe(user: IUserFromToken) {
     return this.databaseService.client.user.findUnique({
       where: { id: user.id },
-      include: { profile: true, medicalHistory: true }
+      include: { 
+        profile: true, 
+        medicalHistory: true,
+        majorDoctor: true,
+        createdByUser: {
+          select: {
+            id: true,
+            fullName: true,
+            role: true
+          }
+        }
+      }
     });
   }
 

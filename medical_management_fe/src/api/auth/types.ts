@@ -48,6 +48,20 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  majorDoctorId?: string;
+  majorDoctor?: {
+    id: string;
+    code: string;
+    name: string;
+    nameEn?: string;
+    description?: string;
+  };
+  createdBy?: string;
+  createdByUser?: {
+    id: string;
+    fullName: string;
+    role: string;
+  };
   userInfo: UserInfo[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Order: any[];
