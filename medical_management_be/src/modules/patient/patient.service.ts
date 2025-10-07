@@ -312,7 +312,10 @@ export class PatientService {
       this.databaseService.client.user.count({ where })
     ]);
     
-    return { data: items, total, page, limit };
+    return { 
+      data: items, 
+      pagination: { total, page, limit }
+    };
   }
 
   async searchPatients(query: { q?: string; page?: number; limit?: number }) {

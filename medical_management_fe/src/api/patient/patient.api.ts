@@ -19,9 +19,9 @@ export const patientApi = {
         });
         const payload = res.data;
         const items = payload.data ?? [];
-        const total = payload.total ?? 0;
-        const currentPage = payload.page ?? page;
-        const perPage = payload.limit ?? limit;
+        const total = payload.pagination?.total ?? 0;
+        const currentPage = payload.pagination?.page ?? page;
+        const perPage = payload.pagination?.limit ?? limit;
         return {
             data: items,
             pagination: {
@@ -47,11 +47,11 @@ export const patientApi = {
 
     async searchPatients(q: string, page?: number, limit?: number): Promise<IGetPatientPaginationResponse> {
         const res = await axiosInstance.get('/patient/search', { params: { q, page, limit } });
-        const payload = res.data?.data ?? res.data;
-        const items = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload) ? payload : []);
-        const total = payload.total ?? items.length;
-        const currentPage = payload.page ?? page ?? 1;
-        const perPage = payload.limit ?? limit ?? 10;
+        const payload = res.data;
+        const items = payload.data ?? [];
+        const total = payload.pagination?.total ?? 0;
+        const currentPage = payload.pagination?.page ?? page ?? 1;
+        const perPage = payload.pagination?.limit ?? limit ?? 10;
         
         return { 
             data: items, 

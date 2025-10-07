@@ -1389,7 +1389,7 @@ const DoctorManagement: React.FC = () => {
                       size="sm"
                       onClick={() => setPatientPage((p) => p + 1)}
                       disabled={
-                        patientPage * patientLimit >= (patientsData?.pagination?.total || patientsData?.total || 0)
+                        !patientsData?.pagination?.hasNextPage
                       }
                       className="hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:border-primary/30 hover:text-primary hover:shadow-md hover:shadow-primary/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
