@@ -31,7 +31,13 @@ import { MedicationsApi, MedicationDto } from "@/api/medications";
 import { UsersApi } from "@/api/user";
 import { patientApi } from "@/api/patient/patient.api";
 import { doctorApi } from "@/api/doctor/doctor.api";
-import { MajorDoctor, User as DoctorUser, CreateDoctorData, UpdateDoctorData, getMajorDoctorName } from "@/api/doctor/types";
+import {
+  MajorDoctor,
+  User as DoctorUser,
+  CreateDoctorData,
+  UpdateDoctorData,
+  getMajorDoctorName,
+} from "@/api/doctor/types";
 import {
   Pencil,
   Trash2,
@@ -161,6 +167,15 @@ const DoctorManagement: React.FC = () => {
     password: "",
     majorDoctor: "TAM_THAN",
   });
+  const [createDoctorErrors, setCreateDoctorErrors] = useState<{
+    fullName?: string;
+    phoneNumber?: string;
+    password?: string;
+  }>({
+    fullName: "",
+    phoneNumber: "",
+    password: "",
+  });
   const [updateDoctorForm, setUpdateDoctorForm] = useState<UpdateDoctorData>({
     fullName: "",
     phoneNumber: "",
@@ -210,8 +225,6 @@ const DoctorManagement: React.FC = () => {
         : patientApi.getAllPatients(),
   });
 
-  
-
   // Doctor queries
   const doctorsQueryKey = useMemo(
     () => [
@@ -243,7 +256,7 @@ const DoctorManagement: React.FC = () => {
       // Refresh patient table
       queryClient.invalidateQueries({ queryKey: ["patient-search"] });
       queryClient.invalidateQueries({ queryKey: ["patient-get-all"] });
-      
+
       setOpenCreatePatient(false);
       setCreateForm({
         fullName: "",
@@ -309,6 +322,11 @@ const DoctorManagement: React.FC = () => {
         phoneNumber: "",
         password: "",
         majorDoctor: "TAM_THAN",
+      });
+      setCreateDoctorErrors({
+        fullName: "",
+        phoneNumber: "",
+        password: "",
       });
       toast.success("Tạo bác sĩ thành công", { position: "top-center" });
     },
@@ -381,7 +399,17 @@ const DoctorManagement: React.FC = () => {
     form: "",
     unit: "",
     description: "",
-    isActive: true,
+  });
+  const [medFormErrors, setMedFormErrors] = useState<{
+    name?: string;
+    strength?: string;
+    form?: string;
+    unit?: string;
+  }>({
+    name: "",
+    strength: "",
+    form: "",
+    unit: "",
   });
   const createMed = useMutation({
     mutationFn: (dto: MedicationDto) => MedicationsApi.create(dto),
@@ -480,7 +508,7 @@ const DoctorManagement: React.FC = () => {
         // Refresh patient table
         queryClient.invalidateQueries({ queryKey: ["patient-search"] });
         queryClient.invalidateQueries({ queryKey: ["patient-get-all"] });
-        
+
         toast.success("Đã xóa bệnh nhân");
         setOpenDeletePatient({ open: false });
       })
@@ -491,10 +519,42 @@ const DoctorManagement: React.FC = () => {
 
   // Doctor handlers
   const handleCreateDoctor = () => {
-    if (!createDoctorForm.fullName || !createDoctorForm.phoneNumber || !createDoctorForm.password) {
-      toast.error("Vui lòng điền đầy đủ thông tin bắt buộc");
+    // Reset errors
+    setCreateDoctorErrors({
+      fullName: "",
+      phoneNumber: "",
+      password: "",
+    });
+
+    let hasError = false;
+    const newErrors: typeof createDoctorErrors = {};
+
+    // Validation tất cả các trường bắt buộc
+    if (!createDoctorForm.fullName?.trim()) {
+      newErrors.fullName = "Vui lòng nhập họ tên";
+      hasError = true;
+    }
+    if (!createDoctorForm.phoneNumber?.trim()) {
+      newErrors.phoneNumber = "Vui lòng nhập số điện thoại";
+      hasError = true;
+    } else if (!/^[0-9]{10,11}$/.test(createDoctorForm.phoneNumber.replace(/\D/g, ""))) {
+      newErrors.phoneNumber = "Số điện thoại không hợp lệ (10-11 số)";
+      hasError = true;
+    }
+    if (!createDoctorForm.password?.trim()) {
+      newErrors.password = "Vui lòng nhập mật khẩu";
+      hasError = true;
+    } else if (createDoctorForm.password.length < 6) {
+      newErrors.password = "Mật khẩu phải có ít nhất 6 ký tự";
+      hasError = true;
+    }
+
+    // Set errors nếu có
+    if (hasError) {
+      setCreateDoctorErrors(newErrors);
       return;
     }
+
     createDoctorMutation.mutate(createDoctorForm);
   };
 
@@ -754,12 +814,21 @@ const DoctorManagement: React.FC = () => {
                         unit: "",
                         description: "",
                       });
+                      setMedFormErrors({
+                        name: "",
+                        strength: "",
+                        form: "",
+                        unit: "",
+                      });
                     }
                   }}
                 >
                   {/* Overlay with blur - only render when dialog is open */}
                   {openMedDialog && (
-                    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0" aria-hidden="true" />
+                    <div
+                      className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0"
+                      aria-hidden="true"
+                    />
                   )}
                   <DialogTrigger asChild>
                     <Button className="relative bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-primary/20">
@@ -781,44 +850,112 @@ const DoctorManagement: React.FC = () => {
                         <Label>Tên thuốc</Label>
                         <Input
                           value={medForm.name || ""}
-                          onChange={(e) =>
-                            setMedForm((s) => ({ ...s, name: e.target.value }))
-                          }
+                          onChange={(e) => {
+                            setMedForm((s) => ({ ...s, name: e.target.value }));
+                            // Clear error when user starts typing
+                            if (medFormErrors.name) {
+                              setMedFormErrors((prev) => ({
+                                ...prev,
+                                name: "",
+                              }));
+                            }
+                          }}
                           placeholder="Paracetamol"
+                          className={
+                            medFormErrors.name
+                              ? "border-red-500 focus:border-red-500"
+                              : ""
+                          }
                         />
+                        {medFormErrors.name && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {medFormErrors.name}
+                          </p>
+                        )}
                       </div>
                       <div className="grid gap-2">
                         <Label>Hàm lượng</Label>
                         <Input
                           value={medForm.strength || ""}
-                          onChange={(e) =>
+                          onChange={(e) => {
                             setMedForm((s) => ({
                               ...s,
                               strength: e.target.value,
-                            }))
-                          }
+                            }));
+                            // Clear error when user starts typing
+                            if (medFormErrors.strength) {
+                              setMedFormErrors((prev) => ({
+                                ...prev,
+                                strength: "",
+                              }));
+                            }
+                          }}
                           placeholder="500mg"
+                          className={
+                            medFormErrors.strength
+                              ? "border-red-500 focus:border-red-500"
+                              : ""
+                          }
                         />
+                        {medFormErrors.strength && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {medFormErrors.strength}
+                          </p>
+                        )}
                       </div>
                       <div className="grid gap-2">
                         <Label>Dạng bào chế</Label>
                         <Input
                           value={medForm.form || ""}
-                          onChange={(e) =>
-                            setMedForm((s) => ({ ...s, form: e.target.value }))
-                          }
+                          onChange={(e) => {
+                            setMedForm((s) => ({ ...s, form: e.target.value }));
+                            // Clear error when user starts typing
+                            if (medFormErrors.form) {
+                              setMedFormErrors((prev) => ({
+                                ...prev,
+                                form: "",
+                              }));
+                            }
+                          }}
                           placeholder="viên"
+                          className={
+                            medFormErrors.form
+                              ? "border-red-500 focus:border-red-500"
+                              : ""
+                          }
                         />
+                        {medFormErrors.form && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {medFormErrors.form}
+                          </p>
+                        )}
                       </div>
                       <div className="grid gap-2">
                         <Label>Đơn vị</Label>
                         <Input
                           value={medForm.unit || ""}
-                          onChange={(e) =>
-                            setMedForm((s) => ({ ...s, unit: e.target.value }))
-                          }
+                          onChange={(e) => {
+                            setMedForm((s) => ({ ...s, unit: e.target.value }));
+                            // Clear error when user starts typing
+                            if (medFormErrors.unit) {
+                              setMedFormErrors((prev) => ({
+                                ...prev,
+                                unit: "",
+                              }));
+                            }
+                          }}
                           placeholder="mg"
+                          className={
+                            medFormErrors.unit
+                              ? "border-red-500 focus:border-red-500"
+                              : ""
+                          }
                         />
+                        {medFormErrors.unit && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {medFormErrors.unit}
+                          </p>
+                        )}
                       </div>
                       <div className="grid gap-2">
                         <Label>Mô tả</Label>
@@ -857,10 +994,43 @@ const DoctorManagement: React.FC = () => {
                     <DialogFooter>
                       <Button
                         onClick={() => {
+                          // Reset errors
+                          setMedFormErrors({
+                            name: "",
+                            strength: "",
+                            form: "",
+                            unit: "",
+                          });
+
+                          let hasError = false;
+                          const newErrors: typeof medFormErrors = {};
+
+                          // Validation tất cả các trường bắt buộc
                           if (!medForm.name?.trim()) {
-                            toast.error("Không thể bỏ trống tên thuốc");
+                            newErrors.name = "Vui lòng nhập tên thuốc";
+                            hasError = true;
+                          }
+                          if (!medForm.strength?.trim()) {
+                            newErrors.strength =
+                              "Vui lòng nhập hàm lượng thuốc";
+                            hasError = true;
+                          }
+                          if (!medForm.form?.trim()) {
+                            newErrors.form = "Vui lòng nhập dạng bào chế";
+                            hasError = true;
+                          }
+                          if (!medForm.unit?.trim()) {
+                            newErrors.unit = "Vui lòng nhập đơn vị";
+                            hasError = true;
+                          }
+
+                          // Set errors nếu có
+                          if (hasError) {
+                            setMedFormErrors(newErrors);
                             return;
                           }
+
+                          // Nếu tất cả validation đều pass, thực hiện create/update
                           if (editingMedId)
                             updateMed.mutate({
                               id: editingMedId,
@@ -885,7 +1055,6 @@ const DoctorManagement: React.FC = () => {
             className="space-y-6"
           >
             <TabsList className="grid w-full grid-cols-3 bg-gradient-to-r from-background via-muted/30 to-background p-2 rounded-2xl border border-border/20 shadow-lg backdrop-blur-sm">
-
               <TabsTrigger
                 value="patients"
                 className="group flex items-center gap-2 relative overflow-hidden rounded-xl px-4 py-3 transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-primary/10 hover:scale-102"
@@ -899,7 +1068,9 @@ const DoctorManagement: React.FC = () => {
                 className="group flex items-center gap-2 relative overflow-hidden rounded-xl px-4 py-3 transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/80 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:scale-105 hover:bg-primary/10 hover:scale-102"
               >
                 <FileText className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-                <span className="hidden sm:inline font-medium">Đơn thuốc</span>
+                <span className="hidden sm:inline font-medium">
+                  Danh sách thuốc
+                </span>
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </TabsTrigger>
               <TabsTrigger
@@ -910,7 +1081,6 @@ const DoctorManagement: React.FC = () => {
                 <span className="hidden sm:inline font-medium">Bác sĩ</span>
                 <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               </TabsTrigger>
-
             </TabsList>
 
             <TabsContent value="patients">
@@ -1040,12 +1210,13 @@ const DoctorManagement: React.FC = () => {
                             </TableCell>
                             <TableCell className="py-4">
                               <span
-                                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${p.profile?.gender === "Nam"
-                                  ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300/50"
-                                  : p.profile?.gender === "Nữ"
+                                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
+                                  p.profile?.gender === "Nam"
+                                    ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300/50"
+                                    : p.profile?.gender === "Nữ"
                                     ? "bg-gradient-to-r from-pink-100 to-pink-200 text-pink-800 border border-pink-300/50"
                                     : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300/50"
-                                  }`}
+                                }`}
                               >
                                 {p.profile?.gender || "-"}
                               </span>
@@ -1087,34 +1258,34 @@ const DoctorManagement: React.FC = () => {
                         {(role !== "PATIENT"
                           ? loadingPatients
                           : currentUserQuery.isLoading) && (
-                            <TableRow>
-                              <TableCell
-                                colSpan={6}
-                                className="text-center py-16 text-muted-foreground"
-                              >
-                                <div className="flex flex-col items-center gap-4">
-                                  <div className="relative">
-                                    <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-                                    <div
-                                      className="absolute inset-0 w-12 h-12 border-4 border-transparent border-t-primary/40 rounded-full animate-spin"
-                                      style={{
-                                        animationDelay: "0.15s",
-                                        animationDuration: "1.5s",
-                                      }}
-                                    ></div>
-                                  </div>
-                                  <div className="space-y-1">
-                                    <span className="text-sm font-medium">
-                                      Đang tải dữ liệu...
-                                    </span>
-                                    <p className="text-xs text-muted-foreground/70">
-                                      Vui lòng chờ trong giây lát
-                                    </p>
-                                  </div>
+                          <TableRow>
+                            <TableCell
+                              colSpan={6}
+                              className="text-center py-16 text-muted-foreground"
+                            >
+                              <div className="flex flex-col items-center gap-4">
+                                <div className="relative">
+                                  <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                                  <div
+                                    className="absolute inset-0 w-12 h-12 border-4 border-transparent border-t-primary/40 rounded-full animate-spin"
+                                    style={{
+                                      animationDelay: "0.15s",
+                                      animationDuration: "1.5s",
+                                    }}
+                                  ></div>
                                 </div>
-                              </TableCell>
-                            </TableRow>
-                          )}
+                                <div className="space-y-1">
+                                  <span className="text-sm font-medium">
+                                    Đang tải dữ liệu...
+                                  </span>
+                                  <p className="text-xs text-muted-foreground/70">
+                                    Vui lòng chờ trong giây lát
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -1167,7 +1338,10 @@ const DoctorManagement: React.FC = () => {
               >
                 {/* Overlay with blur - only render when dialog is open */}
                 {openEditProfile.open && (
-                  <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0" aria-hidden="true" />
+                  <div
+                    className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0"
+                    aria-hidden="true"
+                  />
                 )}
                 <DialogContent className="sm:max-w-[500px] rounded-2xl border border-border/20 shadow-2xl bg-card/95 backdrop-blur-md">
                   <DialogHeader>
@@ -1486,24 +1660,26 @@ const DoctorManagement: React.FC = () => {
                                   </TableCell>
                                   <TableCell className="py-4">
                                     <span
-                                      className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${pr.status === "COMPLETED" ||
+                                      className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
+                                        pr.status === "COMPLETED" ||
                                         pr.status === "completed"
-                                        ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
-                                        : pr.status === "PENDING" ||
-                                          pr.status === "pending"
-                                          ? "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300/50"
-                                          : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300/50"
-                                        }`}
-                                    >
-                                      <div
-                                        className={`w-2 h-2 rounded-full mr-2 ${pr.status === "COMPLETED" ||
-                                          pr.status === "completed"
-                                          ? "bg-green-600"
+                                          ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
                                           : pr.status === "PENDING" ||
                                             pr.status === "pending"
+                                          ? "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300/50"
+                                          : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300/50"
+                                      }`}
+                                    >
+                                      <div
+                                        className={`w-2 h-2 rounded-full mr-2 ${
+                                          pr.status === "COMPLETED" ||
+                                          pr.status === "completed"
+                                            ? "bg-green-600"
+                                            : pr.status === "PENDING" ||
+                                              pr.status === "pending"
                                             ? "bg-yellow-600"
                                             : "bg-gray-600"
-                                          }`}
+                                        }`}
                                       ></div>
                                       {pr.status || "Chưa xác định"}
                                     </span>
@@ -1643,16 +1819,18 @@ const DoctorManagement: React.FC = () => {
                                 </TableCell>
                                 <TableCell className="py-4">
                                   <span
-                                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${m.isActive
-                                      ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
-                                      : "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300/50"
-                                      }`}
+                                    className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
+                                      m.isActive
+                                        ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
+                                        : "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300/50"
+                                    }`}
                                   >
                                     <div
-                                      className={`w-2 h-2 rounded-full mr-2 ${m.isActive
-                                        ? "bg-green-600"
-                                        : "bg-red-600"
-                                        }`}
+                                      className={`w-2 h-2 rounded-full mr-2 ${
+                                        m.isActive
+                                          ? "bg-green-600"
+                                          : "bg-red-600"
+                                      }`}
                                     ></div>
                                     {m.isActive
                                       ? "Hoạt động"
@@ -1702,10 +1880,11 @@ const DoctorManagement: React.FC = () => {
                                           });
                                         }
                                       }}
-                                      className={`transition-all duration-300 group-hover:scale-105 ${m.isActive
-                                        ? "hover:bg-gradient-to-r hover:from-destructive/10 hover:to-destructive/5 hover:border-destructive/30 hover:text-destructive hover:shadow-md hover:shadow-destructive/10"
-                                        : "hover:bg-gradient-to-r hover:from-green-500/10 hover:to-green-500/5 hover:border-green-500/30 hover:text-green-600 hover:shadow-md hover:shadow-green-500/10"
-                                        }`}
+                                      className={`transition-all duration-300 group-hover:scale-105 ${
+                                        m.isActive
+                                          ? "hover:bg-gradient-to-r hover:from-destructive/10 hover:to-destructive/5 hover:border-destructive/30 hover:text-destructive hover:shadow-md hover:shadow-destructive/10"
+                                          : "hover:bg-gradient-to-r hover:from-green-500/10 hover:to-green-500/5 hover:border-green-500/30 hover:text-green-600 hover:shadow-md hover:shadow-green-500/10"
+                                      }`}
                                     >
                                       {m.isActive ? (
                                         <>
@@ -1725,29 +1904,29 @@ const DoctorManagement: React.FC = () => {
                             ))}
                             {(medsQuery.data?.items || toArray(medsQuery.data))
                               .length === 0 && (
-                                <TableRow>
-                                  <TableCell
-                                    colSpan={6}
-                                    className="text-center py-16 text-muted-foreground"
-                                  >
-                                    <div className="flex flex-col items-center gap-4">
-                                      <div className="relative">
-                                        <div className="w-16 h-16 bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl flex items-center justify-center">
-                                          <Pill className="h-8 w-8 text-muted-foreground/50" />
-                                        </div>
-                                      </div>
-                                      <div className="space-y-1">
-                                        <span className="text-sm font-medium">
-                                          Chưa có thuốc nào
-                                        </span>
-                                        <p className="text-xs text-muted-foreground/70">
-                                          Thuốc sẽ xuất hiện ở đây khi được thêm
-                                        </p>
+                              <TableRow>
+                                <TableCell
+                                  colSpan={6}
+                                  className="text-center py-16 text-muted-foreground"
+                                >
+                                  <div className="flex flex-col items-center gap-4">
+                                    <div className="relative">
+                                      <div className="w-16 h-16 bg-gradient-to-br from-muted/50 to-muted/30 rounded-2xl flex items-center justify-center">
+                                        <Pill className="h-8 w-8 text-muted-foreground/50" />
                                       </div>
                                     </div>
-                                  </TableCell>
-                                </TableRow>
-                              )}
+                                    <div className="space-y-1">
+                                      <span className="text-sm font-medium">
+                                        Chưa có thuốc nào
+                                      </span>
+                                      <p className="text-xs text-muted-foreground/70">
+                                        Thuốc sẽ xuất hiện ở đây khi được thêm
+                                      </p>
+                                    </div>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            )}
                           </TableBody>
                         </Table>
                       </div>
@@ -1798,8 +1977,6 @@ const DoctorManagement: React.FC = () => {
               </div>
             </TabsContent>
 
-            
-
             <TabsContent value="doctors">
               <div className="bg-gradient-to-br from-card via-card to-card/95 rounded-2xl shadow-xl border border-border/20 p-8 backdrop-blur-sm">
                 {/* Header Section */}
@@ -1840,7 +2017,23 @@ const DoctorManagement: React.FC = () => {
                     {role === "ADMIN" && (
                       <Dialog
                         open={openCreateDoctor}
-                        onOpenChange={setOpenCreateDoctor}
+                        onOpenChange={(open) => {
+                          setOpenCreateDoctor(open);
+                          if (!open) {
+                            // Reset form and errors when dialog is closed
+                            setCreateDoctorForm({
+                              fullName: "",
+                              phoneNumber: "",
+                              password: "",
+                              majorDoctor: "TAM_THAN",
+                            });
+                            setCreateDoctorErrors({
+                              fullName: "",
+                              phoneNumber: "",
+                              password: "",
+                            });
+                          }
+                        }}
                       >
                         <DialogTrigger asChild>
                           <Button className="relative bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-primary/20">
@@ -1858,41 +2051,65 @@ const DoctorManagement: React.FC = () => {
                               <Label>Họ tên</Label>
                               <Input
                                 value={createDoctorForm.fullName}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                   setCreateDoctorForm((s) => ({
                                     ...s,
                                     fullName: e.target.value,
-                                  }))
-                                }
+                                  }));
+                                  // Clear error when user starts typing
+                                  if (createDoctorErrors.fullName) {
+                                    setCreateDoctorErrors(prev => ({ ...prev, fullName: "" }));
+                                  }
+                                }}
                                 placeholder="BS. Nguyễn Văn A"
+                                className={createDoctorErrors.fullName ? "border-red-500 focus:border-red-500" : ""}
                               />
+                              {createDoctorErrors.fullName && (
+                                <p className="text-sm text-red-500 mt-1">{createDoctorErrors.fullName}</p>
+                              )}
                             </div>
                             <div className="grid gap-2">
                               <Label>Số điện thoại</Label>
                               <Input
                                 value={createDoctorForm.phoneNumber}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                   setCreateDoctorForm((s) => ({
                                     ...s,
                                     phoneNumber: e.target.value,
-                                  }))
-                                }
+                                  }));
+                                  // Clear error when user starts typing
+                                  if (createDoctorErrors.phoneNumber) {
+                                    setCreateDoctorErrors(prev => ({ ...prev, phoneNumber: "" }));
+                                  }
+                                }}
                                 placeholder="09xxxxxxxx"
+                                className={createDoctorErrors.phoneNumber ? "border-red-500 focus:border-red-500" : ""}
                               />
+                              {createDoctorErrors.phoneNumber && (
+                                <p className="text-sm text-red-500 mt-1">{createDoctorErrors.phoneNumber}</p>
+                              )}
                             </div>
                             <div className="grid gap-2">
                               <Label>Mật khẩu</Label>
                               <Input
                                 type="password"
                                 value={createDoctorForm.password}
-                                onChange={(e) =>
+                                onChange={(e) => {
                                   setCreateDoctorForm((s) => ({
                                     ...s,
                                     password: e.target.value,
-                                  }))
-                                }
+                                  }));
+                                  // Clear error when user starts typing
+                                  if (createDoctorErrors.password) {
+                                    setCreateDoctorErrors(prev => ({ ...prev, password: "" }));
+                                  }
+                                }}
                                 placeholder="••••••"
+                                className={createDoctorErrors.password ? "border-red-500 focus:border-red-500" : ""}
                               />
+                              {createDoctorErrors.password && (
+                                <p className="text-sm text-red-500 mt-1">{createDoctorErrors.password}</p>
+                              )}
                             </div>
                             <div className="grid gap-2">
                               <Label>Chuyên khoa</Label>
@@ -1914,14 +2131,18 @@ const DoctorManagement: React.FC = () => {
                                 <option value="PHU_SAN">Phụ sản</option>
                                 <option value="NHI_KHOA">Nhi khoa</option>
                                 <option value="MAT">Mắt</option>
-                                <option value="TAI_MUI_HONG">Tai mũi họng</option>
+                                <option value="TAI_MUI_HONG">
+                                  Tai mũi họng
+                                </option>
                                 <option value="DA_LIEU">Da liễu</option>
                                 <option value="XUONG_KHOP">Xương khớp</option>
                                 <option value="THAN_KINH">Thần kinh</option>
                                 <option value="UNG_BUOU">Ung bướu</option>
                                 <option value="HO_HAP">Hô hấp</option>
                                 <option value="TIEU_HOA">Tiêu hóa</option>
-                                <option value="THAN_TIET_NIEU">Thận tiết niệu</option>
+                                <option value="THAN_TIET_NIEU">
+                                  Thận tiết niệu
+                                </option>
                               </select>
                             </div>
                           </div>
@@ -1931,7 +2152,9 @@ const DoctorManagement: React.FC = () => {
                               disabled={createDoctorMutation.isPending}
                               className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary"
                             >
-                              {createDoctorMutation.isPending ? "Đang tạo..." : "Tạo bác sĩ"}
+                              {createDoctorMutation.isPending
+                                ? "Đang tạo..."
+                                : "Tạo bác sĩ"}
                             </Button>
                           </DialogFooter>
                         </DialogContent>
@@ -1980,79 +2203,91 @@ const DoctorManagement: React.FC = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {toArray(doctorsData?.data).map((doctor: DoctorUser, index: number) => (
-                          <TableRow
-                            key={doctor.id}
-                            className="group hover:bg-gradient-to-r hover:from-primary/5 hover:via-primary/3 hover:to-primary/5 transition-all duration-500 border-b border-border/20 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5"
-                            style={{
-                              animationDelay: `${index * 100}ms`,
-                              animation: "fadeInUp 0.6s ease-out forwards",
-                            }}
-                          >
-                            <TableCell className="font-medium py-4">
-                              <div className="flex items-center gap-4">
-                                <div className="relative group-hover:scale-110 transition-transform duration-300">
-                                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full blur-sm group-hover:blur-md transition-all duration-300"></div>
-                                  <div className="relative w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center border border-primary/20">
-                                    <span className="text-sm font-bold text-primary">
-                                      {doctor.fullName?.charAt(0)?.toUpperCase()}
+                        {toArray(doctorsData?.data).map(
+                          (doctor: DoctorUser, index: number) => (
+                            <TableRow
+                              key={doctor.id}
+                              className="group hover:bg-gradient-to-r hover:from-primary/5 hover:via-primary/3 hover:to-primary/5 transition-all duration-500 border-b border-border/20 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5"
+                              style={{
+                                animationDelay: `${index * 100}ms`,
+                                animation: "fadeInUp 0.6s ease-out forwards",
+                              }}
+                            >
+                              <TableCell className="font-medium py-4">
+                                <div className="flex items-center gap-4">
+                                  <div className="relative group-hover:scale-110 transition-transform duration-300">
+                                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full blur-sm group-hover:blur-md transition-all duration-300"></div>
+                                    <div className="relative w-10 h-10 bg-gradient-to-br from-primary/20 to-primary/10 rounded-full flex items-center justify-center border border-primary/20">
+                                      <span className="text-sm font-bold text-primary">
+                                        {doctor.fullName
+                                          ?.charAt(0)
+                                          ?.toUpperCase()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
+                                      {doctor.fullName}
                                     </span>
                                   </div>
                                 </div>
-                                <div>
-                                  <span className="font-semibold text-foreground group-hover:text-primary transition-colors duration-300">
-                                    {doctor.fullName}
-                                  </span>
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell className="py-4">
-                              <span className="text-muted-foreground font-medium">
-                                {doctor.phoneNumber}
-                              </span>
-                            </TableCell>
-                            <TableCell className="py-4">
-                              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300/50">
-                                {doctor.majorDoctor ? getMajorDoctorName(doctor.majorDoctor) : "-"}
-                              </span>
-                            </TableCell>
-                            <TableCell className="py-4">
-                              <span
-                                className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${doctor.status === "ACTIVE"
-                                  ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
-                                  : doctor.status === "INACTIVE"
-                                    ? "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300/50"
-                                    : "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300/50"
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <span className="text-muted-foreground font-medium">
+                                  {doctor.phoneNumber}
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300/50">
+                                  {doctor.majorDoctor
+                                    ? getMajorDoctorName(doctor.majorDoctor)
+                                    : "-"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <span
+                                  className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
+                                    doctor.status === "ACTIVE"
+                                      ? "bg-gradient-to-r from-green-100 to-green-200 text-green-800 border border-green-300/50"
+                                      : doctor.status === "INACTIVE"
+                                      ? "bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 border border-yellow-300/50"
+                                      : "bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300/50"
                                   }`}
-                              >
-                                {doctor.status === "ACTIVE" ? "Hoạt động" :
-                                  doctor.status === "INACTIVE" ? "Tạm dừng" : "Khóa"}
-                              </span>
-                            </TableCell>
-                            <TableCell className="text-right py-4">
-                              <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleOpenEditDoctor(doctor)}
-                                  className="hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:border-primary/30 hover:text-primary hover:shadow-md hover:shadow-primary/10 transition-all duration-300 group-hover:scale-105"
                                 >
-                                  <Pencil className="h-4 w-4 mr-1.5" />
-                                  Sửa
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleOpenDeleteDoctor(doctor)}
-                                  className="hover:bg-gradient-to-r hover:from-destructive/10 hover:to-destructive/5 hover:border-destructive/30 hover:text-destructive hover:shadow-md hover:shadow-destructive/10 transition-all duration-300 group-hover:scale-105"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-1.5" />
-                                  Xóa
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                                  {doctor.status === "ACTIVE"
+                                    ? "Hoạt động"
+                                    : doctor.status === "INACTIVE"
+                                    ? "Tạm dừng"
+                                    : "Khóa"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right py-4">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleOpenEditDoctor(doctor)}
+                                    className="hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:border-primary/30 hover:text-primary hover:shadow-md hover:shadow-primary/10 transition-all duration-300 group-hover:scale-105"
+                                  >
+                                    <Pencil className="h-4 w-4 mr-1.5" />
+                                    Sửa
+                                  </Button>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleOpenDeleteDoctor(doctor)
+                                    }
+                                    className="hover:bg-gradient-to-r hover:from-destructive/10 hover:to-destructive/5 hover:border-destructive/30 hover:text-destructive hover:shadow-md hover:shadow-destructive/10 transition-all duration-300 group-hover:scale-105"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1.5" />
+                                    Xóa
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
                         {loadingDoctors && (
                           <TableRow>
                             <TableCell
@@ -2131,10 +2366,16 @@ const DoctorManagement: React.FC = () => {
       </div>
 
       {/* Edit Doctor Dialog */}
-      <Dialog open={openEditDoctor.open} onOpenChange={(open) => setOpenEditDoctor({ open })}>
+      <Dialog
+        open={openEditDoctor.open}
+        onOpenChange={(open) => setOpenEditDoctor({ open })}
+      >
         {/* Overlay with blur - only render when dialog is open */}
         {openEditDoctor.open && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0" aria-hidden="true" />
+          <div
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0"
+            aria-hidden="true"
+          />
         )}
         <DialogContent className="sm:max-w-[500px] rounded-2xl border border-border/20 shadow-2xl bg-card/95 backdrop-blur-md">
           <DialogHeader>
@@ -2228,10 +2469,16 @@ const DoctorManagement: React.FC = () => {
       </Dialog>
 
       {/* Delete Doctor Dialog */}
-      <Dialog open={openDeleteDoctor.open} onOpenChange={(open) => setOpenDeleteDoctor({ open })}>
+      <Dialog
+        open={openDeleteDoctor.open}
+        onOpenChange={(open) => setOpenDeleteDoctor({ open })}
+      >
         {/* Overlay with blur - only render when dialog is open */}
         {openDeleteDoctor.open && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0" aria-hidden="true" />
+          <div
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0"
+            aria-hidden="true"
+          />
         )}
         <DialogContent className="sm:max-w-[500px] rounded-2xl border border-border/20 shadow-2xl bg-card/95 backdrop-blur-md">
           <DialogHeader>
@@ -2265,23 +2512,43 @@ const DoctorManagement: React.FC = () => {
       </Dialog>
 
       {/* Delete Patient Dialog */}
-      <Dialog open={openDeletePatient.open} onOpenChange={(open) => setOpenDeletePatient({ open })}>
+      <Dialog
+        open={openDeletePatient.open}
+        onOpenChange={(open) => setOpenDeletePatient({ open })}
+      >
         {/* Overlay with blur - only render when dialog is open */}
         {openDeletePatient.open && (
-          <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0" aria-hidden="true" />
+          <div
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm animate-in fade-in-0"
+            aria-hidden="true"
+          />
         )}
         <DialogContent className="sm:max-w-[520px] rounded-2xl border border-border/20 shadow-2xl bg-card/95 backdrop-blur-md p-0 overflow-hidden">
           <div className="p-6 border-b border-border/10 bg-gradient-to-r from-background/80 to-background/60 backdrop-blur-sm">
             <DialogHeader>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
                 <div>
-                  <DialogTitle className="text-lg font-bold">Xác nhận xóa bệnh nhân</DialogTitle>
-                  <p className="text-xs text-muted-foreground">Hành động này không thể hoàn tác</p>
+                  <DialogTitle className="text-lg font-bold">
+                    Xác nhận xóa bệnh nhân
+                  </DialogTitle>
+                  <p className="text-xs text-muted-foreground">
+                    Hành động này không thể hoàn tác
+                  </p>
                 </div>
               </div>
             </DialogHeader>
@@ -2289,14 +2556,30 @@ const DoctorManagement: React.FC = () => {
           <div className="p-6 space-y-4">
             <div className="flex items-start gap-3 rounded-xl border border-border/10 bg-background/50 p-4">
               <div className="w-9 h-9 rounded-lg bg-destructive/10 text-destructive flex items-center justify-center shrink-0">
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10" />
+                <svg
+                  className="w-4.5 h-4.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"
+                  />
                 </svg>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Bạn sắp xóa bệnh nhân</p>
-                <p className="text-base font-semibold text-foreground">{openDeletePatient.patient?.fullName}</p>
-                <p className="text-xs text-muted-foreground">Dữ liệu liên quan có thể bị ảnh hưởng. Vui lòng xác nhận.</p>
+                <p className="text-sm text-muted-foreground">
+                  Bạn sắp xóa bệnh nhân
+                </p>
+                <p className="text-base font-semibold text-foreground">
+                  {openDeletePatient.patient?.fullName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Dữ liệu liên quan có thể bị ảnh hưởng. Vui lòng xác nhận.
+                </p>
               </div>
             </div>
           </div>
@@ -2328,7 +2611,7 @@ const DoctorManagement: React.FC = () => {
 //     mutationFn: () => DoctorApi.resolveAlert(id),
 //     onSuccess: () => {
 //       queryClient.invalidateQueries({ queryKey: ["doctor-alerts"] });
-//       
+//
 //     },
 //   });
 //   return (
