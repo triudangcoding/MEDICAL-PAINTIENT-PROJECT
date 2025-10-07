@@ -5,7 +5,7 @@ import { User, UserListResponse } from "@/api/user/types";
 
 const UserManagement: React.FC = () => {
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit, setLimit] = useState(12);
   const [roleFilter, setRoleFilter] = useState<"ALL" | "ADMIN" | "DOCTOR" | "PATIENT">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -107,7 +107,7 @@ const UserManagement: React.FC = () => {
                       setLimit(parseInt(e.target.value));
                     }}
                   >
-                    {[8, 12, 16, 24].map((n) => (
+                    {[12, 16, 24].map((n) => (
                       <option key={n} value={n}>{n}/trang</option>
                     ))}
                   </select>
