@@ -271,35 +271,48 @@ export class PatientService {
   }
 
   // Danh sách tất cả bệnh nhân (join User + PatientProfile)
-  async listAllPatients() {
-    return this.databaseService.client.user.findMany({
-      where: {
-        role: 'PATIENT',
-        deletedAt: null // Chỉ lấy các record chưa bị soft delete
-      },
-      select: {
-        id: true,
-        fullName: true,
-        phoneNumber: true,
-        createdAt: true,
-        createdBy: true,
-        createdByUser: {
-          select: {
-            id: true,
-            fullName: true,
-            role: true
+  async listAllPatients(params?: { page?: number; limit?: number }) {
+    const page = params?.page && params.page > 0 ? params.page : 1;
+    const limit = params?.limit && params.limit > 0 ? params.limit : 10;
+    
+    const where = {
+      role: 'PATIENT' as any,
+      deletedAt: null // Chỉ lấy các record chưa bị soft delete
+    };
+    
+    const [items, total] = await Promise.all([
+      this.databaseService.client.user.findMany({
+        where,
+        select: {
+          id: true,
+          fullName: true,
+          phoneNumber: true,
+          createdAt: true,
+          createdBy: true,
+          createdByUser: {
+            select: {
+              id: true,
+              fullName: true,
+              role: true,
+              majorDoctor: true
+            }
+          },
+          profile: {
+            select: {
+              gender: true,
+              birthDate: true,
+              address: true
+            }
           }
         },
-        profile: {
-          select: {
-            gender: true,
-            birthDate: true,
-            address: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit
+      }),
+      this.databaseService.client.user.count({ where })
+    ]);
+    
+    return { data: items, total, page, limit };
   }
 
   async searchPatients(query: { q?: string; page?: number; limit?: number }) {

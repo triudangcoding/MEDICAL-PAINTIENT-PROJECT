@@ -222,7 +222,13 @@ const DoctorManagement: React.FC = () => {
     queryFn: () =>
       patientSearch?.trim()
         ? patientApi.searchPatients(patientSearch, patientPage, patientLimit)
-        : patientApi.getAllPatients(),
+        : patientApi.getPatients({
+            page: patientPage,
+            limit: patientLimit,
+            search: undefined,
+            sortBy: "createdAt",
+            sortOrder: "desc"
+          }),
   });
 
   // Doctor queries
@@ -1109,7 +1115,7 @@ const DoctorManagement: React.FC = () => {
                         <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
                         Tổng số bệnh nhân:{" "}
                         <span className="font-semibold text-primary">
-                          {patientsData?.data?.length ?? 0}
+                          {patientsData?.pagination?.total || patientsData?.total || patientsData?.data?.length || 0}
                         </span>
                       </div>
                     </div>
@@ -1175,6 +1181,14 @@ const DoctorManagement: React.FC = () => {
                               Địa chỉ
                             </div>
                           </TableHead>
+                          <TableHead className="font-bold text-foreground/90 py-4">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1 bg-primary/10 rounded-lg">
+                                <User className="h-4 w-4 text-primary" />
+                              </div>
+                              Bác sĩ điều trị
+                            </div>
+                          </TableHead>
                           <TableHead className="text-right font-bold text-foreground/90 py-4">
                             Thao tác
                           </TableHead>
@@ -1183,7 +1197,7 @@ const DoctorManagement: React.FC = () => {
                       <TableBody>
                         {(role === "PATIENT"
                           ? [currentUserQuery.data].filter(Boolean)
-                          : toArray(patientsData)
+                          : toArray(patientsData?.data || patientsData)
                         ).map((p: any, index: number) => (
                           <TableRow
                             key={p.id}
@@ -1241,6 +1255,51 @@ const DoctorManagement: React.FC = () => {
                                 {p.profile?.address || "-"}
                               </span>
                             </TableCell>
+                            <TableCell className="py-4">
+                              <div className="flex items-center gap-2">
+                                {p.createdByUser ? (
+                                  <>
+                                    <div className="relative group-hover:scale-110 transition-transform duration-300">
+                                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-full blur-sm group-hover:blur-md transition-all duration-300"></div>
+                                      <div className="relative w-8 h-8 bg-gradient-to-br from-blue-500/20 to-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/20">
+                                        <span className="text-xs font-bold text-blue-600">
+                                          {p.createdByUser.fullName?.charAt(0)?.toUpperCase()}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className="font-semibold text-foreground group-hover:text-blue-600 transition-colors duration-300">
+                                        {p.createdByUser.fullName}
+                                      </span>
+                                      {p.createdByUser.majorDoctor && (
+                                        <div className="text-xs text-muted-foreground">
+                                          {p.createdByUser.majorDoctor.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <div className="relative group-hover:scale-110 transition-transform duration-300">
+                                      <div className="absolute inset-0 bg-gradient-to-br from-gray-400/20 to-gray-400/10 rounded-full blur-sm group-hover:blur-md transition-all duration-300"></div>
+                                      <div className="relative w-8 h-8 bg-gradient-to-br from-gray-400/20 to-gray-400/10 rounded-full flex items-center justify-center border border-gray-400/20">
+                                        <span className="text-xs font-bold text-gray-600">
+                                          ?
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className="font-medium text-muted-foreground">
+                                        Đăng ký tự do
+                                      </span>
+                                      <div className="text-xs text-muted-foreground/70">
+                                        Chưa có bác sĩ điều trị
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
                             <TableCell className="text-right py-4">
                               <div className="flex justify-end gap-2">
                                 <Button
@@ -1270,7 +1329,7 @@ const DoctorManagement: React.FC = () => {
                           : currentUserQuery.isLoading) && (
                           <TableRow>
                             <TableCell
-                              colSpan={6}
+                              colSpan={7}
                               className="text-center py-16 text-muted-foreground"
                             >
                               <div className="flex flex-col items-center gap-4">
@@ -1309,6 +1368,10 @@ const DoctorManagement: React.FC = () => {
                     <span className="font-semibold text-primary">
                       {patientsData?.data?.length || 0}
                     </span>{" "}
+                    /{" "}
+                    <span className="font-semibold text-primary">
+                      {patientsData?.pagination?.total || patientsData?.total || 0}
+                    </span>{" "}
                     bệnh nhân
                   </div>
                   <div className="flex gap-3">
@@ -1326,7 +1389,7 @@ const DoctorManagement: React.FC = () => {
                       size="sm"
                       onClick={() => setPatientPage((p) => p + 1)}
                       disabled={
-                        (patientsData?.data?.length || 0) < patientLimit
+                        patientPage * patientLimit >= (patientsData?.pagination?.total || patientsData?.total || 0)
                       }
                       className="hover:bg-gradient-to-r hover:from-primary/10 hover:to-primary/5 hover:border-primary/30 hover:text-primary hover:shadow-md hover:shadow-primary/10 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >

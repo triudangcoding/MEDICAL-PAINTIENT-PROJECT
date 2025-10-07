@@ -28,8 +28,14 @@ export class PatientController {
   @Get('get-all')
   @Public()
   @SkipPermission()
-  async listPatients() {
-    return this.patientService.listAllPatients();
+  async listPatients(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
+  ) {
+    return this.patientService.listAllPatients({
+      page: page ? parseInt(page) : undefined,
+      limit: limit ? parseInt(limit) : undefined
+    });
   }
 
   // Tìm kiếm bệnh nhân theo tên/số điện thoại

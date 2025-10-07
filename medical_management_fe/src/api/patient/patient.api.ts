@@ -12,13 +12,13 @@ interface IPaginationQuery {
 
 export const patientApi = {
     async getPatients(params?: IPaginationQuery): Promise<IGetPatientPaginationResponse> {
-        const { page = 1, limit = 10, search, sortBy, sortOrder } = params || {};
-        // Default to admin listing of patients
-        const res = await axiosInstance.get('/admin/users', {
-            params: { role: 'PATIENT', page, limit, q: search, sortBy, sortOrder }
+        const { page = 1, limit = 10 } = params || {};
+        // Use public endpoint to get all patients with pagination
+        const res = await axiosInstance.get('/patient/get-all', {
+            params: { page, limit }
         });
-        const payload = res.data?.data ?? res.data;
-        const items = payload.items ?? payload.data ?? [];
+        const payload = res.data;
+        const items = payload.data ?? [];
         const total = payload.total ?? 0;
         const currentPage = payload.page ?? page;
         const perPage = payload.limit ?? limit;
@@ -32,7 +32,7 @@ export const patientApi = {
                 hasNextPage: currentPage < Math.ceil((total || 0) / (perPage || 1)),
                 hasPrevPage: currentPage > 1
             },
-            statusCode: res.data?.statusCode ?? 200
+            statusCode: res.status || 200
         } as unknown as IGetPatientPaginationResponse;
     },
 
@@ -45,11 +45,26 @@ export const patientApi = {
         return { data: items, statusCode: res.data?.statusCode ?? 200 } as unknown as IGetPatientResponse;
     },
 
-    async searchPatients(q: string, page?: number, limit?: number): Promise<IGetPatientResponse> {
+    async searchPatients(q: string, page?: number, limit?: number): Promise<IGetPatientPaginationResponse> {
         const res = await axiosInstance.get('/patient/search', { params: { q, page, limit } });
         const payload = res.data?.data ?? res.data;
         const items = Array.isArray(payload?.data) ? payload.data : (Array.isArray(payload) ? payload : []);
-        return { data: items, statusCode: res.data?.statusCode ?? 200 } as unknown as IGetPatientResponse;
+        const total = payload.total ?? items.length;
+        const currentPage = payload.page ?? page ?? 1;
+        const perPage = payload.limit ?? limit ?? 10;
+        
+        return { 
+            data: items, 
+            pagination: {
+                total,
+                limit: perPage,
+                currentPage,
+                totalPages: Math.ceil((total || 0) / (perPage || 1)),
+                hasNextPage: currentPage < Math.ceil((total || 0) / (perPage || 1)),
+                hasPrevPage: currentPage > 1
+            },
+            statusCode: res.data?.statusCode ?? 200 
+        } as unknown as IGetPatientPaginationResponse;
     },
 
     async getPatientsForDoctor(params?: IPaginationQuery): Promise<IGetPatientPaginationResponse> {
@@ -57,8 +72,8 @@ export const patientApi = {
         const res = await axiosInstance.get('/doctor/patients', {
             params: { q: search, page, limit, sortBy, sortOrder }
         });
-        const payload = res.data?.data ?? res.data;
-        const items = payload.items ?? payload.data ?? [];
+        const payload = res.data;
+        const items = payload.data ?? [];
         const total = payload.total ?? 0;
         const currentPage = payload.page ?? page;
         const perPage = payload.limit ?? limit;

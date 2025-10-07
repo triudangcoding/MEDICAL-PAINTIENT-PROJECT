@@ -7,7 +7,8 @@ const RegisterSchema = z
     fullName: z.string(),
     phoneNumber: z.string(),
     password: z.string(),
-    role: z.nativeEnum(UserRole).optional()
+    role: z.nativeEnum(UserRole).optional(),
+    createdBy: z.string().optional()
   })
   .strict();
 

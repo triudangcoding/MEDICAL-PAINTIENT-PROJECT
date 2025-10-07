@@ -87,14 +87,24 @@ export class DoctorService {
     const [items, total] = await Promise.all([
       this.databaseService.client.user.findMany({
         where,
-        include: { profile: true },
+        include: { 
+          profile: true,
+          createdByUser: {
+            select: {
+              id: true,
+              fullName: true,
+              majorDoctor: true,
+              role: true
+            }
+          }
+        },
         orderBy: { [orderByField]: orderDir },
         skip: (page - 1) * limit,
         take: limit
       }),
       this.databaseService.client.user.count({ where })
     ]);
-    return { items, total, page, limit };
+    return { data: items, total, page, limit };
   }
 
   async getPatient(id: string) {

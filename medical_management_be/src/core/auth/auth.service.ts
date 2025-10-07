@@ -73,7 +73,8 @@ export class AuthService {
         phoneNumber: body.phoneNumber,
         password: hashedPassword,
         fullName: body.fullName,
-        role: UserRole.PATIENT
+        role: UserRole.PATIENT,
+        createdBy: body.createdBy || null
       }
     });
 

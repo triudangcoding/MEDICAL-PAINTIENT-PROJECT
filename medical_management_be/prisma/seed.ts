@@ -45,6 +45,7 @@ async function upsertUser(params: {
   role: UserRole;
   status?: UserStatus;
   majorDoctor?: MajorDoctor;
+  createdBy?: string;
 }) {
   const passwordHash = await bcrypt.hash(params.password ?? DEFAULT_PASSWORD, 10);
   return prisma.user.upsert({
@@ -56,7 +57,8 @@ async function upsertUser(params: {
       fullName: params.fullName,
       role: params.role,
       status: params.status ?? UserStatus.ACTIVE,
-      majorDoctor: params.majorDoctor
+      majorDoctor: params.majorDoctor,
+      createdBy: params.createdBy
     }
   });
 }
@@ -160,10 +162,13 @@ async function seed() {
 
   const patients: Array<{ id: string; fullName: string }> = [];
   for (let i = 1; i <= 20; i++) {
+    // Gán bệnh nhân cho bác sĩ ngẫu nhiên
+    const assignedDoctor = pickOne(doctors);
     const p = await upsertUser({
       phoneNumber: generateVietnamPhone(1000 + i),
       fullName: generateVietnamName(2000 + i),
-      role: UserRole.PATIENT
+      role: UserRole.PATIENT,
+      createdBy: assignedDoctor.id
     });
     patients.push({ id: p.id, fullName: p.fullName });
     await createPatientDetails(p.id);
