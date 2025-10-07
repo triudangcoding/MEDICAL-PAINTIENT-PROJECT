@@ -537,7 +537,9 @@ const DoctorManagement: React.FC = () => {
     if (!createDoctorForm.phoneNumber?.trim()) {
       newErrors.phoneNumber = "Vui lòng nhập số điện thoại";
       hasError = true;
-    } else if (!/^[0-9]{10,11}$/.test(createDoctorForm.phoneNumber.replace(/\D/g, ""))) {
+    } else if (
+      !/^[0-9]{10,11}$/.test(createDoctorForm.phoneNumber.replace(/\D/g, ""))
+    ) {
       newErrors.phoneNumber = "Số điện thoại không hợp lệ (10-11 số)";
       hasError = true;
     }
@@ -702,7 +704,7 @@ const DoctorManagement: React.FC = () => {
                         </div>
                         <div className="grid gap-2">
                           <Label>Giới tính</Label>
-                          <Input
+                          <select
                             value={createForm.profile?.gender || ""}
                             onChange={(e) => {
                               setCreateForm((s) => ({
@@ -718,8 +720,13 @@ const DoctorManagement: React.FC = () => {
                                   gender: undefined,
                                 }));
                             }}
-                            placeholder="Nam/Nữ/Khác"
-                          />
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <option value="">Chọn giới tính</option>
+                            <option value="Nam">Nam</option>
+                            <option value="Nữ">Nữ</option>
+                            <option value="Khác">Khác</option>
+                          </select>
                           {createErrors.gender && (
                             <p className="text-red-500 text-sm">
                               {createErrors.gender}
@@ -1211,14 +1218,17 @@ const DoctorManagement: React.FC = () => {
                             <TableCell className="py-4">
                               <span
                                 className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 group-hover:scale-105 ${
-                                  p.profile?.gender === "Nam"
+                                  p.profile?.gender === "Nam" || p.profile?.gender === "MALE"
                                     ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-300/50"
-                                    : p.profile?.gender === "Nữ"
+                                    : p.profile?.gender === "Nữ" || p.profile?.gender === "FEMALE"
                                     ? "bg-gradient-to-r from-pink-100 to-pink-200 text-pink-800 border border-pink-300/50"
                                     : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300/50"
                                 }`}
                               >
-                                {p.profile?.gender || "-"}
+                                {p.profile?.gender === "MALE" ? "Nam" : 
+                                 p.profile?.gender === "FEMALE" ? "Nữ" : 
+                                 p.profile?.gender === "OTHER" ? "Khác" : 
+                                 p.profile?.gender || "-"}
                               </span>
                             </TableCell>
                             <TableCell className="py-4">
@@ -1374,7 +1384,7 @@ const DoctorManagement: React.FC = () => {
                     </div>
                     <div className="grid gap-2">
                       <Label>Giới tính</Label>
-                      <Input
+                      <select
                         value={profileForm.gender || ""}
                         onChange={(e) =>
                           setProfileForm((s) => ({
@@ -1382,7 +1392,13 @@ const DoctorManagement: React.FC = () => {
                             gender: e.target.value,
                           }))
                         }
-                      />
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">Chọn giới tính</option>
+                        <option value="Nam">Nam</option>
+                        <option value="Nữ">Nữ</option>
+                        <option value="Khác">Khác</option>
+                      </select>
                     </div>
                     <div className="grid gap-2">
                       <Label>Ngày sinh</Label>
@@ -2058,14 +2074,23 @@ const DoctorManagement: React.FC = () => {
                                   }));
                                   // Clear error when user starts typing
                                   if (createDoctorErrors.fullName) {
-                                    setCreateDoctorErrors(prev => ({ ...prev, fullName: "" }));
+                                    setCreateDoctorErrors((prev) => ({
+                                      ...prev,
+                                      fullName: "",
+                                    }));
                                   }
                                 }}
                                 placeholder="BS. Nguyễn Văn A"
-                                className={createDoctorErrors.fullName ? "border-red-500 focus:border-red-500" : ""}
+                                className={
+                                  createDoctorErrors.fullName
+                                    ? "border-red-500 focus:border-red-500"
+                                    : ""
+                                }
                               />
                               {createDoctorErrors.fullName && (
-                                <p className="text-sm text-red-500 mt-1">{createDoctorErrors.fullName}</p>
+                                <p className="text-sm text-red-500 mt-1">
+                                  {createDoctorErrors.fullName}
+                                </p>
                               )}
                             </div>
                             <div className="grid gap-2">
@@ -2079,14 +2104,23 @@ const DoctorManagement: React.FC = () => {
                                   }));
                                   // Clear error when user starts typing
                                   if (createDoctorErrors.phoneNumber) {
-                                    setCreateDoctorErrors(prev => ({ ...prev, phoneNumber: "" }));
+                                    setCreateDoctorErrors((prev) => ({
+                                      ...prev,
+                                      phoneNumber: "",
+                                    }));
                                   }
                                 }}
                                 placeholder="09xxxxxxxx"
-                                className={createDoctorErrors.phoneNumber ? "border-red-500 focus:border-red-500" : ""}
+                                className={
+                                  createDoctorErrors.phoneNumber
+                                    ? "border-red-500 focus:border-red-500"
+                                    : ""
+                                }
                               />
                               {createDoctorErrors.phoneNumber && (
-                                <p className="text-sm text-red-500 mt-1">{createDoctorErrors.phoneNumber}</p>
+                                <p className="text-sm text-red-500 mt-1">
+                                  {createDoctorErrors.phoneNumber}
+                                </p>
                               )}
                             </div>
                             <div className="grid gap-2">
@@ -2101,14 +2135,23 @@ const DoctorManagement: React.FC = () => {
                                   }));
                                   // Clear error when user starts typing
                                   if (createDoctorErrors.password) {
-                                    setCreateDoctorErrors(prev => ({ ...prev, password: "" }));
+                                    setCreateDoctorErrors((prev) => ({
+                                      ...prev,
+                                      password: "",
+                                    }));
                                   }
                                 }}
                                 placeholder="••••••"
-                                className={createDoctorErrors.password ? "border-red-500 focus:border-red-500" : ""}
+                                className={
+                                  createDoctorErrors.password
+                                    ? "border-red-500 focus:border-red-500"
+                                    : ""
+                                }
                               />
                               {createDoctorErrors.password && (
-                                <p className="text-sm text-red-500 mt-1">{createDoctorErrors.password}</p>
+                                <p className="text-sm text-red-500 mt-1">
+                                  {createDoctorErrors.password}
+                                </p>
                               )}
                             </div>
                             <div className="grid gap-2">
