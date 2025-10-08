@@ -204,6 +204,28 @@ export const patientApi = {
         return res.data?.data ?? res.data;
     },
 
+    // Enhanced medication reminder APIs
+    async quickConfirmMedication(data: {
+        prescriptionItemId: string;
+        amount?: string;
+        notes?: string;
+        takenAt?: string;
+    }) {
+        const res = await axiosInstance.post('/notifications/patient/quick-confirm', data);
+        return res.data?.data ?? res.data;
+    },
+
+    async getMedicationSchedule(date?: string) {
+        const params = date ? { date } : {};
+        const res = await axiosInstance.get('/notifications/patient/medication-schedule', { params });
+        return res.data?.data ?? res.data;
+    },
+
+    async getUpcomingMedications() {
+        const res = await axiosInstance.get('/notifications/patient/upcoming-medications');
+        return res.data?.data ?? res.data;
+    },
+
     // Doctor endpoints for patient history management
     async updatePatientHistory(patientId: string, historyData: {
         conditions?: string[];

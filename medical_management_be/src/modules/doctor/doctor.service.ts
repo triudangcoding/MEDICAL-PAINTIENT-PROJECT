@@ -711,6 +711,7 @@ export class DoctorService {
       doctorId: string;
       doctorName: string | null;
       adherence: { taken: number; scheduled: number; rate: number };
+      hasMedications: boolean;
     }>;
 
     // Fetch doctor info once
@@ -751,17 +752,19 @@ export class DoctorService {
         ._all as number;
     }
 
-    // Compute scheduled per patient
+    // Compute scheduled per patient and check if they have medications
     const mapPatientScheduled: Record<string, number> = {};
+    const mapPatientHasMedications: Record<string, boolean> = {};
+    
     for (const pid of pagedPatientIds) {
       const ids = mapPatientToPrescriptionIds[pid] || [];
-      const scheduled = items
-        .filter((i) => ids.includes(i.prescriptionId))
-        .reduce(
-          (sum, it) => sum + (it.frequencyPerDay || 0) * (it.durationDays || 0),
-          0
-        );
+      const patientItems = items.filter((i) => ids.includes(i.prescriptionId));
+      const scheduled = patientItems.reduce(
+        (sum, it) => sum + (it.frequencyPerDay || 0) * (it.durationDays || 0),
+        0
+      );
       mapPatientScheduled[pid] = scheduled;
+      mapPatientHasMedications[pid] = patientItems.length > 0;
     }
 
     for (const p of patients) {
@@ -774,7 +777,8 @@ export class DoctorService {
         phoneNumber: p.phoneNumber,
         doctorId: doctor?.id || doctorId,
         doctorName: doctor?.fullName || null,
-        adherence: { taken, scheduled, rate }
+        adherence: { taken, scheduled, rate },
+        hasMedications: mapPatientHasMedications[p.id] || false
       });
     }
 
@@ -879,14 +883,24 @@ export class DoctorService {
     patientId: string,
     message?: string
   ) {
-    // Ensure patient belongs to this doctor (assigned via createdBy) and exists
+    // Ensure patient exists and is a patient
     const patient = await this.databaseService.client.user.findUnique({
       where: { id: patientId }
     });
     if (!patient || patient.role !== UserRole.PATIENT || patient.deletedAt) {
       throw new NotFoundException('Patient not found');
     }
-    if (patient.createdBy && patient.createdBy !== doctorId) {
+    
+    // Check if doctor has ACTIVE prescription with this patient
+    const activePrescription = await this.databaseService.client.prescription.findFirst({
+      where: {
+        doctorId: doctorId,
+        patientId: patientId,
+        status: PrescriptionStatus.ACTIVE
+      }
+    });
+    
+    if (!activePrescription) {
       throw new UnprocessableEntityException(
         'Bệnh nhân không thuộc danh sách theo dõi của bác sĩ'
       );

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { patientApi } from "@/api/patient/patient.api";
 import { DoctorApi } from "@/api/doctor";
+import { doctorApi } from "@/api/doctor/doctor.api";
 import { MedicationsApi } from "@/api/medications";
 import { Button } from "@/components/ui/button";
 import { CreatePatientDialog } from "@/components/dialogs/patients/create-patient.dialog";
@@ -34,12 +35,22 @@ import {
   Clock,
   Search,
   X as XIcon,
+  Bell,
+  AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { X } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+
+// Schema for sending reminder
+const sendReminderSchema = z.object({
+  message: z.string().min(1, "Nội dung nhắc nhở không được để trống").max(500, "Nội dung nhắc nhở quá dài"),
+  type: z.enum(["MISSED_DOSE", "LOW_ADHERENCE", "OTHER"], {
+    errorMap: () => ({ message: "Loại nhắc nhở không hợp lệ" })
+  }),
+});
 
 // Schema for basic patient info update
 const updateBasicInfoSchema = z
@@ -140,6 +151,7 @@ const prescriptionSchema = z.object({
   notes: z.string().optional(),
 });
 
+type SendReminderData = z.infer<typeof sendReminderSchema>;
 type UpdateBasicInfoData = z.infer<typeof updateBasicInfoSchema>;
 type PrescriptionData = z.infer<typeof prescriptionSchema>;
 type PrescriptionItemData = z.infer<typeof prescriptionItemSchema>;
@@ -153,6 +165,8 @@ export default function DoctorPatientsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deletePatient, setDeletePatient] = useState<any | null>(null);
+  const [reminderPatient, setReminderPatient] = useState<any>(null);
+  const [isReminderOpen, setIsReminderOpen] = useState(false);
 
   const [historyPatient, setHistoryPatient] = useState<any | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -215,6 +229,15 @@ export default function DoctorPatientsPage() {
     reValidateMode: "onSubmit",
   });
 
+  // Form for sending reminder
+  const reminderForm = useForm<SendReminderData>({
+    resolver: zodResolver(sendReminderSchema),
+    defaultValues: {
+      message: "",
+      type: "OTHER",
+    },
+  });
+
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["doctor-patients", page, limit, debouncedSearch],
     queryFn: () =>
@@ -256,6 +279,43 @@ export default function DoctorPatientsPage() {
     },
     onError: () => {
       toast.error("Có lỗi xảy ra khi cập nhật thông tin bệnh nhân");
+    },
+  });
+
+  // Mutation for sending reminder
+  const sendReminderMutation = useMutation({
+    mutationFn: async ({ patientId, data }: { patientId: string; data: SendReminderData }) => {
+      // Lấy danh sách đơn thuốc của bệnh nhân từ bác sĩ
+      const prescriptions = await doctorApi.getPatientPrescriptions(patientId);
+      
+      // Tìm đơn thuốc ACTIVE
+      const activePrescription = prescriptions?.data?.items?.find(
+        (p: any) => p.status === 'ACTIVE' && p.items && p.items.length > 0
+      );
+      
+      if (!activePrescription) {
+        throw new Error("Bệnh nhân không có đơn thuốc đang hoạt động hoặc không có thuốc trong đơn");
+      }
+      
+      return doctorApi.sendManualReminder({
+        prescriptionId: activePrescription.id,
+        message: data.message,
+        type: data.type,
+      });
+    },
+    onSuccess: () => {
+      toast.success("Gửi nhắc nhở thành công!");
+      setIsReminderOpen(false);
+      setReminderPatient(null);
+      reminderForm.reset();
+      // Invalidate patient data to refresh adherence info
+      queryClient.invalidateQueries({ queryKey: ["doctor-patients"] });
+    },
+    onError: (error: any) => {
+      console.error("Error sending reminder:", error);
+      toast.error(
+        error?.response?.data?.message || "Có lỗi xảy ra khi gửi nhắc nhở"
+      );
     },
   });
 
@@ -877,6 +937,15 @@ export default function DoctorPatientsPage() {
     }
   };
 
+  const handleSendReminder = (data: SendReminderData) => {
+    if (!reminderPatient) return;
+    
+    sendReminderMutation.mutate({
+      patientId: reminderPatient.id,
+      data,
+    });
+  };
+
   return (
     <main className="flex-1 overflow-auto p-6">
       <div className="space-y-4">
@@ -1088,6 +1157,19 @@ export default function DoctorPatientsPage() {
                           />
                         </svg>
                         Chi tiết
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setReminderPatient(p);
+                          setIsReminderOpen(true);
+                        }}
+                        disabled={!(p as any).hasMedications}
+                        title={(p as any).hasMedications ? "Gửi nhắc nhở uống thuốc" : "Bệnh nhân chưa có đơn thuốc"}
+                        className="h-8 px-2.5 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border-amber-200/60 text-amber-600 hover:text-amber-700 dark:from-amber-900/10 dark:to-orange-900/10 dark:border-amber-700/40 dark:text-amber-400 dark:hover:text-amber-300 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Bell className="w-3.5 h-3.5" />
                       </Button>
                       <Button
                         variant="destructive"
@@ -2544,6 +2626,81 @@ export default function DoctorPatientsPage() {
               </>
             )}
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send Reminder Dialog */}
+      <Dialog open={isReminderOpen} onOpenChange={setIsReminderOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5 text-amber-600" />
+              Gửi nhắc nhở
+            </DialogTitle>
+            <DialogDescription>
+              Gửi nhắc nhở uống thuốc cho bệnh nhân {reminderPatient?.fullName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={reminderForm.handleSubmit(handleSendReminder)} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Loại nhắc nhở</label>
+              <Select
+                value={reminderForm.watch("type")}
+                onValueChange={(value) => reminderForm.setValue("type", value as any)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn loại nhắc nhở" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MISSED_DOSE">Bỏ liều thuốc</SelectItem>
+                  <SelectItem value="LOW_ADHERENCE">Tuân thủ thấp</SelectItem>
+                  <SelectItem value="OTHER">Khác</SelectItem>
+                </SelectContent>
+              </Select>
+              {reminderForm.formState.errors.type && (
+                <p className="text-sm text-red-600">
+                  {reminderForm.formState.errors.type.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Nội dung nhắc nhở</label>
+              <textarea
+                {...reminderForm.register("message")}
+                className="w-full px-3 py-2 border border-border rounded-md bg-background text-sm resize-none"
+                rows={4}
+                placeholder="Nhập nội dung nhắc nhở..."
+              />
+              {reminderForm.formState.errors.message && (
+                <p className="text-sm text-red-600">
+                  {reminderForm.formState.errors.message.message}
+                </p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsReminderOpen(false);
+                  setReminderPatient(null);
+                  reminderForm.reset();
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                type="submit"
+                disabled={sendReminderMutation.isPending}
+                className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+              >
+                {sendReminderMutation.isPending ? "Đang gửi..." : "Gửi nhắc nhở"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </main>

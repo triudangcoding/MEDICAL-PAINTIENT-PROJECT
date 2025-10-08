@@ -145,4 +145,36 @@ export const doctorApi = {
     const res = await axiosInstance.get(`/doctor/doctor/${id}`);
     return res.data.data || res.data;
   },
+
+  // Enhanced medication reminder APIs for doctors
+  sendManualReminder: async (data: {
+    prescriptionId: string;
+    message: string;
+    type: 'MISSED_DOSE' | 'LOW_ADHERENCE' | 'OTHER';
+    scheduledTime?: string;
+  }) => {
+    const res = await axiosInstance.post('/notifications/doctor/send-reminder', data);
+    return res.data?.data ?? res.data;
+  },
+
+  getAdherenceReport: async (params: {
+    patientId: string;
+    startDate: string;
+    endDate: string;
+    groupBy?: 'day' | 'week' | 'month';
+  }) => {
+    const res = await axiosInstance.get('/notifications/doctor/adherence-report', { params });
+    return res.data?.data ?? res.data;
+  },
+
+  getPatientMedicationSchedule: async (patientId: string, date?: string) => {
+    const params = date ? { date, patientId } : { patientId };
+    const res = await axiosInstance.get('/notifications/patient/medication-schedule', { params });
+    return res.data?.data ?? res.data;
+  },
+
+  getPatientPrescriptions: async (patientId: string) => {
+    const res = await axiosInstance.get(`/doctor/prescriptions/patient/${patientId}`);
+    return res.data;
+  },
 };

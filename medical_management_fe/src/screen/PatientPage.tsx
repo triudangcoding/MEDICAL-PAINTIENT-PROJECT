@@ -462,9 +462,17 @@ export default function PatientPage() {
       });
     } catch (error: any) {
       console.error("Confirm intake error:", error);
+      // Check if it's a time validation error
+      const errorMessage = error?.response?.data?.message || "";
+      const isTimeError = errorMessage.includes("sai dữ liệu đầu vào") || 
+                         errorMessage.includes("không đúng giờ") ||
+                         errorMessage.includes("time") ||
+                         errorMessage.includes("schedule");
+      
       toast.error(
-        error?.response?.data?.message ||
-          "Có lỗi xảy ra khi xác nhận uống thuốc",
+        isTimeError 
+          ? "Bạn không thể uống thuốc vào khung giờ này!"
+          : errorMessage || "Có lỗi xảy ra khi xác nhận uống thuốc",
         {
           duration: 4000,
           position: "top-center",
@@ -533,12 +541,22 @@ export default function PatientPage() {
     console.log("Prescription Item ID:", reminder.prescriptionItemId);
 
     try {
-      await patientApi.confirmIntake(reminder.prescriptionId, {
+      console.log('=== FE QUICK CONFIRM DEBUG ===');
+      console.log('Reminder object:', JSON.stringify(reminder, null, 2));
+      console.log('prescriptionItemId:', reminder.prescriptionItemId);
+      console.log('uniqueDoseId:', reminder.uniqueDoseId);
+      
+      const confirmData = {
         prescriptionItemId: reminder.prescriptionItemId,
         takenAt: new Date().toISOString(),
-        status: "TAKEN",
         notes: reminder.uniqueDoseId, // Send unique dose ID to track specific time slot
-      });
+      };
+      
+      console.log('Data to send:', JSON.stringify(confirmData, null, 2));
+      console.log('=== END FE QUICK CONFIRM DEBUG ===');
+      
+      // Use new enhanced API for quick confirmation
+      await patientApi.quickConfirmMedication(confirmData);
 
       // Refresh reminders and related data with more aggressive invalidation
       console.log("=== REFRESHING CACHE AFTER CONFIRM INTAKE ===");
@@ -569,9 +587,17 @@ export default function PatientPage() {
       });
     } catch (error: any) {
       console.error("Confirm intake from reminder error:", error);
+      // Check if it's a time validation error
+      const errorMessage = error?.response?.data?.message || "";
+      const isTimeError = errorMessage.includes("sai dữ liệu đầu vào") || 
+                         errorMessage.includes("không đúng giờ") ||
+                         errorMessage.includes("time") ||
+                         errorMessage.includes("schedule");
+      
       toast.error(
-        error?.response?.data?.message ||
-          "Có lỗi xảy ra khi xác nhận uống thuốc",
+        isTimeError 
+          ? "Bạn không thể uống thuốc vào khung giờ này!"
+          : errorMessage || "Có lỗi xảy ra khi xác nhận uống thuốc",
         {
           duration: 4000,
           position: "top-center",

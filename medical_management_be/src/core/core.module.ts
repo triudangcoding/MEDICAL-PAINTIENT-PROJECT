@@ -24,10 +24,11 @@ import { APP_PIPE } from '@nestjs/core';
   ],
   providers: [
     ErrorService,
-    {
-      provide: APP_PIPE,
-      useClass: ZodValidationPipe
-    }
+    // Temporarily disabled global pipe for debugging
+    // {
+    //   provide: APP_PIPE,
+    //   useClass: ZodValidationPipe
+    // }
   ],
   exports: [ErrorService, LoggerModule, DatabaseModule, AuthModule]
 })
