@@ -515,7 +515,6 @@ export class NotificationsService {
     const targetDate = query.date ? new Date(query.date) : new Date();
     const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
-    
     const endOfDay = new Date(targetDate);
     endOfDay.setHours(23, 59, 59, 999);
 
