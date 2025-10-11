@@ -1,0 +1,75 @@
+{
+  "id": "b85b669c-fc5c-4036-ae1f-28b3d9e3ce85",
+  "phoneNumber": "0396157476",
+  "password": "$2b$10$5T8.v8IDkr/30JuKk6F9BOhphrAsZKSGnNNXPBfDK9vIwMBazXY8a",
+  "fullName": "Võ Quốc Triẹu - Updated",
+  "role": "DOCTOR",
+  "status": "ACTIVE",
+  "createdAt": "2025-10-11T06:53:33.830Z",
+  "updatedAt": "2025-10-11T07:41:28.377Z",
+  "deletedAt": null,
+  "createdBy": null,
+  "majorDoctorId": "0de1541e-794e-4afe-b569-26a4053a152b",
+  "profile": null,
+  "majorDoctor": {
+    "id": "0de1541e-794e-4afe-b569-26a4053a152b",
+    "code": "TAM_THAN",
+    "name": "Tâm thần",
+    "nameEn": "Psychiatry",
+    "description": "Chuyên khoa tâm thần và sức khỏe tâm lý",
+    "isActive": true,
+    "sortOrder": 2,
+    "createdAt": "2025-10-08T16:44:41.343Z",
+    "updatedAt": "2025-10-08T16:44:41.343Z"
+  },
+  "prescriptionsAsDoctor": [
+    {
+      "id": "ab05f18f-ec24-4ec4-a83b-d0c5d6ebe5e9",
+      "status": "ACTIVE",
+      "startDate": "2025-10-11T07:21:02.721Z",
+      "endDate": null,
+      "createdAt": "2025-10-11T07:21:02.723Z"
+    },
+    {
+      "id": "cbf25cfd-5ced-4998-b50a-1718f42f0ac1",
+      "status": "ACTIVE",
+      "startDate": "2025-10-11T07:18:58.962Z",
+      "endDate": null,
+      "createdAt": "2025-10-11T07:18:58.967Z"
+    }
+  ],
+  "alertsAsDoctor": [
+    {
+      "id": "767063dc-fc3e-4b51-9956-266e23e4549e",
+      "type": "LOW_ADHERENCE",
+      "message": "Bác sĩ Võ Quốc Triẹu nhắc nhở bạn uống thuốc đều đặn và đúng giờ theo chỉ định",
+      "resolved": false,
+      "createdAt": "2025-10-11T07:20:03.299Z"
+    }
+  ],
+  "createdPatients": [
+    {
+      "id": "2e13f563-01be-4a42-84f7-3897beae83a5",
+      "fullName": "Bệnh Nhân Test - Updated",
+      "phoneNumber": "0988009115",
+      "createdAt": "2025-10-11T07:07:10.821Z"
+    },
+    {
+      "id": "018127f5-b4f7-494a-910c-1bb653085e93",
+      "fullName": "ádasd",
+      "phoneNumber": "0396157376",
+      "createdAt": "2025-10-11T07:05:13.245Z"
+    },
+    {
+      "id": "f302481b-c266-462f-b973-a95f6d8d54c6",
+      "fullName": "Trây 97",
+      "phoneNumber": "0900099009",
+      "createdAt": "2025-10-11T06:54:10.817Z"
+    }
+  ],
+  "stats": {
+    "totalPatientsCreated": 3,
+    "totalPrescriptions": 2,
+    "totalAlerts": 1
+  }
+}

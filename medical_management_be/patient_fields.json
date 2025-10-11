@@ -1,0 +1,269 @@
+{
+  "id": "2e13f563-01be-4a42-84f7-3897beae83a5",
+  "phoneNumber": "0988009115",
+  "password": "$2b$10$jxC4xCmcBri7UHmQ52HeuOnPacY/Nme0kLepcgIuMj9qtKeGbcYqW",
+  "fullName": "Bệnh Nhân Test - Updated",
+  "role": "PATIENT",
+  "status": "ACTIVE",
+  "createdAt": "2025-10-11T07:07:10.821Z",
+  "updatedAt": "2025-10-11T07:41:28.554Z",
+  "deletedAt": null,
+  "createdBy": "b85b669c-fc5c-4036-ae1f-28b3d9e3ce85",
+  "majorDoctorId": null,
+  "profile": {
+    "id": "1e01c499-81da-4afa-8c79-181539c27c94",
+    "userId": "2e13f563-01be-4a42-84f7-3897beae83a5",
+    "gender": "MALE",
+    "birthDate": null,
+    "address": "234 sdadasdsad",
+    "createdAt": "2025-10-11T07:07:10.828Z",
+    "updatedAt": "2025-10-11T07:07:10.828Z"
+  },
+  "medicalHistory": {
+    "id": "fa3f108e-eeee-4fcf-9a9c-2c4a9e481806",
+    "patientId": "2e13f563-01be-4a42-84f7-3897beae83a5",
+    "conditions": [
+      "có"
+    ],
+    "allergies": [
+      "có"
+    ],
+    "surgeries": [
+      "có"
+    ],
+    "familyHistory": "có",
+    "lifestyle": "có",
+    "currentMedications": [
+      "có"
+    ],
+    "notes": "có",
+    "createdAt": "2025-10-11T07:07:32.923Z",
+    "updatedAt": "2025-10-11T07:07:32.923Z",
+    "extras": {}
+  },
+  "createdByUser": {
+    "id": "b85b669c-fc5c-4036-ae1f-28b3d9e3ce85",
+    "fullName": "Võ Quốc Triẹu - Updated",
+    "phoneNumber": "0396157476",
+    "role": "DOCTOR",
+    "majorDoctor": {
+      "id": "0de1541e-794e-4afe-b569-26a4053a152b",
+      "code": "TAM_THAN",
+      "name": "Tâm thần",
+      "nameEn": "Psychiatry",
+      "description": "Chuyên khoa tâm thần và sức khỏe tâm lý",
+      "isActive": true,
+      "sortOrder": 2,
+      "createdAt": "2025-10-08T16:44:41.343Z",
+      "updatedAt": "2025-10-08T16:44:41.343Z"
+    }
+  },
+  "prescriptionsAsPatient": [
+    {
+      "id": "cbf25cfd-5ced-4998-b50a-1718f42f0ac1",
+      "patientId": "2e13f563-01be-4a42-84f7-3897beae83a5",
+      "doctorId": "b85b669c-fc5c-4036-ae1f-28b3d9e3ce85",
+      "status": "ACTIVE",
+      "startDate": "2025-10-11T07:18:58.962Z",
+      "endDate": null,
+      "notes": "",
+      "createdAt": "2025-10-11T07:18:58.967Z",
+      "updatedAt": "2025-10-11T07:18:58.967Z",
+      "doctor": {
+        "id": "b85b669c-fc5c-4036-ae1f-28b3d9e3ce85",
+        "fullName": "Võ Quốc Triẹu - Updated",
+        "phoneNumber": "0396157476",
+        "majorDoctor": {
+          "id": "0de1541e-794e-4afe-b569-26a4053a152b",
+          "code": "TAM_THAN",
+          "name": "Tâm thần",
+          "nameEn": "Psychiatry",
+          "description": "Chuyên khoa tâm thần và sức khỏe tâm lý",
+          "isActive": true,
+          "sortOrder": 2,
+          "createdAt": "2025-10-08T16:44:41.343Z",
+          "updatedAt": "2025-10-08T16:44:41.343Z"
+        }
+      },
+      "items": [
+        {
+          "id": "a7e1fd23-a20f-4520-9767-41ba24757a4f",
+          "prescriptionId": "cbf25cfd-5ced-4998-b50a-1718f42f0ac1",
+          "medicationId": "7447aa7e-d4a3-4112-9ad1-0046c636cd66",
+          "dosage": "600",
+          "frequencyPerDay": 1,
+          "timesOfDay": [
+            "Trưa",
+            "Chiều",
+            "Tối"
+          ],
+          "durationDays": 7,
+          "route": "INJECTION",
+          "instructions": "Uống rồi mới ăn",
+          "createdAt": "2025-10-11T07:18:58.967Z",
+          "updatedAt": "2025-10-11T07:18:58.967Z",
+          "medication": {
+            "id": "7447aa7e-d4a3-4112-9ad1-0046c636cd66",
+            "name": "Amoxicillin",
+            "strength": "500mg",
+            "form": "capsule",
+            "unit": "mg",
+            "description": "Kháng sinh",
+            "isActive": true,
+            "createdAt": "2025-10-08T16:44:43.638Z",
+            "updatedAt": "2025-10-08T16:44:43.638Z"
+          }
+        }
+      ]
+    }
+  ],
+  "adherenceLogs": [
+    {
+      "id": "54d6ad87-3fa9-44ae-a46a-287728e02059",
+      "prescriptionId": "cbf25cfd-5ced-4998-b50a-1718f42f0ac1",
+      "prescriptionItemId": "a7e1fd23-a20f-4520-9767-41ba24757a4f",
+      "patientId": "2e13f563-01be-4a42-84f7-3897beae83a5",
+      "takenAt": "2025-10-11T07:20:30.637Z",
+      "status": "TAKEN",
+      "amount": null,
+      "notes": "a7e1fd23-a20f-4520-9767-41ba24757a4f-2025-10-11-Tối",
+      "createdAt": "2025-10-11T07:20:30.668Z",
+      "updatedAt": "2025-10-11T07:20:30.668Z",
+      "prescriptionItem": {
+        "id": "a7e1fd23-a20f-4520-9767-41ba24757a4f",
+        "prescriptionId": "cbf25cfd-5ced-4998-b50a-1718f42f0ac1",
+        "medicationId": "7447aa7e-d4a3-4112-9ad1-0046c636cd66",
+        "dosage": "600",
+        "frequencyPerDay": 1,
+        "timesOfDay": [
+          "Trưa",
+          "Chiều",
+          "Tối"
+        ],
+        "durationDays": 7,
+        "route": "INJECTION",
+        "instructions": "Uống rồi mới ăn",
+        "createdAt": "2025-10-11T07:18:58.967Z",
+        "updatedAt": "2025-10-11T07:18:58.967Z",
+        "medication": {
+          "id": "7447aa7e-d4a3-4112-9ad1-0046c636cd66",
+          "name": "Amoxicillin",
+          "strength": "500mg",
+          "form": "capsule",
+          "unit": "mg",
+          "description": "Kháng sinh",
+          "isActive": true,
+          "createdAt": "2025-10-08T16:44:43.638Z",
+          "updatedAt": "2025-10-08T16:44:43.638Z"
+        }
+      }
+    },
+    {
+      "id": "4f4b3b0c-9040-4632-b943-807685c40c8c",
+      "prescriptionId": "cbf25cfd-5ced-4998-b50a-1718f42f0ac1",
+      "prescriptionItemId": "a7e1fd23-a20f-4520-9767-41ba24757a4f",
+      "patientId": "2e13f563-01be-4a42-84f7-3897beae83a5",
+      "takenAt": "2025-10-11T07:20:28.819Z",
+      "status": "TAKEN",
+      "amount": null,
+      "notes": "a7e1fd23-a20f-4520-9767-41ba24757a4f-2025-10-11-Chiều",
+      "createdAt": "2025-10-11T07:20:28.851Z",
+      "updatedAt": "2025-10-11T07:20:28.851Z",
+      "prescriptionItem": {
+        "id": "a7e1fd23-a20f-4520-9767-41ba24757a4f",
+        "prescriptionId": "cbf25cfd-5ced-4998-b50a-1718f42f0ac1",
+        "medicationId": "7447aa7e-d4a3-4112-9ad1-0046c636cd66",
+        "dosage": "600",
+        "frequencyPerDay": 1,
+        "timesOfDay": [
+          "Trưa",
+          "Chiều",
+          "Tối"
+        ],
+        "durationDays": 7,
+        "route": "INJECTION",
+        "instructions": "Uống rồi mới ăn",
+        "createdAt": "2025-10-11T07:18:58.967Z",
+        "updatedAt": "2025-10-11T07:18:58.967Z",
+        "medication": {
+          "id": "7447aa7e-d4a3-4112-9ad1-0046c636cd66",
+          "name": "Amoxicillin",
+          "strength": "500mg",
+          "form": "capsule",
+          "unit": "mg",
+          "description": "Kháng sinh",
+          "isActive": true,
+          "createdAt": "2025-10-08T16:44:43.638Z",
+          "updatedAt": "2025-10-08T16:44:43.638Z"
+        }
+      }
+    },
+    {
+      "id": "99fd2284-5831-4cb7-9a99-4209b1f036d3",
+      "prescriptionId": "cbf25cfd-5ced-4998-b50a-1718f42f0ac1",
+      "prescriptionItemId": "a7e1fd23-a20f-4520-9767-41ba24757a4f",
+      "patientId": "2e13f563-01be-4a42-84f7-3897beae83a5",
+      "takenAt": "2025-10-11T07:20:28.041Z",
+      "status": "TAKEN",
+      "amount": null,
+      "notes": "a7e1fd23-a20f-4520-9767-41ba24757a4f-2025-10-11-Trưa",
+      "createdAt": "2025-10-11T07:20:28.082Z",
+      "updatedAt": "2025-10-11T07:20:28.082Z",
+      "prescriptionItem": {
+        "id": "a7e1fd23-a20f-4520-9767-41ba24757a4f",
+        "prescriptionId": "cbf25cfd-5ced-4998-b50a-1718f42f0ac1",
+        "medicationId": "7447aa7e-d4a3-4112-9ad1-0046c636cd66",
+        "dosage": "600",
+        "frequencyPerDay": 1,
+        "timesOfDay": [
+          "Trưa",
+          "Chiều",
+          "Tối"
+        ],
+        "durationDays": 7,
+        "route": "INJECTION",
+        "instructions": "Uống rồi mới ăn",
+        "createdAt": "2025-10-11T07:18:58.967Z",
+        "updatedAt": "2025-10-11T07:18:58.967Z",
+        "medication": {
+          "id": "7447aa7e-d4a3-4112-9ad1-0046c636cd66",
+          "name": "Amoxicillin",
+          "strength": "500mg",
+          "form": "capsule",
+          "unit": "mg",
+          "description": "Kháng sinh",
+          "isActive": true,
+          "createdAt": "2025-10-08T16:44:43.638Z",
+          "updatedAt": "2025-10-08T16:44:43.638Z"
+        }
+      }
+    }
+  ],
+  "alertsAsPatient": [
+    {
+      "id": "767063dc-fc3e-4b51-9956-266e23e4549e",
+      "prescriptionId": null,
+      "patientId": "2e13f563-01be-4a42-84f7-3897beae83a5",
+      "doctorId": "b85b669c-fc5c-4036-ae1f-28b3d9e3ce85",
+      "type": "LOW_ADHERENCE",
+      "message": "Bác sĩ Võ Quốc Triẹu nhắc nhở bạn uống thuốc đều đặn và đúng giờ theo chỉ định",
+      "resolved": false,
+      "createdAt": "2025-10-11T07:20:03.299Z",
+      "updatedAt": "2025-10-11T07:20:03.299Z",
+      "doctor": {
+        "id": "b85b669c-fc5c-4036-ae1f-28b3d9e3ce85",
+        "fullName": "Võ Quốc Triẹu - Updated"
+      }
+    }
+  ],
+  "stats": {
+    "totalPrescriptions": 1,
+    "activePrescriptions": 1,
+    "totalAdherenceLogs": 3,
+    "takenLogs": 3,
+    "missedLogs": 0,
+    "adherenceRate": 100,
+    "totalAlerts": 1,
+    "unresolvedAlerts": 1
+  }
+}

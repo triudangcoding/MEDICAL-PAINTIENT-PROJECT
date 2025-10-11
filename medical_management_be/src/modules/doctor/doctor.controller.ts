@@ -14,6 +14,7 @@ import { DoctorService } from '@/modules/doctor/doctor.service';
 import { UserInfo } from '@/common/decorators/users.decorator';
 import { IUserFromToken } from '@/modules/users/types/user.type';
 import { UserRole } from '@prisma/client';
+import { SkipTransform } from '@/common/decorators/skip-transform.decorator';
 
 @Controller('doctor')
 export class DoctorController {
@@ -287,6 +288,30 @@ export class DoctorController {
 
 
   // CRUD Operations for Doctor Management
+  
+  // Route cụ thể phải đặt trước route có parameter động
+  @Get('fields')
+  @SkipTransform()
+  async getAllDoctorFields(@UserInfo() user: IUserFromToken) {
+    this.ensureDoctor(user);
+    return this.doctorService.getDoctorAllFields(user.id);
+  }
+
+  @Put('fields')
+  @SkipTransform()
+  async updateDoctorFields(
+    @UserInfo() user: IUserFromToken,
+    @Body() body: {
+      fullName?: string;
+      phoneNumber?: string;
+      password?: string;
+      major?: string; // majorDoctorId
+    }
+  ) {
+    this.ensureDoctor(user);
+    return this.doctorService.updateDoctorFields(user.id, body);
+  }
+
   @Post('doctor')
   async createDoctor(
     @Body()

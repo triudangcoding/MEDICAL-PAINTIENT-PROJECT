@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   Query
 } from '@nestjs/common';
 import { PatientService } from './patient.service';
@@ -13,6 +14,7 @@ import { UserInfo } from '@/common/decorators/users.decorator';
 import { IUserFromToken } from '@/modules/users/types/user.type';
 import { AdherenceStatus, UserRole } from '@prisma/client';
 import { Public, SkipPermission } from '@/common/decorators/isPublicRoute';
+import { SkipTransform } from '@/common/decorators/skip-transform.decorator';
 
 @Controller('patient')
 export class PatientController {
@@ -22,6 +24,28 @@ export class PatientController {
     if (user.roles !== UserRole.PATIENT) {
       throw new HttpException('Bạn không có quyền', HttpStatus.FORBIDDEN);
     }
+  }
+
+  // Route cụ thể phải đặt trước route có parameter động
+  @Get('fields')
+  @SkipTransform()
+  async getAllPatientFields(@UserInfo() user: IUserFromToken) {
+    this.ensurePatient(user);
+    return this.patientService.getPatientAllFields(user.id);
+  }
+
+  @Put('fields')
+  @SkipTransform()
+  async updatePatientFields(
+    @UserInfo() user: IUserFromToken,
+    @Body() body: {
+      fullName?: string;
+      phoneNumber?: string;
+      password?: string;
+    }
+  ) {
+    this.ensurePatient(user);
+    return this.patientService.updatePatientFields(user.id, body);
   }
 
   // Danh sách tất cả bệnh nhân (Admin/Doctor dùng để tra cứu)

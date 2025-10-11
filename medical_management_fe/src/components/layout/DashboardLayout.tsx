@@ -252,7 +252,17 @@ const AppSidebar: React.FC<AppSidebarProps> = React.memo(({ userData }) => {
               <div className="p-3 space-y-2">
                 {/* Thông tin cơ bản */}
                 <div className="space-y-1">
-                  <h4 className="text-xs font-medium text-foreground flex items-center gap-1">
+                  <h4 
+                    className="text-xs font-medium text-foreground flex items-center gap-1 cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => {
+                      const role = userData?.data.role;
+                      if (role === 'DOCTOR') {
+                        navigate('/dashboard/doctor-info');
+                      } else if (role === 'PATIENT') {
+                        navigate('/dashboard/patient-info');
+                      }
+                    }}
+                  >
                     <UserRound className="h-3 w-3" />
                     Thông tin cá nhân
                   </h4>
@@ -432,32 +442,50 @@ const DashboardLayout: React.FC = () => {
 
                 {/* User Profile */}
                 <div className="relative" ref={dropdownRef}>
-                  <div 
-                    className="flex items-center gap-3 cursor-pointer group hover:bg-accent/30 rounded-xl p-2 transition-colors duration-200"
-                    onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                  >
-                  <div className="relative">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center text-white text-sm font-semibold">
-                      {userData?.data.fullName?.charAt(0) || "U"}
+                  <div className="flex items-center gap-2">
+                    {/* User Avatar and Name - Navigate on Click */}
+                    <div 
+                      className="flex items-center gap-3 cursor-pointer group hover:bg-accent/50 rounded-xl p-2 transition-colors duration-200"
+                      onClick={() => {
+                        const role = userData?.data.role;
+                        if (role === 'DOCTOR') {
+                          navigate('/dashboard/doctor-info');
+                        } else if (role === 'PATIENT') {
+                          navigate('/dashboard/patient-info');
+                        }
+                        setIsUserDropdownOpen(false);
+                      }}
+                    >
+                      <div className="relative">
+                        <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary/70 rounded-lg flex items-center justify-center text-white text-sm font-semibold">
+                          {userData?.data.fullName?.charAt(0) || "U"}
+                        </div>
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-background" />
+                      </div>
+                      <div className="hidden lg:flex flex-col">
+                        <span className="text-sm font-semibold text-foreground leading-tight">
+                          {userData?.data.fullName || "User"}
+                        </span>
+                        <span className="text-xs text-muted-foreground leading-tight">
+                          {userData?.data.role === "DOCTOR"
+                            ? "Bác sĩ"
+                            : userData?.data.role === "ADMIN"
+                              ? "Quản trị viên"
+                              : "Bệnh nhân"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-background" />
-                  </div>
-                  <div className="hidden lg:flex flex-col">
-                    <span className="text-sm font-semibold text-foreground leading-tight">
-                      {userData?.data.fullName || "User"}
-                    </span>
-                    <span className="text-xs text-muted-foreground leading-tight">
-                      {userData?.data.role === "DOCTOR"
-                        ? "Bác sĩ"
-                        : userData?.data.role === "ADMIN"
-                          ? "Quản trị viên"
-                          : "Bệnh nhân"}
-                    </span>
-                  </div>
-                    <ChevronDown className={cn(
-                      "h-4 w-4 text-muted-foreground hidden lg:block group-hover:text-foreground transition-all duration-200",
-                      isUserDropdownOpen && "rotate-180"
-                    )} />
+                    
+                    {/* Dropdown Toggle */}
+                    <div
+                      className="hidden lg:flex h-9 w-9 items-center justify-center cursor-pointer hover:bg-accent/30 rounded-lg transition-colors duration-200"
+                      onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                    >
+                      <ChevronDown className={cn(
+                        "h-4 w-4 text-muted-foreground transition-all duration-200",
+                        isUserDropdownOpen && "rotate-180"
+                      )} />
+                    </div>
                   </div>
 
                   {/* User Info Dropdown */}

@@ -516,4 +516,178 @@ export class PatientService {
       select: { id: true }
     });
   }
+
+  async getPatientAllFields(id: string) {
+    const patient = await this.databaseService.client.user.findUnique({
+      where: { id },
+      include: {
+        profile: true,
+        medicalHistory: true,
+        createdByUser: {
+          select: {
+            id: true,
+            fullName: true,
+            phoneNumber: true,
+            role: true,
+            majorDoctor: true
+          }
+        },
+        prescriptionsAsPatient: {
+          include: {
+            doctor: {
+              select: {
+                id: true,
+                fullName: true,
+                phoneNumber: true,
+                majorDoctor: true
+              }
+            },
+            items: {
+              include: {
+                medication: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 5
+        },
+        adherenceLogs: {
+          include: {
+            prescriptionItem: {
+              include: {
+                medication: true
+              }
+            }
+          },
+          orderBy: {
+            takenAt: 'desc'
+          },
+          take: 10
+        },
+        alertsAsPatient: {
+          include: {
+            doctor: {
+              select: {
+                id: true,
+                fullName: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 5
+        }
+      }
+    });
+
+    if (!patient) {
+      throw new NotFoundException('Patient not found');
+    }
+
+    // Tính toán thống kê
+    const totalPrescriptions = await this.databaseService.client.prescription.count({
+      where: { patientId: id }
+    });
+
+    const activePrescriptions = await this.databaseService.client.prescription.count({
+      where: { 
+        patientId: id,
+        status: 'ACTIVE' as any
+      }
+    });
+
+    const totalAdherenceLogs = await this.databaseService.client.adherenceLog.count({
+      where: { patientId: id }
+    });
+
+    const takenLogs = await this.databaseService.client.adherenceLog.count({
+      where: { 
+        patientId: id,
+        status: AdherenceStatus.TAKEN
+      }
+    });
+
+    const missedLogs = await this.databaseService.client.adherenceLog.count({
+      where: { 
+        patientId: id,
+        status: AdherenceStatus.MISSED
+      }
+    });
+
+    const totalAlerts = await this.databaseService.client.alert.count({
+      where: { patientId: id }
+    });
+
+    const unresolvedAlerts = await this.databaseService.client.alert.count({
+      where: { 
+        patientId: id,
+        resolved: false
+      }
+    });
+
+    const adherenceRate = totalAdherenceLogs > 0 ? (takenLogs / totalAdherenceLogs) * 100 : 0;
+
+    return {
+      ...patient,
+      stats: {
+        totalPrescriptions,
+        activePrescriptions,
+        totalAdherenceLogs,
+        takenLogs,
+        missedLogs,
+        adherenceRate: Math.round(adherenceRate * 100) / 100,
+        totalAlerts,
+        unresolvedAlerts
+      }
+    };
+  }
+
+  async updatePatientFields(
+    id: string,
+    data: {
+      fullName?: string;
+      phoneNumber?: string;
+      password?: string;
+    }
+  ) {
+    // Kiểm tra patient có tồn tại
+    const patient = await this.databaseService.client.user.findUnique({
+      where: { id }
+    });
+
+    if (!patient || patient.role !== 'PATIENT' || patient.deletedAt) {
+      throw new NotFoundException('Patient not found');
+    }
+
+    // Kiểm tra phone number uniqueness nếu được update
+    if (data.phoneNumber && data.phoneNumber !== patient.phoneNumber) {
+      const existing = await this.databaseService.client.user.findFirst({
+        where: { phoneNumber: data.phoneNumber }
+      });
+      if (existing) {
+        throw new NotFoundException('Số điện thoại đã được sử dụng');
+      }
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    
+    if (data.fullName) updateData.fullName = data.fullName;
+    if (data.phoneNumber) updateData.phoneNumber = data.phoneNumber;
+    if (data.password) {
+      updateData.password = await Utils.HashUtils.hashPassword(data.password);
+    }
+
+    // Update patient
+    await this.databaseService.client.user.update({
+      where: { id },
+      data: updateData
+    });
+
+    // Return updated full fields
+    return this.getPatientAllFields(id);
+  }
 }

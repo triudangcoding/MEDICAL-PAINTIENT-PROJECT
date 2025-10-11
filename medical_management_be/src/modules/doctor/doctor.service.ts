@@ -1363,4 +1363,142 @@ export class DoctorService {
 
     return doctor;
   }
+
+  async getDoctorAllFields(id: string) {
+    const doctor = await this.databaseService.client.user.findUnique({
+      where: { id },
+      include: {
+        profile: true,
+        majorDoctor: true,
+        prescriptionsAsDoctor: {
+          select: {
+            id: true,
+            status: true,
+            startDate: true,
+            endDate: true,
+            createdAt: true
+          },
+          take: 5,
+          orderBy: {
+            createdAt: 'desc'
+          }
+        },
+        alertsAsDoctor: {
+          select: {
+            id: true,
+            type: true,
+            message: true,
+            resolved: true,
+            createdAt: true
+          },
+          take: 5,
+          orderBy: {
+            createdAt: 'desc'
+          }
+        },
+        createdPatients: {
+          select: {
+            id: true,
+            fullName: true,
+            phoneNumber: true,
+            createdAt: true
+          },
+          take: 5,
+          orderBy: {
+            createdAt: 'desc'
+          }
+        }
+      }
+    });
+
+    if (!doctor || doctor.role !== UserRole.DOCTOR || doctor.deletedAt) {
+      throw new NotFoundException('Doctor not found');
+    }
+
+    // Đếm tổng số bệnh nhân được tạo bởi bác sĩ này
+    const totalPatientsCreated = await this.databaseService.client.user.count({
+      where: {
+        createdBy: id,
+        role: UserRole.PATIENT,
+        deletedAt: null
+      }
+    });
+
+    // Đếm tổng số đơn thuốc
+    const totalPrescriptions = await this.databaseService.client.prescription.count({
+      where: { doctorId: id }
+    });
+
+    // Đếm tổng số alerts
+    const totalAlerts = await this.databaseService.client.alert.count({
+      where: { doctorId: id }
+    });
+
+    return {
+      ...doctor,
+      stats: {
+        totalPatientsCreated,
+        totalPrescriptions,
+        totalAlerts
+      }
+    };
+  }
+
+  async updateDoctorFields(
+    id: string, 
+    data: {
+      fullName?: string;
+      phoneNumber?: string;
+      password?: string;
+      major?: string;
+    }
+  ) {
+    // Kiểm tra doctor có tồn tại
+    const doctor = await this.databaseService.client.user.findUnique({
+      where: { id }
+    });
+
+    if (!doctor || doctor.role !== UserRole.DOCTOR || doctor.deletedAt) {
+      throw new NotFoundException('Doctor not found');
+    }
+
+    // Validate majorDoctor nếu được cung cấp
+    if (data.major) {
+      const majorDoctorExists = await this.databaseService.client.majorDoctorTable.findUnique({
+        where: { id: data.major }
+      });
+      if (!majorDoctorExists) {
+        throw new UnprocessableEntityException('Invalid major doctor');
+      }
+    }
+
+    // Kiểm tra phone number uniqueness nếu được update
+    if (data.phoneNumber && data.phoneNumber !== doctor.phoneNumber) {
+      const existing = await this.databaseService.client.user.findFirst({
+        where: { phoneNumber: data.phoneNumber }
+      });
+      if (existing) {
+        throw new UnprocessableEntityException('Số điện thoại đã được sử dụng');
+      }
+    }
+
+    // Prepare update data
+    const updateData: any = {};
+    
+    if (data.fullName) updateData.fullName = data.fullName;
+    if (data.phoneNumber) updateData.phoneNumber = data.phoneNumber;
+    if (data.password) {
+      updateData.password = await Utils.HashUtils.hashPassword(data.password);
+    }
+    if (data.major) updateData.majorDoctorId = data.major;
+
+    // Update doctor
+    await this.databaseService.client.user.update({
+      where: { id },
+      data: updateData
+    });
+
+    // Return updated full fields
+    return this.getDoctorAllFields(id);
+  }
 }
