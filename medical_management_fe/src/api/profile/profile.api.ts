@@ -112,6 +112,9 @@ export interface UpdatePatientFieldsData {
   fullName?: string;
   phoneNumber?: string;
   password?: string;
+  gender?: string;
+  birthDate?: string;
+  address?: string;
 }
 
 export const profileApi = {

@@ -42,6 +42,9 @@ export class PatientController {
       fullName?: string;
       phoneNumber?: string;
       password?: string;
+      gender?: string;
+      birthDate?: string;
+      address?: string;
     }
   ) {
     this.ensurePatient(user);

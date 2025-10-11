@@ -651,11 +651,15 @@ export class PatientService {
       fullName?: string;
       phoneNumber?: string;
       password?: string;
+      gender?: string;
+      birthDate?: string;
+      address?: string;
     }
   ) {
     // Kiểm tra patient có tồn tại
     const patient = await this.databaseService.client.user.findUnique({
-      where: { id }
+      where: { id },
+      include: { profile: true }
     });
 
     if (!patient || patient.role !== 'PATIENT' || patient.deletedAt) {
@@ -672,7 +676,7 @@ export class PatientService {
       }
     }
 
-    // Prepare update data
+    // Prepare update data for User table
     const updateData: any = {};
     
     if (data.fullName) updateData.fullName = data.fullName;
@@ -681,11 +685,39 @@ export class PatientService {
       updateData.password = await Utils.HashUtils.hashPassword(data.password);
     }
 
-    // Update patient
-    await this.databaseService.client.user.update({
-      where: { id },
-      data: updateData
-    });
+    // Update patient basic info
+    if (Object.keys(updateData).length > 0) {
+      await this.databaseService.client.user.update({
+        where: { id },
+        data: updateData
+      });
+    }
+
+    // Prepare update data for PatientProfile
+    const profileUpdateData: any = {};
+    
+    if (data.gender) profileUpdateData.gender = data.gender;
+    if (data.birthDate !== undefined) profileUpdateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
+    if (data.address !== undefined) profileUpdateData.address = data.address;
+
+    // Update or create PatientProfile
+    if (Object.keys(profileUpdateData).length > 0) {
+      if (patient.profile) {
+        // Update existing profile
+        await this.databaseService.client.patientProfile.update({
+          where: { id: patient.profile.id },
+          data: profileUpdateData
+        });
+      } else {
+        // Create new profile if doesn't exist
+        await this.databaseService.client.patientProfile.create({
+          data: {
+            userId: id,
+            ...profileUpdateData
+          }
+        });
+      }
+    }
 
     // Return updated full fields
     return this.getPatientAllFields(id);
