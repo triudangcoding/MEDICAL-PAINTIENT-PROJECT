@@ -87,6 +87,8 @@ export const patientApi = {
             status: 'ACTIVE', // Active patients are always ACTIVE
             role: 'PATIENT',
             createdAt: new Date().toISOString(), // Default value
+            hasMedications: item.hasMedications, // Include medication status
+            totalReminderCount: item.totalReminderCount || 0, // Include reminder count
             createdBy: item.doctorId,
             createdByUser: {
                 id: item.doctorId,

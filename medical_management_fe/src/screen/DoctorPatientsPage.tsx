@@ -1076,6 +1076,22 @@ export default function DoctorPatientsPage() {
 
                     {/* Patient info - Fixed height section - Updated */}
                     <div className="space-y-2.5 mb-5 flex-1">
+                      {/* Medication Status */}
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className={`w-1 h-1 rounded-full ${(p as any).hasMedications ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                        <span className={`${(p as any).hasMedications ? 'text-green-600' : 'text-gray-500'}`}>
+                          {(p as any).hasMedications ? 'Có đơn thuốc' : 'Chưa có đơn thuốc'}
+                        </span>
+                        {(p as any).totalReminderCount > 0 && (
+                          <>
+                            <span className="text-muted-foreground/60">•</span>
+                            <span className="text-amber-600 font-medium">
+                              Đã nhắc {(p as any).totalReminderCount} lần
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      
                       {/* Gender and Age - Always show */}
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <div className="w-1 h-1 rounded-full bg-blue-500"></div>
@@ -1158,19 +1174,30 @@ export default function DoctorPatientsPage() {
                         </svg>
                         Chi tiết
                       </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setReminderPatient(p);
-                          setIsReminderOpen(true);
-                        }}
-                        disabled={!(p as any).hasMedications}
-                        title={(p as any).hasMedications ? "Gửi nhắc nhở uống thuốc" : "Bệnh nhân chưa có đơn thuốc"}
-                        className="h-8 px-2.5 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border-amber-200/60 text-amber-600 hover:text-amber-700 dark:from-amber-900/10 dark:to-orange-900/10 dark:border-amber-700/40 dark:text-amber-400 dark:hover:text-amber-300 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <Bell className="w-3.5 h-3.5" />
-                      </Button>
+                      <div className="relative">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setReminderPatient(p);
+                            setIsReminderOpen(true);
+                          }}
+                          disabled={!(p as any).hasMedications}
+                          title={
+                            (p as any).hasMedications 
+                              ? `Gửi nhắc nhở uống thuốc${(p as any).totalReminderCount > 0 ? ` (Đã nhắc ${(p as any).totalReminderCount} lần)` : ''}` 
+                              : "Bệnh nhân chưa có đơn thuốc"
+                          }
+                          className="h-8 px-2.5 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 border-amber-200/60 text-amber-600 hover:text-amber-700 dark:from-amber-900/10 dark:to-orange-900/10 dark:border-amber-700/40 dark:text-amber-400 dark:hover:text-amber-300 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Bell className="w-3.5 h-3.5" />
+                        </Button>
+                        {(p as any).totalReminderCount > 0 && (
+                          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium">
+                            {(p as any).totalReminderCount}
+                          </div>
+                        )}
+                      </div>
                       <Button
                         variant="destructive"
                         size="sm"

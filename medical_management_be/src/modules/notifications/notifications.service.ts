@@ -446,8 +446,14 @@ export class NotificationsService {
     let prescriptionItemId = data.prescriptionItemId;
     if (prescriptionItemId.includes('-') && !prescriptionItemId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
       // Extract UUID from format like "item-123-2024-01-15-08:00"
-      prescriptionItemId = prescriptionItemId.split('-')[1]; // Lấy phần thứ 2 (UUID)
-      console.log('Extracted prescriptionItemId:', prescriptionItemId);
+      const parts = prescriptionItemId.split('-');
+      if (parts.length >= 2) {
+        prescriptionItemId = parts[1]; // Lấy phần thứ 2 (UUID)
+        console.log('Extracted prescriptionItemId:', prescriptionItemId);
+      } else {
+        console.log('Invalid prescriptionItemId format:', prescriptionItemId);
+        throw new Error(`Định dạng prescriptionItemId không hợp lệ: ${prescriptionItemId}`);
+      }
     }
     
     // Kiểm tra prescription item thuộc về bệnh nhân này
@@ -476,7 +482,7 @@ export class NotificationsService {
     const adherenceLog = await this.databaseService.client.adherenceLog.create({
       data: {
         prescriptionId: prescriptionItem.prescriptionId,
-        prescriptionItemId: data.prescriptionItemId,
+        prescriptionItemId: prescriptionItemId, // Use extracted UUID
         patientId: patientId,
         takenAt: data.takenAt ? new Date(data.takenAt) : new Date(),
         status: AdherenceStatus.TAKEN,

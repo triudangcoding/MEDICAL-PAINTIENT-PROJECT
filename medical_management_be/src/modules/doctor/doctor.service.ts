@@ -1011,6 +1011,17 @@ export class DoctorService {
       _count: { _all: true }
     });
 
+    // Get total reminder count by patient (all alerts from doctor to patient)
+    const totalReminderCounts = await this.databaseService.client.alert.groupBy({
+      by: ['patientId'],
+      where: {
+        patientId: { in: patientIds },
+        doctorId: doctorId,
+        createdAt: { gte: sinceDate }
+      },
+      _count: { _all: true }
+    });
+
     // Process overall adherence data
     const adherenceMap: Record<
       string,
@@ -1077,6 +1088,14 @@ export class DoctorService {
       todayWarningMap[patientId] = count;
     }
 
+    // Process total reminder count data
+    const totalReminderMap: Record<string, number> = {};
+    for (const row of totalReminderCounts) {
+      const patientId = row.patientId;
+      const count = (row as any)._count._all as number;
+      totalReminderMap[patientId] = count;
+    }
+
     // Fetch patient basic info
     const patients = await this.databaseService.client.user.findMany({
       where: { id: { in: patientIds } },
@@ -1104,6 +1123,7 @@ export class DoctorService {
         other: 0
       };
       const todayWarningCount = todayWarningMap[patient.id] || 0;
+      const totalReminderCount = totalReminderMap[patient.id] || 0;
 
       // Determine primary status based on overall adherence
       let primaryStatus: 'TAKEN' | 'MISSED' | 'MIXED' = 'TAKEN';
@@ -1133,6 +1153,7 @@ export class DoctorService {
         primaryStatus,
         todayStatus,
         todayWarningCount,
+        totalReminderCount,
         totalMissed: adherence.missed,
         totalTaken: adherence.taken,
         totalAlerts: alerts.missedDose + alerts.lowAdherence + alerts.other
