@@ -19,6 +19,7 @@ import {
 import { TimeValidationDialog } from "@/components/dialogs/TimeValidationDialog";
 import {
   isWithinTimeSlot,
+  isBeforeTimeSlot,
   formatTimeSlot,
   getCurrentTimeInVietnamese,
   getTimeSlotFromTime,
@@ -154,6 +155,24 @@ export default function PatientPage() {
     doctorName?: string;
     message?: string;
   }>({ open: false });
+
+  // Missed medication reminder dialog
+  const [missedMedicationDialog, setMissedMedicationDialog] = useState<{
+    open: boolean;
+    reminder: any | null;
+  }>({
+    open: false,
+    reminder: null,
+  });
+
+  // Late medication warning dialog
+  const [lateMedicationDialog, setLateMedicationDialog] = useState<{
+    open: boolean;
+    reminder: any | null;
+  }>({
+    open: false,
+    reminder: null,
+  });
 
   const { data: ovAlerts, isLoading: loadingOvAlerts } = useQuery({
     queryKey: ["patient-ov-alerts"],
@@ -489,40 +508,32 @@ export default function PatientPage() {
     console.log("Reminder:", reminder);
     console.log("Reminder time:", reminder.time);
 
+    // Check if current time is before the expected time slot
+    const isBeforeTime = isBeforeTimeSlot(reminder.time);
+    console.log("Is before time slot:", isBeforeTime);
+
+    if (isBeforeTime) {
+      console.log("Trying to take medication before scheduled time");
+      toast.error("Bạn không được uống thuốc trước giờ!", {
+        duration: 4000,
+        position: "top-center",
+        style: { background: "#EF4444", color: "#fff" },
+      });
+      return;
+    }
+
     // Check if current time is within the expected time slot
     const isWithinTime = isWithinTimeSlot(reminder.time);
     console.log("Is within time slot:", isWithinTime);
 
     if (!isWithinTime) {
-      console.log("Showing time validation dialog");
-
-      // Test with simple alert first
-      const message =
-        `Bạn đang xác nhận uống thuốc ${reminder.medicationName} ngoài khung giờ.\n\n` +
-        `Khung giờ dự kiến: ${formatTimeSlot(reminder.time)}\n` +
-        `Thời gian hiện tại: ${getCurrentTimeInVietnamese()}\n\n` +
-        `Bạn có chắc chắn muốn xác nhận uống thuốc vào thời điểm này không?`;
-
-      console.log("Alert message:", message);
-      console.log("About to show window.confirm");
-
-      const confirmed = window.confirm(message);
-      console.log("User confirmed:", confirmed);
-
-      if (confirmed) {
-        console.log("User confirmed, proceeding with action");
-        await confirmIntakeAction(reminder);
-      } else {
-        console.log("User cancelled");
-      }
+      console.log("Showing late medication dialog");
+      // Show dialog warning about taking medication late
+      setLateMedicationDialog({
+        open: true,
+        reminder: reminder,
+      });
       return;
-
-      // Original dialog code (commented out for now)
-      // setTimeValidationDialog({
-      //   open: true,
-      //   reminder: reminder,
-      // });
-      // return;
     }
 
     console.log("Proceeding with normal confirmation");
@@ -616,33 +627,11 @@ export default function PatientPage() {
     console.log("Reminder:", reminder);
     console.log("Reminder time:", reminder.time);
 
-    // Check if current time is within the expected time slot
-    const isWithinTime = isWithinTimeSlot(reminder.time);
-    console.log("Is within time slot:", isWithinTime);
-
-    // Always show confirmation for marking missed (regardless of time slot)
-    console.log("Showing missed validation dialog");
-
-    // Test with simple alert first - warning for marking missed
-    const message =
-      `Bạn đang đánh dấu bỏ lỡ thuốc ${reminder.medicationName}.\n\n` +
-      `Khung giờ dự kiến: ${formatTimeSlot(reminder.time)}\n` +
-      `Thời gian hiện tại: ${getCurrentTimeInVietnamese()}\n\n` +
-      `Bạn có chắc chắn muốn đánh dấu bỏ lỡ thuốc này không?`;
-
-    console.log("Missed alert message:", message);
-    console.log("About to show window.confirm for missed");
-
-    const confirmed = window.confirm(message);
-    console.log("User confirmed missed:", confirmed);
-
-    if (!confirmed) {
-      console.log("User cancelled missed action");
-      return; // User cancelled
-    }
-
-    // Proceed with marking missed
-    await markMissedAction(reminder);
+    // Show dialog reminder to take medication regularly
+    setMissedMedicationDialog({
+      open: true,
+      reminder: reminder,
+    });
   };
 
   const markMissedAction = async (reminder: any) => {
@@ -2512,6 +2501,129 @@ export default function PatientPage() {
                 className="bg-indigo-600 hover:bg-indigo-700 text-white"
               >
                 Tôi đã hiểu
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Missed medication reminder dialog */}
+        <Dialog
+          open={missedMedicationDialog.open}
+          onOpenChange={(open) =>
+            setMissedMedicationDialog((prev) => ({ ...prev, open }))
+          }
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-amber-600" />
+                Nhắc nhở quan trọng
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-lg font-semibold text-amber-900 text-center">
+                  Bạn Nên Uống Thuốc Đều Đặn Hơn
+                </p>
+              </div>
+              <p className="text-sm text-foreground">
+                Việc bỏ lỡ thuốc có thể ảnh hưởng đến quá trình điều trị của bạn. 
+                Hãy cố gắng uống thuốc đúng giờ để đạt hiệu quả tốt nhất.
+              </p>
+              <Separator />
+              <p className="text-xs text-muted-foreground">
+                Bạn vẫn muốn đánh dấu đã bỏ lỡ liều thuốc này?
+              </p>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setMissedMedicationDialog({ open: false, reminder: null });
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (missedMedicationDialog.reminder) {
+                    await markMissedAction(missedMedicationDialog.reminder);
+                  }
+                  setMissedMedicationDialog({ open: false, reminder: null });
+                }}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                Xác nhận bỏ lỡ
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Late medication warning dialog */}
+        <Dialog
+          open={lateMedicationDialog.open}
+          onOpenChange={(open) =>
+            setLateMedicationDialog((prev) => ({ ...prev, open }))
+          }
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-600" />
+                Cảnh báo quan trọng
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <p className="text-lg font-semibold text-orange-900 text-center">
+                  Bạn nên uống thuốc điều độ hơn!
+                </p>
+              </div>
+              {lateMedicationDialog.reminder && (
+                <div className="text-sm space-y-2">
+                  <p className="text-foreground">
+                    Bạn đang xác nhận uống thuốc <span className="font-semibold">{lateMedicationDialog.reminder.medicationName}</span> ngoài khung giờ quy định.
+                  </p>
+                  <div className="flex justify-between text-xs bg-muted/50 p-3 rounded-lg">
+                    <div>
+                      <span className="text-muted-foreground">Khung giờ dự kiến:</span>
+                      <div className="font-medium mt-1">{formatTimeSlot(lateMedicationDialog.reminder.time)}</div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-muted-foreground">Thời gian hiện tại:</span>
+                      <div className="font-medium mt-1">{getCurrentTimeInVietnamese()}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <p className="text-sm text-foreground">
+                Uống thuốc đúng giờ giúp đảm bảo hiệu quả điều trị tốt nhất. 
+                Hãy cố gắng tuân thủ lịch uống thuốc của bạn.
+              </p>
+              <Separator />
+              <p className="text-xs text-muted-foreground">
+                Bạn có chắc chắn muốn xác nhận uống thuốc vào thời điểm này không?
+              </p>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setLateMedicationDialog({ open: false, reminder: null });
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (lateMedicationDialog.reminder) {
+                    await confirmIntakeAction(lateMedicationDialog.reminder);
+                  }
+                  setLateMedicationDialog({ open: false, reminder: null });
+                }}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                Xác nhận uống
               </Button>
             </DialogFooter>
           </DialogContent>

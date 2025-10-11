@@ -50,6 +50,29 @@ export function isWithinTimeSlot(timeSlot: string, currentTime?: Date): boolean 
 }
 
 /**
+ * Check if current time is before the specified time slot
+ */
+export function isBeforeTimeSlot(timeSlot: string, currentTime?: Date): boolean {
+  const timeSlotConfig = VIETNAMESE_TIME_SLOTS[timeSlot];
+  
+  if (!timeSlotConfig) {
+    return false; // If time slot not found, not before
+  }
+
+  const now = currentTime || new Date();
+  const currentHour = now.getHours();
+
+  // Handle overnight time slot (22:00 - 6:00)
+  if (timeSlotConfig.start > timeSlotConfig.end) {
+    // For overnight slot, before means between end and start
+    return currentHour >= timeSlotConfig.end && currentHour < timeSlotConfig.start;
+  }
+
+  // Normal time slot - before means current hour is less than start hour
+  return currentHour < timeSlotConfig.start;
+}
+
+/**
  * Get time slot configuration for a Vietnamese time string
  */
 export function getTimeSlotConfig(timeSlot: string): TimeSlot | null {
