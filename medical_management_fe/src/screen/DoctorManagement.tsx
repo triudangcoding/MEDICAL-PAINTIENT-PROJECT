@@ -50,6 +50,7 @@ import {
   User,
   Pill,
   Stethoscope,
+  FileSliders,
 } from "lucide-react";
 
 const toArray = (payload: any): any[] => {
@@ -1981,7 +1982,7 @@ const DoctorManagement: React.FC = () => {
                                     >
                                       {m.isActive ? (
                                         <>
-                                          <Trash2 className="h-4 w-4 mr-1.5" />
+                                          <FileSliders className="h-4 w-4 mr-1.5" />
                                           Vô hiệu
                                         </>
                                       ) : (

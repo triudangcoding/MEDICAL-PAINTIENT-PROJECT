@@ -475,7 +475,8 @@ const MajorManagement: React.FC = () => {
                             onClick={() => handleOpenEditDialog(major)}
                             title="Chỉnh sửa"
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="w-4 h-4 me-2" />
+                            Sửa
                           </Button>
                           <Button
                             variant="outline"
@@ -488,7 +489,10 @@ const MajorManagement: React.FC = () => {
                             {deleteMajorMutation.isPending ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
                             ) : (
-                              <Trash2 className="w-4 h-4" />
+                              <div className="flex items-center">
+                                <Trash2 className="w-4 h-4 me-2" />
+                                Xóa
+                              </div>
                             )}
                           </Button>
                         </div>
