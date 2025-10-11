@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Users, Bell, ChevronDown, HelpCircle, LogOut, Loader2, Stethoscope, UserRound, Pill, Clock, AlarmClock, AlertTriangle, Activity, Phone, MapPin } from "lucide-react";
+import { Home, Users, ChevronDown, LogOut, Loader2, Stethoscope, UserRound, Pill, Clock, AlarmClock, AlertTriangle, Activity, Phone, MapPin } from "lucide-react";
 
 const adminMenuItems = [
   {
