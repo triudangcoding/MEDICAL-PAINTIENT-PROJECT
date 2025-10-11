@@ -19,7 +19,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -319,13 +318,13 @@ const MajorManagement: React.FC = () => {
             </CardTitle>
             <div className="h-8 w-8 rounded-full bg-green-200 flex items-center justify-center">
               <span className="text-green-700 font-bold text-sm">
-                {majors.filter(m => m.isActive).length}
+                {majors.filter((m: MajorDoctor) => m.isActive).length}
               </span>
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-800">
-              {majors.filter(m => m.isActive).length}
+              {majors.filter((m: MajorDoctor) => m.isActive).length}
             </div>
             <p className="text-xs text-green-600 mt-1">
               Chuyên khoa đang hoạt động
@@ -340,13 +339,13 @@ const MajorManagement: React.FC = () => {
             </CardTitle>
             <div className="h-8 w-8 rounded-full bg-orange-200 flex items-center justify-center">
               <span className="text-orange-700 font-bold text-sm">
-                {majors.filter(m => !m.isActive).length}
+                {majors.filter((m: MajorDoctor) => !m.isActive).length}
               </span>
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-orange-800">
-              {majors.filter(m => !m.isActive).length}
+              {majors.filter((m: MajorDoctor) => !m.isActive).length}
             </div>
             <p className="text-xs text-orange-600 mt-1">
               Chuyên khoa tạm dừng
@@ -445,7 +444,7 @@ const MajorManagement: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {majors.map((major) => (
+                  {majors.map((major: MajorDoctor) => (
                     <TableRow key={major.id}>
                       <TableCell className="font-medium">{major.code}</TableCell>
                       <TableCell>{major.name}</TableCell>

@@ -36,7 +36,6 @@ import {
   Search,
   X as XIcon,
   Bell,
-  AlertTriangle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { X } from "lucide-react";

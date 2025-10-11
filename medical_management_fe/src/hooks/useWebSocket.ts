@@ -67,7 +67,7 @@ export const useWebSocket = (token?: string) => {
     newSocket.on('doctor-warning', (data: WebSocketMessage) => {
       console.log('Received doctor warning:', data);
       
-      toast.info(data.message, {
+      toast(data.message, {
         duration: 4000,
         icon: '⚠️',
       });
