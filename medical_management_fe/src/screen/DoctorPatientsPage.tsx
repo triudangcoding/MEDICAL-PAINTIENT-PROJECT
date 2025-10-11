@@ -728,12 +728,15 @@ export default function DoctorPatientsPage() {
       historyPatient.userInfo?.address || historyPatient.profile?.address;
 
     // Only include gender if it's not empty and different
+    console.log('DEBUG Frontend: data.gender =', data.gender);
+    console.log('DEBUG Frontend: currentGender =', currentGender);
     if (
       data.gender &&
       data.gender.trim() !== "" &&
       data.gender !== currentGender
     ) {
       profileData.gender = data.gender;
+      console.log('DEBUG Frontend: Setting profileData.gender =', profileData.gender);
     }
 
     // Only include birth year if it's not empty and different

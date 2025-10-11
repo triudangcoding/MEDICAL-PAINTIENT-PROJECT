@@ -462,7 +462,19 @@ export class PatientService {
 
       // Only include gender if it's not empty and valid
       if (profile.gender && profile.gender.trim() !== '') {
-        profileData.gender = profile.gender as any;
+        // Convert Vietnamese gender values to enum values
+        const genderMap: Record<string, string> = {
+          'Nam': 'MALE',
+          'Nữ': 'FEMALE',
+          'Khác': 'OTHER',
+          'MALE': 'MALE',
+          'FEMALE': 'FEMALE',
+          'OTHER': 'OTHER'
+        };
+        const mappedGender = genderMap[profile.gender];
+        if (mappedGender) {
+          profileData.gender = mappedGender as any;
+        }
       }
 
       // Handle birth date
@@ -696,7 +708,21 @@ export class PatientService {
     // Prepare update data for PatientProfile
     const profileUpdateData: any = {};
     
-    if (data.gender) profileUpdateData.gender = data.gender;
+    if (data.gender) {
+      // Convert Vietnamese gender values to enum values
+      const genderMap: Record<string, string> = {
+        'Nam': 'MALE',
+        'Nữ': 'FEMALE',
+        'Khác': 'OTHER',
+        'MALE': 'MALE',
+        'FEMALE': 'FEMALE',
+        'OTHER': 'OTHER'
+      };
+      const mappedGender = genderMap[data.gender];
+      if (mappedGender) {
+        profileUpdateData.gender = mappedGender;
+      }
+    }
     if (data.birthDate !== undefined) profileUpdateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
     if (data.address !== undefined) profileUpdateData.address = data.address;
 
