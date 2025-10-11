@@ -67,6 +67,20 @@ const DoctorManagement: React.FC = () => {
     const s = String(value);
     return s.length >= 10 ? s.slice(0, 10) : s;
   };
+
+  // Helper function to calculate age from birth date
+  const calculateAge = (birthDate: string): number => {
+    if (!birthDate) return 0;
+    const birth = new Date(birthDate);
+    const today = new Date();
+    const age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    // Calculate actual age considering month and day
+    return monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate()) 
+      ? age - 1 
+      : age;
+  };
   const [activeTab, setActiveTab] = useState<
     "patients" | "prescriptions" | "alerts" | "doctors"
   >("patients");
@@ -217,6 +231,31 @@ const DoctorManagement: React.FC = () => {
       errs.gender = "Không thể bỏ trống giới tính";
     if (!(createForm.profile?.birthDate || "").trim())
       errs.birthDate = "Không thể bỏ trống ngày sinh";
+    else {
+      // Validate birth date
+      const birthDateStr = createForm.profile?.birthDate;
+      if (birthDateStr) {
+        const birthDate = new Date(birthDateStr);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        // Calculate actual age considering month and day
+        const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) 
+          ? age - 1 
+          : age;
+        
+        if (birthDate > today) {
+          errs.birthDate = "Ngày sinh không được ở tương lai";
+        } else if (actualAge < 0) {
+          errs.birthDate = "Ngày sinh không hợp lệ";
+        } else if (actualAge > 120) {
+          errs.birthDate = "Tuổi không được vượt quá 120";
+        } else if (actualAge < 0) {
+          errs.birthDate = "Tuổi phải lớn hơn 0";
+        }
+      }
+    }
     if (!(createForm.profile?.address || "").trim())
       errs.address = "Không thể bỏ trống địa chỉ";
     setCreateErrors(errs);
@@ -772,7 +811,16 @@ const DoctorManagement: React.FC = () => {
                                   birthDate: undefined,
                                 }));
                             }}
+                            max={new Date().toISOString().split('T')[0]} // Prevent future dates
+                            className={createErrors.birthDate ? "border-red-500 focus:border-red-500" : ""}
                           />
+                          {createForm.profile?.birthDate && (
+                            <div className="text-xs text-muted-foreground">
+                              Tuổi: <span className="font-semibold text-primary">
+                                {calculateAge(createForm.profile.birthDate)} tuổi
+                              </span>
+                            </div>
+                          )}
                           {createErrors.birthDate && (
                             <p className="text-red-500 text-sm">
                               {createErrors.birthDate}
@@ -1647,7 +1695,15 @@ const DoctorManagement: React.FC = () => {
                             birthDate: e.target.value,
                           }))
                         }
+                        max={new Date().toISOString().split('T')[0]} // Prevent future dates
                       />
+                      {profileForm.birthDate && (
+                        <div className="text-xs text-muted-foreground">
+                          Tuổi: <span className="font-semibold text-primary">
+                            {calculateAge(profileForm.birthDate)} tuổi
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="grid gap-2">
                       <Label>Địa chỉ</Label>
