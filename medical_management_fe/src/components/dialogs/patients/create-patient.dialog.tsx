@@ -41,7 +41,7 @@ export const createPatientSchema = z.object({
   phoneNumber: z
     .string()
     .min(1, "Số điện thoại là bắt buộc")
-    .regex(/^[0-9]{10,11}$/, "Số điện thoại phải có 10-11 chữ số")
+    .regex(/^[0-9]{10}$/, "Số điện thoại phải có đúng 10 chữ số")
     .trim(),
   password: z
     .string()
@@ -86,14 +86,14 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
   } | null>(null)
   const [isHistoryStep, setIsHistoryStep] = useState(false)
   const [historyForm, setHistoryForm] = useState<{
-    conditions: string[];
-    allergies: string[];
-    surgeries: string[];
+    conditions: string;
+    allergies: string;
+    surgeries: string;
     familyHistory?: string;
     lifestyle?: string;
-    currentMedications: string[];
+    currentMedications: string;
     notes?: string;
-  }>({ conditions: [], allergies: [], surgeries: [], currentMedications: [] })
+  }>({ conditions: '', allergies: '', surgeries: '', currentMedications: '' })
   const [customFields, setCustomFields] = useState<Array<{ key: string; value: string }>>([{ key: '', value: '' }])
 
   const defaultValues: CreatePatientFormData = {
@@ -160,16 +160,19 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
       return;
     }
     try {
-      // Merge "Khác" inputs if present (support parity with DoctorPatientsPage)
-      const mergedConditions = Array.from(new Set([
-        ...((historyForm.conditions || []).map(s => s.trim()).filter(Boolean))
-      ]))
-      const mergedAllergies = Array.from(new Set([
-        ...((historyForm.allergies || []).map(s => s.trim()).filter(Boolean))
-      ]))
-      const mergedSurgeries = Array.from(new Set([
-        ...((historyForm.surgeries || []).map(s => s.trim()).filter(Boolean))
-      ]))
+      // Convert string inputs to arrays by splitting with comma
+      const mergedConditions = historyForm.conditions 
+        ? historyForm.conditions.split(',').map(s => s.trim()).filter(Boolean)
+        : []
+      const mergedAllergies = historyForm.allergies 
+        ? historyForm.allergies.split(',').map(s => s.trim()).filter(Boolean)
+        : []
+      const mergedSurgeries = historyForm.surgeries 
+        ? historyForm.surgeries.split(',').map(s => s.trim()).filter(Boolean)
+        : []
+      const mergedCurrentMedications = historyForm.currentMedications 
+        ? historyForm.currentMedications.split(',').map(s => s.trim()).filter(Boolean)
+        : []
       const extras = customFields.filter(f => f.key && f.value).reduce((acc, cur) => { acc[cur.key] = cur.value; return acc; }, {} as Record<string, string>)
       await patientApi.updatePatientHistory(createdPatientId, {
         conditions: mergedConditions,
@@ -177,7 +180,7 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
         surgeries: mergedSurgeries,
         familyHistory: historyForm.familyHistory,
         lifestyle: historyForm.lifestyle,
-        currentMedications: (historyForm.currentMedications || []).map(s => s.trim()).filter(Boolean),
+        currentMedications: mergedCurrentMedications,
         notes: historyForm.notes,
         extras
       })
@@ -259,9 +262,14 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                     <FormControl>
                           <Input 
                             type="tel" 
-                            placeholder="Nhập số điện thoại 10-11 chữ số" 
+                            placeholder="Nhập số điện thoại 10 chữ số" 
                             className="transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
-                            {...field} 
+                            maxLength={10}
+                            {...field}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                              field.onChange(value);
+                            }}
                           />
                     </FormControl>
                   </FormItem>
@@ -518,28 +526,28 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                     <div>
                       <label className='text-xs font-medium text-muted-foreground mb-2 block'>Bệnh nền</label>
                       <Input 
-                        placeholder='Ví dụ: Đái tháo đường, Tăng huyết áp...'
+                        placeholder='Nhập thông tin bệnh nền'
                         className="transition-all duration-200 focus:ring-2 focus:ring-emerald-500/20"
-                        value={historyForm.conditions.join(', ')}
-                        onChange={(e) => setHistoryForm((p) => ({ ...p, conditions: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                        value={historyForm.conditions}
+                        onChange={(e) => setHistoryForm((p) => ({ ...p, conditions: e.target.value }))}
                       />
                     </div>
                     <div>
                       <label className='text-xs font-medium text-muted-foreground mb-2 block'>Dị ứng</label>
                       <Input 
-                        placeholder='Ví dụ: Penicillin, Hải sản...'
+                        placeholder='Nhập thông tin dị ứng'
                         className="transition-all duration-200 focus:ring-2 focus:ring-emerald-500/20"
-                        value={historyForm.allergies.join(', ')}
-                        onChange={(e) => setHistoryForm((p) => ({ ...p, allergies: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                        value={historyForm.allergies}
+                        onChange={(e) => setHistoryForm((p) => ({ ...p, allergies: e.target.value }))}
                       />
               </div>
               <div>
                       <label className='text-xs font-medium text-muted-foreground mb-2 block'>Phẫu thuật</label>
                       <Input 
-                        placeholder='Ví dụ: Cắt ruột thừa, Mổ tim...'
+                        placeholder='Nhập thông tin phẫu thuật'
                         className="transition-all duration-200 focus:ring-2 focus:ring-emerald-500/20"
-                        value={historyForm.surgeries.join(', ')}
-                        onChange={(e) => setHistoryForm((p) => ({ ...p, surgeries: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                        value={historyForm.surgeries}
+                        onChange={(e) => setHistoryForm((p) => ({ ...p, surgeries: e.target.value }))}
                       />
                     </div>
                 </div>
@@ -573,10 +581,10 @@ export function CreatePatientDialog({ isOpen, onClose, onCreateSuccess, defaultR
                 <div>
                       <label className='text-xs font-medium text-muted-foreground mb-2 block'>Thuốc đang dùng</label>
                       <Input 
-                        placeholder='Nhập tên thuốc, ngăn cách bởi dấu phẩy'
+                        placeholder='Nhập thông tin thuốc đang dùng'
                         className="transition-all duration-200 focus:ring-2 focus:ring-blue-500/20"
-                        value={historyForm.currentMedications.join(', ')}
-                        onChange={(e) => setHistoryForm((p) => ({ ...p, currentMedications: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                        value={historyForm.currentMedications}
+                        onChange={(e) => setHistoryForm((p) => ({ ...p, currentMedications: e.target.value }))}
                       />
                 </div>
                 <div>
