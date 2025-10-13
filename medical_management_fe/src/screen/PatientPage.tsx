@@ -514,10 +514,15 @@ export default function PatientPage() {
 
     if (isBeforeTime) {
       console.log("Trying to take medication before scheduled time");
-      toast.error("Bạn không được uống thuốc trước giờ!", {
-        duration: 4000,
+      toast.error("⏰ Bạn không thể uống thuốc trước giờ quy định!", {
+        duration: 5000,
         position: "top-center",
-        style: { background: "#EF4444", color: "#fff" },
+        style: { 
+          background: "#EF4444", 
+          color: "#fff",
+          fontSize: "14px",
+          fontWeight: "500",
+        },
       });
       return;
     }
@@ -527,7 +532,7 @@ export default function PatientPage() {
     console.log("Is within time slot:", isWithinTime);
 
     if (!isWithinTime) {
-      console.log("Showing late medication dialog");
+      console.log("Showing late medication dialog - taking after scheduled time");
       // Show dialog warning about taking medication late
       setLateMedicationDialog({
         open: true,
@@ -2526,40 +2531,50 @@ export default function PatientPage() {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-orange-600" />
-                Cảnh báo quan trọng
+                <AlertTriangle className="h-5 w-5 text-orange-600 animate-pulse" />
+                Cảnh báo uống thuốc muộn
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                <p className="text-lg font-semibold text-orange-900 text-center">
-                  Bạn nên uống thuốc điều độ hơn!
+              <div className="bg-orange-50 border-2 border-orange-200 rounded-lg p-4">
+                <p className="text-lg font-bold text-orange-900 text-center">
+                  ⏰ Bạn đang uống thuốc muộn hơn giờ quy định!
                 </p>
               </div>
               {lateMedicationDialog.reminder && (
-                <div className="text-sm space-y-2">
-                  <p className="text-foreground">
-                    Bạn đang xác nhận uống thuốc <span className="font-semibold">{lateMedicationDialog.reminder.medicationName}</span> ngoài khung giờ quy định.
-                  </p>
-                  <div className="flex justify-between text-xs bg-muted/50 p-3 rounded-lg">
-                    <div>
-                      <span className="text-muted-foreground">Khung giờ dự kiến:</span>
-                      <div className="font-medium mt-1">{formatTimeSlot(lateMedicationDialog.reminder.time)}</div>
+                <div className="text-sm space-y-3">
+                  <div className="bg-white border border-orange-200 rounded-lg p-3">
+                    <p className="text-foreground">
+                      Thuốc: <span className="font-semibold text-orange-900">{lateMedicationDialog.reminder.medicationName}</span>
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Liều lượng: {lateMedicationDialog.reminder.dosage}
+                    </p>
+                  </div>
+                  <div className="flex justify-between gap-3 text-xs bg-muted/50 p-3 rounded-lg border border-orange-100">
+                    <div className="flex-1">
+                      <span className="text-muted-foreground block mb-1">⏱️ Giờ quy định:</span>
+                      <div className="font-semibold text-orange-700">{formatTimeSlot(lateMedicationDialog.reminder.time)}</div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-muted-foreground">Thời gian hiện tại:</span>
-                      <div className="font-medium mt-1">{getCurrentTimeInVietnamese()}</div>
+                    <div className="h-auto w-px bg-orange-200"></div>
+                    <div className="flex-1 text-right">
+                      <span className="text-muted-foreground block mb-1">🕐 Hiện tại:</span>
+                      <div className="font-semibold text-foreground">{getCurrentTimeInVietnamese()} ({new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })})</div>
                     </div>
                   </div>
                 </div>
               )}
-              <p className="text-sm text-foreground">
-                Uống thuốc đúng giờ giúp đảm bảo hiệu quả điều trị tốt nhất. 
-                Hãy cố gắng tuân thủ lịch uống thuốc của bạn.
-              </p>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <p className="text-sm text-amber-900 font-medium">
+                  💊 Lưu ý quan trọng:
+                </p>
+                <p className="text-sm text-amber-800 mt-2">
+                  Uống thuốc đúng giờ giúp duy trì nồng độ thuốc ổn định trong cơ thể, đảm bảo hiệu quả điều trị tốt nhất.
+                </p>
+              </div>
               <Separator />
-              <p className="text-xs text-muted-foreground">
-                Bạn có chắc chắn muốn xác nhận uống thuốc vào thời điểm này không?
+              <p className="text-xs text-muted-foreground text-center">
+                Hãy cố gắng uống thuốc đúng giờ vào những lần tiếp theo nhé! 🙏
               </p>
             </div>
             <DialogFooter className="gap-2">
@@ -2568,6 +2583,7 @@ export default function PatientPage() {
                 onClick={() => {
                   setLateMedicationDialog({ open: false, reminder: null });
                 }}
+                className="flex-1"
               >
                 Hủy
               </Button>
@@ -2578,9 +2594,9 @@ export default function PatientPage() {
                   }
                   setLateMedicationDialog({ open: false, reminder: null });
                 }}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
+                className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
               >
-                Xác nhận uống
+                Vẫn xác nhận uống
               </Button>
             </DialogFooter>
           </DialogContent>
