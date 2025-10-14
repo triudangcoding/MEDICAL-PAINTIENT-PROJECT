@@ -647,6 +647,8 @@ export default function DoctorPatientsPage() {
     );
     setPrescriptionNotes(detail.notes || "");
     setEditingPrescriptionId(detail.id);
+    // Ensure the parent management dialog is visible when switching to edit form
+    setIsHistoryOpen(true);
     setIsPrescriptionDetailOpen(false);
     setActiveDialogTab("prescriptions");
     setShowCreatePrescriptionForm(true);
@@ -1949,15 +1951,6 @@ export default function DoctorPatientsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    console.log(
-                      "Rendering prescriptions:",
-                      patientPrescriptions,
-                    );
-                    console.log("Loading prescriptions:", loadingPrescriptions);
-                    console.log("Prescriptions error:", prescriptionsError);
-                    return null;
-                  })()}
                   {loadingPrescriptions ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -1969,32 +1962,7 @@ export default function DoctorPatientsPage() {
                         Lỗi tải đơn thuốc: {prescriptionsError.message}
                       </p>
                     </div>
-                  ) : (() => {
-                      console.log("=== UI RENDER DEBUG ===");
-                      console.log(
-                        "patientPrescriptions:",
-                        patientPrescriptions,
-                      );
-                      console.log(
-                        "patientPrescriptions type:",
-                        typeof patientPrescriptions,
-                      );
-                      console.log(
-                        "patientPrescriptions isArray:",
-                        Array.isArray(patientPrescriptions),
-                      );
-                      console.log(
-                        "patientPrescriptions length:",
-                        patientPrescriptions?.length,
-                      );
-                      console.log(
-                        "Condition check:",
-                        patientPrescriptions && patientPrescriptions.length > 0,
-                      );
-                      return (
-                        patientPrescriptions && patientPrescriptions.length > 0
-                      );
-                    })() ? (
+                  ) : (patientPrescriptions && patientPrescriptions.length > 0) ? (
                     <div className="space-y-4">
                       {patientPrescriptions.map((prescription: any) => (
                         <div
@@ -2378,7 +2346,7 @@ export default function DoctorPatientsPage() {
                         Mã đơn thuốc
                       </label>
                       <p className="text-sm font-mono bg-muted/20 p-2 rounded">
-                        {prescriptionDetail.id}
+                        {prescriptionDetail.id || "N/A"}
                       </p>
                     </div>
                     <div>
@@ -2397,7 +2365,7 @@ export default function DoctorPatientsPage() {
                             ? "Đang điều trị"
                             : prescriptionDetail.status === "UNACTIVE"
                               ? "Không hoạt động"
-                              : prescriptionDetail.status}
+                              : prescriptionDetail.status || "N/A"}
                         </Badge>
                       </div>
                     </div>
@@ -2407,9 +2375,12 @@ export default function DoctorPatientsPage() {
                       </label>
                       <p className="text-sm">
                         {prescriptionDetail.startDate
-                          ? new Date(
-                              prescriptionDetail.startDate,
-                            ).toLocaleDateString("vi-VN")
+                          ? (() => {
+                              const date = new Date(prescriptionDetail.startDate);
+                              return isNaN(date.getTime()) 
+                                ? "N/A" 
+                                : date.toLocaleDateString("vi-VN");
+                            })()
                           : "N/A"}
                       </p>
                     </div>
@@ -2419,9 +2390,12 @@ export default function DoctorPatientsPage() {
                       </label>
                       <p className="text-sm">
                         {prescriptionDetail.endDate
-                          ? new Date(
-                              prescriptionDetail.endDate,
-                            ).toLocaleDateString("vi-VN")
+                          ? (() => {
+                              const date = new Date(prescriptionDetail.endDate);
+                              return isNaN(date.getTime()) 
+                                ? "N/A" 
+                                : date.toLocaleDateString("vi-VN");
+                            })()
                           : "Đang điều trị"}
                       </p>
                     </div>
@@ -2433,7 +2407,7 @@ export default function DoctorPatientsPage() {
                         Ghi chú
                       </label>
                       <p className="text-sm bg-muted/20 p-3 rounded mt-1">
-                        {prescriptionDetail.notes}
+                        {prescriptionDetail.notes || "N/A"}
                       </p>
                     </div>
                   )}
@@ -2489,8 +2463,18 @@ export default function DoctorPatientsPage() {
                         Chuyên khoa
                       </label>
                       <p className="text-sm">
-                        {prescriptionDetail.doctor?.majorDoctor ||
-                          "Chưa cập nhật"}
+                        {(() => {
+                          const major = prescriptionDetail.doctor?.majorDoctor as any;
+                          if (!major) return "Chưa cập nhật";
+                          if (typeof major === "string") return major;
+                          // Handle object shapes: { name }, { nameEn }, or { code }
+                          if (typeof major === "object") {
+                            return (
+                              major.name || major.nameEn || major.code || "Chưa cập nhật"
+                            );
+                          }
+                          return String(major);
+                        })()}
                       </p>
                     </div>
                   </div>
@@ -2504,7 +2488,7 @@ export default function DoctorPatientsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {prescriptionDetail.items?.map((item: any, idx: number) => (
+                    {Array.isArray(prescriptionDetail.items) && prescriptionDetail.items.map((item: any, idx: number) => (
                       <div
                         key={idx}
                         className="border border-border/20 rounded-lg p-4 bg-muted/10"
@@ -2575,6 +2559,7 @@ export default function DoctorPatientsPage() {
 
               {/* Adherence Logs */}
               {prescriptionDetail.logs &&
+                Array.isArray(prescriptionDetail.logs) &&
                 prescriptionDetail.logs.length > 0 && (
                   <Card>
                     <CardHeader>
@@ -2602,12 +2587,12 @@ export default function DoctorPatientsPage() {
                                 </Badge>
                                 <div>
                                   <p className="text-sm font-medium">
-                                    {new Date(log.takenAt).toLocaleDateString(
-                                      "vi-VN",
-                                    )}{" "}
-                                    {new Date(log.takenAt).toLocaleTimeString(
-                                      "vi-VN",
-                                    )}
+                                    {log.takenAt ? (() => {
+                                      const date = new Date(log.takenAt);
+                                      return isNaN(date.getTime()) 
+                                        ? "N/A" 
+                                        : `${date.toLocaleDateString("vi-VN")} ${date.toLocaleTimeString("vi-VN")}`;
+                                    })() : "N/A"}
                                   </p>
                                   {log.amount && (
                                     <p className="text-xs text-muted-foreground">
