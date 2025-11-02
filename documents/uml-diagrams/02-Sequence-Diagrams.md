@@ -328,6 +328,181 @@ sequenceDiagram
     Note over C,AC: Authentication flow hoàn tất
 ```
 
+## 7. Sequence Diagram - Admin Quản Lý Người Dùng
+
+```mermaid
+sequenceDiagram
+    participant A as Admin
+    participant AC as AdminController
+    participant US as UserService
+    participant VS as ValidationService
+    participant DB as Database
+    participant NS as NotificationService
+
+    A->>AC: GET /admin/users?page=1&limit=10
+    Note over A,AC: Lấy danh sách người dùng
+
+    AC->>US: getUsers(filters, pagination)
+    US->>DB: findUsers(filters, pagination)
+    DB-->>US: Users list
+    US-->>AC: Users with pagination
+
+    AC-->>A: 200 OK + Users list
+
+    %% Create user flow
+    A->>AC: POST /admin/users
+    Note over A,AC: Tạo người dùng mới
+
+    AC->>VS: validateUserData(userData)
+    VS-->>AC: Validation passed
+
+    AC->>US: createUser(userData)
+    US->>DB: checkPhoneNumberExists(phoneNumber)
+    DB-->>US: PhoneNumber not exists
+
+    US->>US: hashPassword(password)
+    US->>DB: createUser(userData)
+    DB-->>US: User created
+
+    US->>NS: sendWelcomeNotification(userId)
+    NS-->>US: Notification sent
+
+    US-->>AC: User created successfully
+    AC-->>A: 201 Created + User data
+
+    %% Update user flow
+    A->>AC: PATCH /admin/users/:id
+    Note over A,AC: Cập nhật người dùng
+
+    AC->>US: updateUser(id, userData)
+    US->>DB: getUserById(id)
+    DB-->>US: User exists
+
+    US->>VS: validateUpdateData(userData)
+    VS-->>US: Validation passed
+
+    US->>DB: updateUser(id, userData)
+    DB-->>US: User updated
+
+    US-->>AC: User updated successfully
+    AC-->>A: 200 OK + Updated user data
+
+    %% Delete user flow
+    A->>AC: DELETE /admin/users/:id
+    Note over A,AC: Xóa người dùng
+
+    AC->>US: deleteUser(id)
+    US->>DB: checkUserCanBeDeleted(id)
+    DB-->>US: User can be deleted
+
+    US->>DB: softDeleteUser(id)
+    DB-->>US: User deleted
+
+    US-->>AC: User deleted successfully
+    AC-->>A: 200 OK
+
+    Note over A,DB: Quản lý người dùng hoàn tất
+```
+
+## 8. Sequence Diagram - Bác Sĩ Chỉnh Sửa Đơn Thuốc
+
+```mermaid
+sequenceDiagram
+    participant D as Doctor
+    participant DC as DoctorController
+    participant PS as PrescriptionService
+    participant NS as NotificationService
+    participant DB as Database
+    participant P as Patient
+    participant WS as WebSocket
+
+    D->>DC: PATCH /doctor/prescriptions/:id
+    Note over D,DC: Chỉnh sửa đơn thuốc
+
+    DC->>PS: updatePrescription(id, prescriptionData)
+    Note over DC,PS: Cập nhật đơn thuốc
+
+    PS->>DB: getPrescription(id)
+    DB-->>PS: Prescription data
+
+    PS->>DB: validatePrescriptionStatus(id)
+    DB-->>PS: Prescription is ACTIVE
+
+    PS->>DB: validateDoctorCanEdit(doctorId, prescriptionId)
+    DB-->>PS: Doctor can edit
+
+    PS->>DB: updatePrescription(id, prescriptionData)
+    DB-->>PS: Prescription updated
+
+    PS->>DB: updatePrescriptionItems(id, items)
+    DB-->>PS: PrescriptionItems updated
+
+    PS-->>DC: Prescription updated successfully
+
+    DC->>NS: sendPrescriptionUpdateNotification(patientId, prescriptionId)
+    Note over DC,NS: Gửi thông báo cập nhật
+
+    NS->>WS: sendToPatient(patientId, notification)
+    WS-->>P: Real-time notification
+
+    NS->>DB: createAlert(alertData)
+    DB-->>NS: Alert created
+
+    DC-->>D: 200 OK + Updated prescription data
+
+    Note over D,P: Đơn thuốc đã được cập nhật và thông báo đã gửi
+```
+
+## 9. Sequence Diagram - Bệnh Nhân Đánh Dấu Bỏ Lỡ Thuốc
+
+```mermaid
+sequenceDiagram
+    participant P as Patient
+    participant PC as PatientController
+    participant PS as PrescriptionService
+    participant NS as NotificationService
+    participant DB as Database
+    participant D as Doctor
+    participant WS as WebSocket
+
+    P->>PC: POST /patient/prescriptions/:id/mark-missed
+    Note over P,PC: Đánh dấu bỏ lỡ thuốc
+
+    PC->>PS: markMedicationMissed(prescriptionId, data)
+    Note over PC,PS: Xử lý đánh dấu bỏ lỡ
+
+    PS->>DB: getPrescription(prescriptionId)
+    DB-->>PS: Prescription data
+
+    PS->>DB: validatePrescriptionStatus(prescriptionId)
+    DB-->>PS: Prescription is ACTIVE
+
+    PS->>DB: createAdherenceLog(logData)
+    Note over PS,DB: Tạo nhật ký với status MISSED
+    DB-->>PS: AdherenceLog created with MISSED status
+
+    PS->>DB: updatePrescriptionStatus(prescriptionId)
+    DB-->>PS: Status updated
+
+    PS->>DB: calculateAdherenceRate(prescriptionId)
+    DB-->>PS: Adherence rate percentage
+
+    PS-->>PC: Missed medication marked successfully
+
+    PC->>NS: sendMissedMedicationAlert(doctorId, patientId, prescriptionId)
+    Note over PC,NS: Gửi cảnh báo cho bác sĩ
+
+    NS->>WS: sendToDoctor(doctorId, alert)
+    WS-->>D: Real-time alert
+
+    NS->>DB: createAlert(alertData)
+    DB-->>NS: Alert created
+
+    PC-->>P: 200 OK + Confirmation data
+
+    Note over P,D: Bệnh nhân đã đánh dấu bỏ lỡ thuốc, bác sĩ nhận cảnh báo
+```
+
 ## Mô Tả Chi Tiết
 
 ### 1. Kê Đơn Thuốc Điện Tử

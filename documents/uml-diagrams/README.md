@@ -6,6 +6,18 @@ Thư mục này chứa các sơ đồ UML chi tiết cho hệ thống quản lý
 
 ## Danh Sách Sơ Đồ UML
 
+### 0. 📋 Use Case Diagram
+**File**: `00-Use-Case-Diagram.md`
+**Mô tả**: Sơ đồ Use Case UML mô tả tổng quan tất cả các chức năng (use cases) và các tác nhân (actors) trong hệ thống.
+
+**Nội dung chính**:
+- Actors: Admin, Doctor, Patient, System
+- Admin Use Cases: Quản lý người dùng, Quản lý chuyên khoa, Quản lý thuốc, Xem báo cáo, Quản lý đơn thuốc
+- Doctor Use Cases: Quản lý bệnh nhân, Kê đơn thuốc, Chỉnh sửa đơn thuốc, Giám sát tuân thủ, Xem lịch sử điều trị
+- Patient Use Cases: Xem đơn thuốc, Xem lịch nhắc, Xác nhận uống thuốc, Đánh dấu bỏ lỡ, Xem lịch sử, Quản lý hồ sơ
+- System Use Cases: Gửi nhắc nhở, Tạo cảnh báo tuân thủ, Xử lý WebSocket
+- Mối quan hệ Include và Extend giữa các use cases
+
 ### 1. 📊 Class Diagram
 **File**: `01-Class-Diagram.md`
 **Mô tả**: Sơ đồ lớp UML mô tả cấu trúc các lớp, thuộc tính, phương thức và mối quan hệ giữa chúng.
@@ -28,6 +40,9 @@ Thư mục này chứa các sơ đồ UML chi tiết cho hệ thống quản lý
 - Tạo Cảnh Báo Tuân Thủ Thấp
 - WebSocket Connection Management
 - Authentication Flow
+- Admin Quản Lý Người Dùng
+- Bác Sĩ Chỉnh Sửa Đơn Thuốc
+- Bệnh Nhân Đánh Dấu Bỏ Lỡ Thuốc
 
 ### 3. 🎯 Activity Diagrams
 **File**: `03-Activity-Diagrams.md`
@@ -65,21 +80,37 @@ Thư mục này chứa các sơ đồ UML chi tiết cho hệ thống quản lý
 - Authentication Module: Controllers, Services, Security, External Dependencies
 - Database Layer: ORM Layer, Repository Layer, Database Services, Data Models
 
+### 6. 🏛️ System Overview Diagram
+**File**: `06-System-Overview.md`
+**Mô tả**: Sơ đồ tổng quan hệ thống mô tả kiến trúc tổng thể, các module chính, luồng dữ liệu và mối quan hệ giữa các thành phần.
+
+**Nội dung chính**:
+- Kiến Trúc Tổng Thể: Frontend, API Gateway, Backend Services, Data Layer, External Services, Background Jobs
+- Luồng Dữ Liệu Chính: Kê đơn thuốc, Uống thuốc, Nhắc nhở tự động, Cảnh báo tuân thủ
+- Mô Hình Dữ Liệu Tổng Quan: ERD relationships
+- Phân Quyền và Bảo Mật: Authentication, Authorization, RBAC, Security Layers
+- Real-time Communication: WebSocket, Notification Types, Delivery Channels
+- Background Processing: Cron Jobs, Schedulers, Tasks, Services
+
 ## Cách Sử Dụng
 
 ### 1. Đọc Sơ Đồ
-- Bắt đầu với **Class Diagram** để hiểu cấu trúc hệ thống
-- Đọc **Sequence Diagrams** để hiểu luồng tương tác
+- Bắt đầu với **Use Case Diagram** để hiểu tổng quan các chức năng và actors
+- Xem **System Overview Diagram** để hiểu kiến trúc tổng thể hệ thống
+- Đọc **Class Diagram** để hiểu cấu trúc các lớp và mối quan hệ
+- Đọc **Sequence Diagrams** để hiểu luồng tương tác giữa các đối tượng
 - Xem **Activity Diagrams** để hiểu quy trình nghiệp vụ
-- Tham khảo **State Machine Diagrams** để hiểu trạng thái
-- Đọc **Component Diagrams** để hiểu kiến trúc hệ thống
+- Tham khảo **State Machine Diagrams** để hiểu trạng thái và chuyển đổi
+- Đọc **Component Diagrams** để hiểu chi tiết các thành phần
 
 ### 2. Sử Dụng Cho Phát Triển
-- **Thiết kế**: Sử dụng Class Diagram để thiết kế database schema
+- **Phân tích yêu cầu**: Sử dụng Use Case Diagram để phân tích và định nghĩa chức năng
+- **Thiết kế kiến trúc**: Sử dụng System Overview Diagram để thiết kế kiến trúc tổng thể
+- **Thiết kế database**: Sử dụng Class Diagram để thiết kế database schema
 - **Implement**: Sử dụng Sequence Diagrams để implement API endpoints
 - **Testing**: Sử dụng Activity Diagrams để thiết kế test cases
 - **Debug**: Sử dụng State Machine Diagrams để debug trạng thái
-- **Architecture**: Sử dụng Component Diagrams để thiết kế kiến trúc
+- **Architecture details**: Sử dụng Component Diagrams để thiết kế chi tiết các thành phần
 
 ### 3. Sử Dụng Cho Tài Liệu
 - **Onboarding**: Sử dụng để onboard team members mới
